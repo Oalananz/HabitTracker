@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Console - Recovery Journey</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#6cdd81",
+                        "on-surface-variant": "#bdcaba",
+                        "on-secondary-fixed-variant": "#004882",
+                        "on-tertiary-fixed": "#271900",
+                        "tertiary-fixed-dim": "#fabc45",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#6cdd81",
+                        "outline": "#889486",
+                        "surface-container": "#1c2026",
+                        "inverse-primary": "#006e2c",
+                        "secondary-fixed-dim": "#a2c9ff",
+                        "on-secondary": "#00315c",
+                        "background": "#10141a",
+                        "surface-container-highest": "#31353c",
+                        "surface-container-low": "#181c22",
+                        "surface-container-high": "#262a31",
+                        "outline-variant": "#3e4a3e",
+                        "on-error": "#690005",
+                        "surface-bright": "#353940",
+                        "surface-dim": "#10141a",
+                        "secondary-container": "#0071c7",
+                        "on-primary-fixed-variant": "#00531f",
+                        "on-surface": "#dfe2eb",
+                        "surface": "#10141a",
+                        "on-background": "#dfe2eb",
+                        "on-secondary-fixed": "#001c38",
+                        "on-tertiary-container": "#392600",
+                        "primary-fixed": "#88fb9a",
+                        "on-primary-fixed": "#002108",
+                        "tertiary-fixed": "#ffdeaa",
+                        "inverse-surface": "#dfe2eb",
+                        "surface-variant": "#31353c",
+                        "on-tertiary": "#422c00",
+                        "on-primary": "#003913",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "on-primary-container": "#003210",
+                        "surface-container-lowest": "#0a0e14",
+                        "tertiary": "#fabc45",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#f0f4ff",
+                        "primary-container": "#2fa550",
+                        "tertiary-container": "#bd8708",
+                        "secondary": "#a2c9ff",
+                        "primary": "#6cdd81",
+                        "inverse-on-surface": "#2d3137",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#d3e4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline, .font-label { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined { font-family: 'Material Symbols Outlined'; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="flex justify-between items-center w-full px-8 ml-64 max-w-[calc(100%-16rem)] bg-[#10141a] text-[#6cdd81] font-['Space_Grotesk'] text-xs tracking-widest uppercase docked full-width top-0 h-14 border-b border-[#181c22] flat no shadows z-50 fixed">
+<div class="flex items-center gap-6">
+<span class="text-xl font-black text-[#6cdd81] italic">SOVEREIGN_CONSOLE</span>
+<div class="flex gap-4">
+<a class="text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 rounded" href="#">System</a>
+<a class="text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 rounded" href="#">Network</a>
+<a class="text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 rounded" href="#">Logs</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-48 hidden md:block">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/15 text-on-surface text-xs px-3 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body placeholder:text-on-surface-variant/50" placeholder="Search..." type="text"/>
+</div>
+<button class="text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors p-1.5 rounded">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors p-1.5 rounded">
+<span class="material-symbols-outlined text-lg">terminal</span>
+</button>
+<button class="bg-primary text-on-primary px-3 py-1.5 font-bold hover:bg-primary-container transition-colors ml-2">Execute</button>
+<img alt="User Avatar" class="w-8 h-8 rounded-none border border-outline-variant/30 ml-2 object-cover" data-alt="A futuristic male avatar with subtle green lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq2KKD8mFLDBj4zRFE6Dww7IJXEY9AVUix8BxL6BkTQQwoeQqwd5kwYGgtoGeF59GiF6d2uOFr3IZGxEqqHhnt_7zV0iubIbzDhskh3w0DLDEOWNIO9tAQ1fGrhIHT9TeAUGHR8_tNvfCsMNPdav39GWKVeR_gX-YPv1inWaeXWkjqdk9zAr0nKU4My3Whj6O75QkgH4X0Mmerc9SNZadY2n7H7xUHMUuG1BILOYoTvJ2OWuNRs6N_zcaidMCHFxJ1JO2iCmYn1P0"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<nav class="flex flex-col fixed left-0 top-0 h-screen py-6 bg-[#0a0e14] text-[#6cdd81] font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase w-64 border-r border-[#181c22] tonal shift via bg-[#0a0e14] against bg-[#10141a] flat no shadows z-40">
+<div class="px-6 mb-8 flex flex-col gap-1">
+<span class="text-xs text-on-surface-variant font-body normal-case mb-1">&gt; system/user</span>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(108,221,129,0.6)]"></div>
+<span class="text-xs text-on-surface font-body normal-case tracking-normal">Status: Online</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-1 mt-4">
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">terminal</span>
+<span>Today</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-[#6cdd81] font-bold border-l-2 border-[#6cdd81] pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80 bg-surface-container-low/50" href="#">
+<span class="material-symbols-outlined text-lg">healing</span>
+<span>Recovery Journey</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Calendar</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">cached</span>
+<span>Habits</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<div class="px-4 mb-4">
+<button class="w-full bg-transparent border border-outline-variant/30 text-primary py-2 text-xs font-bold hover:bg-surface-container-low transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> New Entry
+            </button>
+</div>
+<div class="mt-auto flex flex-col gap-1 border-t border-outline-variant/10 pt-4">
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">menu_book</span>
+<span>Docs</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] hover:text-[#6cdd81] duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-lg">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-14 p-8 w-full min-h-screen">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Page Header -->
+<header class="mb-10">
+<h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter flex items-center gap-3">
+<span class="text-primary font-mono text-2xl">&gt;</span> Recovery Journey
+                </h1>
+<p class="text-on-surface-variant font-body text-sm mt-2 ml-7">System monitoring protocol initialized. Tracking continuity sequence.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Main Terminal & Milestones -->
+<div class="lg:col-span-8 space-y-8 flex flex-col">
+<!-- Main Timer Panel -->
+<div class="bg-surface-container-low rounded relative overflow-hidden flex-1 min-h-[400px] flex flex-col border border-outline-variant/15">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"></div>
+<div class="px-6 py-4 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-highest/20">
+<span class="font-label text-xs text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">terminal</span>
+                                &gt; system/timer --since='2023-11-01'
+                            </span>
+<span class="text-xs font-body text-on-surface-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span> live
+                            </span>
+</div>
+<div class="flex-1 p-10 flex flex-col items-center justify-center relative">
+<!-- Background Grid Pattern -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#6cdd81 1px, transparent 1px); background-size: 24px 24px;"></div>
+<div class="text-center z-10 w-full">
+<div class="text-[5rem] leading-none font-headline font-black text-on-surface tracking-[-0.04em] flex justify-center items-baseline gap-4 mb-4">
+<div class="flex flex-col items-center">
+<span class="text-primary text-shadow-sm">42</span>
+<span class="text-xs font-label text-on-surface-variant tracking-widest uppercase mt-2">Days</span>
+</div>
+<span class="text-outline-variant/50 self-start mt-2">:</span>
+<div class="flex flex-col items-center">
+<span>14</span>
+<span class="text-xs font-label text-on-surface-variant tracking-widest uppercase mt-2">Hrs</span>
+</div>
+<span class="text-outline-variant/50 self-start mt-2">:</span>
+<div class="flex flex-col items-center">
+<span>36</span>
+<span class="text-xs font-label text-on-surface-variant tracking-widest uppercase mt-2">Min</span>
+</div>
+</div>
+<div class="font-mono text-sm text-secondary-fixed-dim mt-8 opacity-80 border border-outline-variant/20 inline-block px-4 py-1.5 bg-surface-container-lowest">
+                                    Target: 90 Days [46.6% Complete]
+                                </div>
+</div>
+</div>
+<!-- Reset Action -->
+<div class="p-6 bg-surface-container-lowest border-t border-outline-variant/15 flex justify-between items-center">
+<span class="font-body text-xs text-on-surface-variant max-w-sm">
+                                Warning: Executing reset protocol will terminate current streak and log a failure event.
+                            </span>
+<button class="bg-transparent border border-error text-error hover:bg-error/10 hover:text-error-container font-label text-xs uppercase tracking-widest px-6 py-3 rounded-none transition-all duration-200 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">warning</span>
+                                I FAILED
+                            </button>
+</div>
+</div>
+<!-- Milestones Bento -->
+<div class="bg-surface-container-low rounded relative p-6 border border-outline-variant/15">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary"></div>
+<h2 class="font-label text-xs text-secondary flex items-center gap-2 mb-6 uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">emoji_events</span>
+                            &gt; milestones/status
+                        </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Unlocked -->
+<div class="bg-surface-container-lowest border border-outline-variant/20 p-4 relative group hover:bg-surface-container-high transition-colors">
+<div class="absolute top-0 right-0 p-2">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+</div>
+<div class="text-2xl font-headline font-bold text-on-surface mb-1">7 Days</div>
+<div class="text-xs font-body text-primary uppercase tracking-wider">Unlocked</div>
+<div class="mt-4 text-[10px] text-on-surface-variant font-mono">SEQ: 001_ALPHA</div>
+</div>
+<!-- In Progress -->
+<div class="bg-surface-container-lowest border border-primary/30 p-4 relative overflow-hidden">
+<div class="absolute bottom-0 left-0 h-1 bg-primary w-[46%] shadow-[0_0_10px_rgba(108,221,129,0.5)]"></div>
+<div class="absolute top-0 right-0 p-2 animate-pulse">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-sm">sync</span>
+</div>
+<div class="text-2xl font-headline font-bold text-on-surface mb-1">30 Days</div>
+<div class="text-xs font-body text-secondary-fixed-dim uppercase tracking-wider">In Progress</div>
+<div class="mt-4 text-[10px] text-on-surface-variant font-mono">EST: T-MINUS 18D</div>
+</div>
+<!-- Locked -->
+<div class="bg-surface-container-lowest border border-outline-variant/10 p-4 relative opacity-50">
+<div class="absolute top-0 right-0 p-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">lock</span>
+</div>
+<div class="text-2xl font-headline font-bold text-on-surface mb-1">90 Days</div>
+<div class="text-xs font-body text-on-surface-variant uppercase tracking-wider">Locked</div>
+<div class="mt-4 text-[10px] text-on-surface-variant font-mono">REQ: SEQ_002</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Failure Logs -->
+<div class="lg:col-span-4">
+<div class="bg-surface-container-low rounded relative h-full flex flex-col border border-outline-variant/15">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-tertiary"></div>
+<div class="px-6 py-4 border-b border-outline-variant/15">
+<h2 class="font-label text-xs text-tertiary flex items-center gap-2 uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">history</span>
+                                &gt; logs/failure_events
+                            </h2>
+</div>
+<div class="flex-1 p-4 overflow-y-auto space-y-2">
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10 hover:border-tertiary/30 transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface font-bold">Failure #4</span>
+<span class="font-mono text-[10px] text-on-surface-variant">2023-11-01</span>
+</div>
+<div class="text-sm font-body text-on-surface-variant">
+                                    Duration: <span class="text-on-surface font-mono">12d 4h</span>
+</div>
+<div class="mt-3 text-[10px] font-mono text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
+                                    &gt; CAUSE_LOG_PENDING
+                                </div>
+</div>
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10 hover:border-tertiary/30 transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface font-bold">Failure #3</span>
+<span class="font-mono text-[10px] text-on-surface-variant">2023-10-19</span>
+</div>
+<div class="text-sm font-body text-on-surface-variant">
+                                    Duration: <span class="text-on-surface font-mono">5d 11h</span>
+</div>
+<div class="mt-3 text-[10px] font-mono text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
+                                    &gt; CAUSE: STRESS_SPIKE
+                                </div>
+</div>
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10 hover:border-tertiary/30 transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface font-bold">Failure #2</span>
+<span class="font-mono text-[10px] text-on-surface-variant">2023-10-14</span>
+</div>
+<div class="text-sm font-body text-on-surface-variant">
+                                    Duration: <span class="text-on-surface font-mono">2d 2h</span>
+</div>
+<div class="mt-3 text-[10px] font-mono text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
+                                    &gt; CAUSE: WEEKEND_ROUTINE_BREAK
+                                </div>
+</div>
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10 hover:border-tertiary/30 transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface font-bold">Failure #1</span>
+<span class="font-mono text-[10px] text-on-surface-variant">2023-10-12</span>
+</div>
+<div class="text-sm font-body text-on-surface-variant">
+                                    Duration: <span class="text-on-surface font-mono">0d 18h</span>
+</div>
+<div class="mt-3 text-[10px] font-mono text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
+                                    &gt; INITIAL_CALIBRATION_FAIL
+                                </div>
+</div>
+<div class="pt-4 pb-2 text-center border-t border-outline-variant/10 mt-4">
+<button class="text-xs font-label text-secondary hover:text-secondary-fixed-dim transition-colors uppercase tracking-widest flex items-center gap-1 mx-auto">
+                                    View Full Archive <span class="material-symbols-outlined text-[10px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

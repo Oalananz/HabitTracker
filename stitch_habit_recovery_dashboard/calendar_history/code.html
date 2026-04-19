@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calendar - Recovery Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#2d3137",
+                        "surface-container-high": "#262a31",
+                        "on-primary": "#003913",
+                        "surface-container-lowest": "#0a0e14",
+                        "surface-bright": "#353940",
+                        "primary-fixed-dim": "#6cdd81",
+                        "inverse-primary": "#006e2c",
+                        "on-error-container": "#ffdad6",
+                        "background": "#10141a",
+                        "on-tertiary": "#422c00",
+                        "on-secondary-container": "#f0f4ff",
+                        "secondary-fixed": "#d3e4ff",
+                        "on-error": "#690005",
+                        "on-primary-fixed": "#002108",
+                        "surface-container": "#1c2026",
+                        "tertiary-container": "#bd8708",
+                        "primary-container": "#2fa550",
+                        "error-container": "#93000a",
+                        "on-background": "#dfe2eb",
+                        "outline": "#889486",
+                        "secondary-container": "#0071c7",
+                        "on-surface": "#dfe2eb",
+                        "surface-tint": "#6cdd81",
+                        "outline-variant": "#3e4a3e",
+                        "on-secondary-fixed-variant": "#004882",
+                        "tertiary-fixed": "#ffdeaa",
+                        "on-primary-fixed-variant": "#00531f",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "error": "#ffb4ab",
+                        "tertiary": "#fabc45",
+                        "on-secondary-fixed": "#001c38",
+                        "primary-fixed": "#88fb9a",
+                        "on-secondary": "#00315c",
+                        "surface-container-highest": "#31353c",
+                        "surface-variant": "#31353c",
+                        "primary": "#6cdd81",
+                        "surface-dim": "#10141a",
+                        "tertiary-fixed-dim": "#fabc45",
+                        "surface-container-low": "#181c22",
+                        "on-primary-container": "#003210",
+                        "on-tertiary-container": "#392600",
+                        "on-tertiary-fixed": "#271900",
+                        "surface": "#10141a",
+                        "on-surface-variant": "#bdcaba",
+                        "inverse-surface": "#dfe2eb",
+                        "secondary-fixed-dim": "#a2c9ff",
+                        "secondary": "#a2c9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {},
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline, .font-label { font-family: 'Space Grotesk', sans-serif; }
+        .gradient-primary-glow { background: linear-gradient(180deg, #6cdd81 0%, #2fa550 100%); }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen left-0 w-64 bg-[#0a0e14] py-6 px-4 gap-4 shrink-0 sticky top-0 border-r border-[#3e4a3e]/15">
+<div class="mb-8">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-DEFAULT bg-surface-container overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+</div>
+<div>
+<div class="font-headline text-primary font-bold text-sm tracking-tight">&gt; ROOT_USER</div>
+<div class="font-label text-xs text-on-surface-variant">STREAK_42_DAYS</div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT font-['Space_Grotesk'] text-xs font-medium uppercase text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22]/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="grid_view">grid_view</span>
+                DASHBOARD
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT font-['Space_Grotesk'] text-xs font-medium uppercase text-[#6cdd81] bg-[#181c22] border-l-4 border-[#6cdd81] transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="calendar_month" data-weight="fill" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+                CALENDAR
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT font-['Space_Grotesk'] text-xs font-medium uppercase text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22]/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="history_edu">history_edu</span>
+                HISTORY
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT font-['Space_Grotesk'] text-xs font-medium uppercase text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22]/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="terminal">terminal</span>
+                SYSTEM
+            </a>
+</div>
+<button class="mt-4 w-full gradient-primary-glow text-on-primary font-headline font-bold text-xs tracking-wide py-3 px-4 rounded-DEFAULT active:scale-95 transition-transform uppercase flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+            NEW_LOG
+        </button>
+<div class="mt-4 pt-4 border-t border-[#3e4a3e]/15">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT font-['Space_Grotesk'] text-xs font-medium uppercase text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22]/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+                SETTINGS
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-6 py-3 bg-[#10141a] border-b border-[#3e4a3e]/15 sticky top-0 z-10 shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="text-xl font-bold tracking-tighter text-[#6cdd81] font-['Space_Grotesk'] uppercase">
+                    RECOVERY_CONSOLE
+                </div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center bg-surface-container-lowest border border-outline-variant/30 rounded-DEFAULT px-3 py-1.5 focus-within:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input class="bg-transparent border-none text-xs font-body text-on-surface placeholder:text-on-surface-variant focus:ring-0 w-48 p-0" placeholder="Search logs..." type="text"/>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<button class="p-2 hover:bg-[#181c22] transition-colors rounded-DEFAULT active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</button>
+<button class="p-2 hover:bg-[#181c22] transition-colors rounded-DEFAULT active:scale-95 duration-100 relative">
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#181c22] transition-colors rounded-DEFAULT active:scale-95 duration-100 md:hidden">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-4 md:p-8 overflow-y-auto">
+<div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+<!-- Calendar Section -->
+<div class="flex-1 flex flex-col gap-6">
+<div class="flex items-center justify-between border-b border-outline-variant/15 pb-4">
+<h1 class="font-headline text-lg tracking-tight flex items-center gap-2">
+<span class="text-primary">&gt;</span> system/calendar <span class="text-on-surface-variant text-sm">--logs</span>
+</h1>
+<div class="flex items-center gap-3">
+<button class="p-1.5 bg-surface-container-low hover:bg-surface-container-high rounded-DEFAULT text-on-surface transition-colors border border-outline-variant/15">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<span class="font-headline text-sm tracking-widest uppercase">OCTOBER_2023</span>
+<button class="p-1.5 bg-surface-container-low hover:bg-surface-container-high rounded-DEFAULT text-on-surface transition-colors border border-outline-variant/15">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Protocol Legend -->
+<div class="bg-surface-container-lowest border border-outline-variant/15 rounded-DEFAULT p-3 flex gap-6 text-xs font-label text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(108,221,129,0.4)]"></span>
+                            PROTOCOL_MET
+                        </div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[14px]">close</span>
+                            FAILURE_LOG
+                        </div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                            PARTIAL_COMPLETION
+                        </div>
+</div>
+<!-- Calendar Grid -->
+<div class="bg-surface-container-low rounded-lg p-1">
+<!-- Days Header -->
+<div class="grid grid-cols-7 gap-1 mb-1">
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">SUN</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">MON</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">TUE</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">WED</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">THU</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">FRI</div>
+<div class="text-center font-label text-[10px] text-on-surface-variant py-2 uppercase tracking-wider">SAT</div>
+</div>
+<!-- Grid -->
+<div class="grid grid-cols-7 gap-1">
+<!-- Empty Days -->
+<div class="aspect-square bg-surface/50 rounded-DEFAULT p-2 flex flex-col justify-between opacity-50"></div>
+<div class="aspect-square bg-surface/50 rounded-DEFAULT p-2 flex flex-col justify-between opacity-50"></div>
+<!-- Day 1 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">01</span>
+<div class="flex gap-1 justify-end mt-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</button>
+<!-- Day 2 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left border border-outline-variant/30">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">02</span>
+<div class="flex gap-1 justify-end mt-auto items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="material-symbols-outlined text-error text-[10px]">close</span>
+</div>
+</button>
+<!-- Day 3 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">03</span>
+<div class="flex gap-1 justify-end mt-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</button>
+<!-- Day 4 - Active Selection -->
+<button class="aspect-square bg-surface-container-highest ring-1 ring-primary/50 transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-primary font-bold">04</span>
+<div class="flex gap-1 justify-end mt-auto items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_4px_rgba(108,221,129,0.8)]"></span>
+<span class="material-symbols-outlined text-error text-[10px]">close</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+</div>
+<div class="absolute inset-0 border-l-2 border-primary rounded-l-DEFAULT"></div>
+</button>
+<!-- Day 5 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">05</span>
+<div class="flex gap-1 justify-end mt-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</button>
+<!-- Day 6 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">06</span>
+<div class="flex gap-1 justify-end mt-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</button>
+<!-- Day 7 -->
+<button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+<span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">07</span>
+<div class="flex gap-1 justify-end mt-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</button>
+<!-- Filler days for visual -->
+<script>
+                                for(let i=8; i<=31; i++) {
+                                    document.write(`
+                                    <button class="aspect-square bg-surface hover:bg-surface-container-highest transition-colors rounded-DEFAULT p-2 flex flex-col justify-between relative group text-left">
+                                        <span class="font-headline text-sm text-on-surface-variant group-hover:text-primary transition-colors">${i.toString().padStart(2, '0')}</span>
+                                        <div class="flex gap-1 justify-end mt-auto">
+                                            ${Math.random() > 0.3 ? '<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>' : ''}
+                                            ${Math.random() > 0.6 ? '<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>' : ''}
+                                            ${Math.random() > 0.8 ? '<span class="material-symbols-outlined text-error text-[10px]">close</span>' : ''}
+                                        </div>
+                                    </button>
+                                    `);
+                                }
+                            </script>
+</div>
+</div>
+</div>
+<!-- Side Panel: Daily Logs -->
+<div class="w-full lg:w-80 flex flex-col gap-4">
+<div class="bg-surface-container-low rounded-lg p-5 flex flex-col h-full border border-outline-variant/15 relative overflow-hidden">
+<!-- Ambient Status Glow -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-headline text-sm text-on-surface mb-1 flex items-center gap-2">
+<span class="text-primary">&gt;</span> LOG_DETAILS
+                                </h2>
+<div class="font-label text-xs text-on-surface-variant">OCT_04_2023</div>
+</div>
+<div class="px-2 py-1 bg-surface-container-lowest border border-error/30 rounded-DEFAULT text-error font-label text-[10px] tracking-wider">
+                                INCOMPLETE
+                            </div>
+</div>
+<!-- Tasks Array -->
+<div class="flex flex-col gap-2 mb-6">
+<div class="text-xs font-label text-on-surface-variant uppercase tracking-wider mb-2 border-b border-outline-variant/15 pb-2">ROUTINE_ARRAY</div>
+<!-- Task Item -->
+<div class="flex items-start gap-3 p-2 hover:bg-surface-container-high transition-colors rounded-DEFAULT group">
+<div class="mt-0.5 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="check_box" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+<div>
+<div class="font-body text-sm text-on-surface group-hover:text-primary-fixed transition-colors">Morning Meditation (15m)</div>
+<div class="font-label text-[10px] text-on-surface-variant mt-0.5">07:30_AM -- SUCCESS</div>
+</div>
+</div>
+<!-- Task Item -->
+<div class="flex items-start gap-3 p-2 hover:bg-surface-container-high transition-colors rounded-DEFAULT group">
+<div class="mt-0.5 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="check_box" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_box</span>
+</div>
+<div>
+<div class="font-body text-sm text-on-surface group-hover:text-primary-fixed transition-colors">Hydration Target (2L)</div>
+<div class="font-label text-[10px] text-on-surface-variant mt-0.5">14:15_PM -- SUCCESS</div>
+</div>
+</div>
+<!-- Task Item (Warning) -->
+<div class="flex items-start gap-3 p-2 hover:bg-surface-container-high transition-colors rounded-DEFAULT group relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-0.5 bg-tertiary"></div>
+<div class="mt-0.5 text-tertiary ml-1">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+</div>
+<div>
+<div class="font-body text-sm text-on-surface">Evening Journal</div>
+<div class="font-label text-[10px] text-tertiary mt-0.5">PARTIAL -- 50%_MET</div>
+</div>
+</div>
+</div>
+<!-- Incident Logs -->
+<div class="flex flex-col gap-2 flex-1">
+<div class="text-xs font-label text-error uppercase tracking-wider mb-2 border-b border-error/20 pb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">dangerous</span>
+                                INCIDENT_REPORTS
+                            </div>
+<div class="bg-surface-container-lowest border border-error/20 rounded-DEFAULT p-3 relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-error rounded-l-DEFAULT"></div>
+<div class="font-headline text-xs text-error mb-1">TRIGGER_EVENT</div>
+<div class="font-body text-sm text-on-surface mb-2">Broke protocol during late evening window due to high stress levels from work project.</div>
+<div class="flex justify-between items-center mt-2 pt-2 border-t border-outline-variant/15">
+<span class="font-label text-[10px] text-on-surface-variant">SEVERITY: MEDIUM</span>
+<span class="font-label text-[10px] text-on-surface-variant">22:45_PM</span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<button class="mt-6 w-full bg-surface-container-lowest border border-outline-variant/30 text-primary hover:bg-surface-container-high font-headline text-xs tracking-wide py-2.5 px-4 rounded-DEFAULT active:scale-95 transition-all uppercase flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_document</span>
+                            EDIT_LOG_DATA
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

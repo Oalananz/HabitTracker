@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Console - Analytics Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-gradient-primary {
+            background: linear-gradient(180deg, theme('colors.primary'), theme('colors.primary-container'));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(180deg, theme('colors.primary'), theme('colors.primary-container'));
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#6cdd81",
+                        "on-surface-variant": "#bdcaba",
+                        "on-secondary-fixed-variant": "#004882",
+                        "on-tertiary-fixed": "#271900",
+                        "tertiary-fixed-dim": "#fabc45",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#6cdd81",
+                        "outline": "#889486",
+                        "surface-container": "#1c2026",
+                        "inverse-primary": "#006e2c",
+                        "secondary-fixed-dim": "#a2c9ff",
+                        "on-secondary": "#00315c",
+                        "background": "#10141a",
+                        "surface-container-highest": "#31353c",
+                        "surface-container-low": "#181c22",
+                        "surface-container-high": "#262a31",
+                        "outline-variant": "#3e4a3e",
+                        "on-error": "#690005",
+                        "surface-bright": "#353940",
+                        "surface-dim": "#10141a",
+                        "secondary-container": "#0071c7",
+                        "on-primary-fixed-variant": "#00531f",
+                        "on-surface": "#dfe2eb",
+                        "surface": "#10141a",
+                        "on-background": "#dfe2eb",
+                        "on-secondary-fixed": "#001c38",
+                        "on-tertiary-container": "#392600",
+                        "primary-fixed": "#88fb9a",
+                        "on-primary-fixed": "#002108",
+                        "tertiary-fixed": "#ffdeaa",
+                        "inverse-surface": "#dfe2eb",
+                        "surface-variant": "#31353c",
+                        "on-tertiary": "#422c00",
+                        "on-primary": "#003913",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "on-primary-container": "#003210",
+                        "surface-container-lowest": "#0a0e14",
+                        "tertiary": "#fabc45",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#f0f4ff",
+                        "primary-container": "#2fa550",
+                        "tertiary-container": "#bd8708",
+                        "secondary": "#a2c9ff",
+                        "primary": "#6cdd81",
+                        "inverse-on-surface": "#2d3137",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#d3e4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Space Grotesk", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="docked full-width top-0 h-14 border-b border-[#181c22] bg-[#10141a] dark:bg-[#10141a] flex justify-between items-center w-full px-8 ml-64 max-w-[calc(100%-16rem)] fixed z-50">
+<div class="flex items-center gap-6">
+<span class="text-xl font-black text-[#6cdd81] italic">SOVEREIGN_CONSOLE</span>
+</div>
+<div class="flex items-center gap-6">
+<ul class="flex items-center gap-6 font-['Space_Grotesk'] text-xs tracking-widest uppercase">
+<li><a class="text-slate-400 dark:text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1" href="#">System</a></li>
+<li><a class="text-slate-400 dark:text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1" href="#">Network</a></li>
+<li><a class="text-[#6cdd81] underline underline-offset-4 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1" href="#">Logs</a></li>
+</ul>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3">
+<button class="text-[#6cdd81] hover:bg-[#181c22] p-1.5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="text-[#6cdd81] hover:bg-[#181c22] p-1.5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-lg">terminal</span>
+</button>
+</div>
+<button class="bg-[#6cdd81] text-[#003913] px-4 py-1.5 font-['Space_Grotesk'] text-xs tracking-widest uppercase font-bold hover:opacity-90 transition-opacity cursor-pointer">
+                Execute
+            </button>
+<div class="w-8 h-8 bg-surface-container-high rounded border border-[#181c22] overflow-hidden ml-2">
+<img alt="User Avatar" class="w-full h-full object-cover grayscale opacity-80 mix-blend-screen" data-alt="high contrast black and white abstract geometric portrait of a digital operator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtJyR4TCbWGepfEPidsRSTftqlqvVhn8AHBsrd7gzft_mVfxPZDLtW7OwFu24-DTQW4O0MB9o0y4G0RmUu-OnlPNbfjbdykn3SVCNqGXi4dDUR5TfuhDZW64BMRT5osEO2jKz86gV1fZNp_SfT2KJv7s7d_SMh_0xJ93z_haEHx5FG5BfjvjNm_CMCRw-kbuEvRCPcz6Mn2nfNP0vYqZkJAfEsQ_l75oRAQmYVLGXvUUgfihtMKdyIqDYUIR_Wf9i7OeD-rN0eG5c"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="flex flex-col fixed left-0 top-0 h-screen py-6 w-64 border-r border-[#181c22] bg-[#0a0e14] dark:bg-[#0a0e14] z-40">
+<div class="px-6 mb-8 mt-2">
+<div class="text-lg font-bold text-[#6cdd81] tracking-tighter mb-1">&gt; system/user</div>
+<div class="text-xs text-on-surface-variant font-headline tracking-tight uppercase">Status: Online</div>
+</div>
+<button class="mx-4 mb-8 bg-[#6cdd81] text-[#003913] px-4 py-3 font-['Space_Grotesk'] text-sm tracking-tight uppercase font-bold hover:opacity-90 transition-opacity cursor-pointer text-left flex items-center gap-2">
+<span class="material-symbols-outlined text-sm font-bold">add</span>
+            New Entry
+        </button>
+<nav class="flex-1 overflow-y-auto">
+<ul class="flex flex-col font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase gap-1">
+<li>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+                        Today
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-[#6cdd81] font-bold border-l-2 border-[#6cdd81] bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+                        Dashboard
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">healing</span>
+                        Recovery Journey
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Calendar
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">cached</span>
+                        Habits
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-4 py-2 transition-all duration-150 scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</nav>
+<div class="mt-auto px-4 border-t border-[#181c22] pt-4">
+<ul class="flex flex-col font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase gap-1">
+<li>
+<a class="flex items-center gap-3 text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-2 py-2 transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+                        Docs
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-slate-500 hover:text-[#6cdd81] hover:bg-[#181c22] pl-2 py-2 transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+                        Logout
+                    </a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-14 p-8 min-h-screen">
+<!-- Page Header -->
+<header class="mb-10">
+<h1 class="font-headline text-3xl font-bold tracking-tight text-on-surface mb-2 flex items-center gap-2">
+<span class="text-primary">&gt;</span> system/analytics --verbose
+            </h1>
+<p class="text-on-surface-variant text-sm font-body max-w-2xl">
+                Diagnostic overview of habit adherence and streak velocity.
+            </p>
+</header>
+<!-- Key Metrics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Metric Card 1 -->
+<div class="bg-surface-container-low rounded-lg relative overflow-hidden group hover:bg-surface-container-high transition-colors duration-300">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"></div>
+<div class="p-5 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+<span class="text-primary">&gt;</span> Current Streak
+                        </span>
+<span class="material-symbols-outlined text-primary text-sm opacity-50">local_fire_department</span>
+</div>
+<div class="mt-auto">
+<span class="font-headline text-4xl font-bold tracking-tight text-on-surface">42</span>
+<span class="text-primary font-headline text-xs ml-2 uppercase">Days</span>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 font-body">
+                        +3% vs prev. cycle
+                    </div>
+</div>
+</div>
+<!-- Metric Card 2 -->
+<div class="bg-surface-container-low rounded-lg relative overflow-hidden group hover:bg-surface-container-high transition-colors duration-300">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary"></div>
+<div class="p-5 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+<span class="text-secondary">&gt;</span> Longest Streak
+                        </span>
+<span class="material-symbols-outlined text-secondary text-sm opacity-50">emoji_events</span>
+</div>
+<div class="mt-auto">
+<span class="font-headline text-4xl font-bold tracking-tight text-on-surface">128</span>
+<span class="text-secondary font-headline text-xs ml-2 uppercase">Days</span>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 font-body">
+                        Historical max
+                    </div>
+</div>
+</div>
+<!-- Metric Card 3 -->
+<div class="bg-surface-container-low rounded-lg relative overflow-hidden group hover:bg-surface-container-high transition-colors duration-300">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-surface-variant"></div>
+<div class="p-5 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+<span class="text-on-surface-variant">&gt;</span> Total Completed
+                        </span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm opacity-50">task_alt</span>
+</div>
+<div class="mt-auto">
+<span class="font-headline text-4xl font-bold tracking-tight text-on-surface">1,024</span>
+<span class="text-on-surface-variant font-headline text-xs ml-2 uppercase">Tasks</span>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 font-body">
+                        Since sys.init()
+                    </div>
+</div>
+</div>
+<!-- Metric Card 4 -->
+<div class="bg-surface-container-low rounded-lg relative overflow-hidden group hover:bg-surface-container-high transition-colors duration-300">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-tertiary"></div>
+<div class="p-5 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+<span class="text-tertiary">&gt;</span> Completion Rate
+                        </span>
+<span class="material-symbols-outlined text-tertiary text-sm opacity-50">data_usage</span>
+</div>
+<div class="mt-auto">
+<span class="font-headline text-4xl font-bold tracking-tight text-on-surface">87.5</span>
+<span class="text-tertiary font-headline text-xs ml-1 uppercase">%</span>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 font-body">
+                        Trailing 30 days
+                    </div>
+</div>
+</div>
+</div>
+<!-- Heatmap Section -->
+<section class="bg-surface-container-low rounded-lg p-6 mb-8 relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-surface-variant"></div>
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-label text-sm uppercase tracking-widest text-on-surface flex items-center gap-2">
+<span class="text-primary">&gt;</span> consistency/heatmap
+                </h2>
+<div class="text-xs font-label text-on-surface-variant uppercase">Last 365 Days</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/15 overflow-x-auto">
+<div class="min-w-[700px]">
+<!-- Simulated Heatmap Grid -->
+<div class="flex gap-1 mb-2 text-[10px] font-label text-on-surface-variant uppercase ml-6">
+<div class="flex-1">Jan</div><div class="flex-1">Feb</div><div class="flex-1">Mar</div><div class="flex-1">Apr</div><div class="flex-1">May</div><div class="flex-1">Jun</div><div class="flex-1">Jul</div><div class="flex-1">Aug</div><div class="flex-1">Sep</div><div class="flex-1">Oct</div><div class="flex-1">Nov</div><div class="flex-1">Dec</div>
+</div>
+<div class="flex gap-2">
+<div class="flex flex-col gap-[6px] text-[10px] font-label text-on-surface-variant uppercase justify-between py-1">
+<span>Mon</span><span>Wed</span><span>Fri</span>
+</div>
+<div class="flex flex-1 gap-1">
+<!-- Week columns generated structurally to mimic heatmap -->
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<!-- ... more abstract columns to fill space ... -->
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary/20 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-surface-variant rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+<div class="flex flex-col gap-1"><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/80 rounded-sm"></div><div class="w-3 h-3 bg-primary rounded-sm"></div><div class="w-3 h-3 bg-primary/60 rounded-sm"></div><div class="w-3 h-3 bg-primary/40 rounded-sm"></div><div class="w-3 h-3 bg-primary/20 rounded-sm"></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

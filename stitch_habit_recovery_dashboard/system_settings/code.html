@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings - Sovereign Console</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#00315c",
+                        "on-primary-fixed-variant": "#00531f",
+                        "primary": "#6cdd81",
+                        "on-error": "#690005",
+                        "on-surface": "#dfe2eb",
+                        "error": "#ffb4ab",
+                        "background": "#10141a",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "on-primary": "#003913",
+                        "secondary-fixed-dim": "#a2c9ff",
+                        "on-primary-fixed": "#002108",
+                        "tertiary-container": "#bd8708",
+                        "secondary-fixed": "#d3e4ff",
+                        "outline-variant": "#3e4a3e",
+                        "on-tertiary": "#422c00",
+                        "primary-fixed": "#88fb9a",
+                        "on-secondary-container": "#f0f4ff",
+                        "inverse-primary": "#006e2c",
+                        "secondary": "#a2c9ff",
+                        "on-tertiary-fixed": "#271900",
+                        "on-background": "#dfe2eb",
+                        "surface-variant": "#31353c",
+                        "surface-container-low": "#181c22",
+                        "surface-container-highest": "#31353c",
+                        "on-surface-variant": "#bdcaba",
+                        "secondary-container": "#0071c7",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#001c38",
+                        "tertiary-fixed": "#ffdeaa",
+                        "inverse-surface": "#dfe2eb",
+                        "on-primary-container": "#003210",
+                        "tertiary": "#fabc45",
+                        "surface-container-high": "#262a31",
+                        "surface": "#10141a",
+                        "on-secondary-fixed-variant": "#004882",
+                        "inverse-on-surface": "#2d3137",
+                        "surface-dim": "#10141a",
+                        "tertiary-fixed-dim": "#fabc45",
+                        "outline": "#889486",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#1c2026",
+                        "on-tertiary-container": "#392600",
+                        "surface-container-lowest": "#0a0e14",
+                        "surface-tint": "#6cdd81",
+                        "primary-fixed-dim": "#6cdd81",
+                        "primary-container": "#2fa550",
+                        "surface-bright": "#353940"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {},
+                    "fontFamily": {
+                        "headline": [
+                            "Space Grotesk"
+                        ],
+                        "body": [
+                            "Inter"
+                        ],
+                        "label": [
+                            "Space Grotesk"
+                        ]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #10141a; color: #dfe2eb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .scanline-btn { background: linear-gradient(180deg, #6cdd81 0%, #2fa550 100%); }
+        .ghost-border { border: 1px solid rgba(62, 74, 62, 0.15); }
+    </style>
+</head>
+<body class="font-body antialiased flex bg-background text-on-background min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Shared Component) -->
+<nav class="fixed left-0 top-0 h-full flex flex-col py-8 px-4 bg-[#0a0e14] dark:bg-[#0a0e14] h-screen w-64 border-r border-transparent text-[#6cdd81] dark:text-[#6cdd81] font-['Space_Grotesk'] tracking-tighter uppercase z-50">
+<div class="mb-12">
+<h1 class="text-[#6cdd81] font-bold text-xl tracking-widest">HABIT_OS</h1>
+<p class="text-slate-500 text-xs mt-1 lowercase">&gt; root/admin</p>
+</div>
+<div class="flex-1 space-y-2">
+<!-- Tabs -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium hover:text-slate-200 hover:bg-[#181c22] transition-colors duration-200 rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<span class="text-sm">&gt; CONSOLE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium hover:text-slate-200 hover:bg-[#181c22] transition-colors duration-200 rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[20px]">insights</span>
+<span class="text-sm">&gt; METRICS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium hover:text-slate-200 hover:bg-[#181c22] transition-colors duration-200 rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span class="text-sm">&gt; ARCHIVE</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#6cdd81] font-bold border-l-2 border-[#6cdd81] bg-[#181c22] hover:bg-[#181c22] transition-colors duration-200 rounded-r-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm">&gt; SYSTEM</span>
+</a>
+</div>
+<div class="mt-auto pt-8">
+<button class="w-full py-3 px-4 flex items-center justify-center gap-2 bg-primary-container/20 text-primary border border-primary/30 hover:bg-primary-container/40 transition-colors duration-200 rounded-DEFAULT font-bold text-sm tracking-widest">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                NEW_ENTRY
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen relative">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-8 py-4 bg-transparent full-width top-0 z-40 sticky">
+<div class="flex items-center">
+<span class="font-['Space_Grotesk'] text-xs font-bold text-[#6cdd81]">&gt; TERMINAL_CONFIG</span>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search (Placeholder) -->
+<div class="hidden md:flex items-center bg-surface-container-low px-3 py-1.5 rounded-DEFAULT border border-outline-variant/30 text-slate-400">
+<span class="material-symbols-outlined text-[16px] mr-2">search</span>
+<input class="bg-transparent border-none text-xs font-label focus:ring-0 w-48 text-on-surface placeholder:text-slate-500" placeholder="query_parameters..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-slate-400">
+<button class="hover:text-[#6cdd81] transition-all opacity-90 on hover"><span class="material-symbols-outlined text-[20px]">sync</span></button>
+<button class="hover:text-[#6cdd81] transition-all opacity-90 on hover"><span class="material-symbols-outlined text-[20px]">notifications_none</span></button>
+<button class="hover:text-[#6cdd81] transition-all opacity-90 on hover"><span class="material-symbols-outlined text-[20px]">power_settings_new</span></button>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8 max-w-5xl mx-auto w-full">
+<div class="mb-12 flex justify-between items-end">
+<div>
+<h2 class="font-headline text-5xl font-black tracking-[-0.02em] text-on-surface mb-2">CONFIGURATION</h2>
+<p class="font-body text-sm text-on-surface-variant max-w-xl">Adjust system parameters, interface preferences, and data sovereignty controls. Changes are staged until committed.</p>
+</div>
+<button class="scanline-btn text-on-primary font-label font-bold px-6 py-2.5 rounded-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                    COMMIT_CHANGES
+                </button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Column 1 -->
+<div class="space-y-8">
+<!-- Profile Panel -->
+<section class="bg-surface-container-low rounded-lg relative overflow-hidden ghost-border">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"></div>
+<div class="p-6">
+<h3 class="font-label text-xs text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">account_circle</span>
+                                &gt; system/profile
+                            </h3>
+<div class="space-y-5">
+<div class="flex items-center gap-6 mb-6">
+<div class="w-16 h-16 rounded-DEFAULT bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-center overflow-hidden">
+<img alt="Developer Avatar" class="w-full h-full object-cover opacity-80 mix-blend-luminosity" data-alt="close up of abstract dark metallic tech surface with subtle green led glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdlKPOuWS7XmOz4E5xBEt80oNWk4-rkY8OojDaUEFjkAknQE28gelgzjZzvuL-k4GIWsgoWxn0g3RBjNCtEL2FEoK2Gzp7tzdycPODoZpKp-ndKOswmTQrKXVSGTlvXNBdSuRih9lOht9TKMydVJivNGfREsFTRP_IiQE85h0lknlYQOUBHUKVdClKY5wuHa-8vOQ8WlihnMD1QA9nGBPEHQqT5YPHg8Haniv4CGMD0AS_jb8sRTFQAEmjb1SEa0-8fMP8Y7ssH6A"/>
+</div>
+<button class="text-xs font-label text-secondary hover:text-secondary-fixed transition-colors border border-secondary/30 px-3 py-1.5 rounded-sm">UPDATE_AVATAR</button>
+</div>
+<div>
+<label class="block font-label text-xs text-on-surface-variant mb-2">USERNAME_ALIAS</label>
+<div class="flex bg-surface-container-lowest rounded-sm border border-outline-variant/30 focus-within:border-primary/50 overflow-hidden">
+<span class="px-3 py-2 text-primary font-label text-sm flex items-center">&gt;</span>
+<input class="w-full bg-transparent border-none text-sm font-body text-on-surface focus:ring-0 px-0 py-2" type="text" value="root_user"/>
+</div>
+</div>
+<div>
+<label class="block font-label text-xs text-on-surface-variant mb-2">STATUS_MESSAGE</label>
+<div class="flex bg-surface-container-lowest rounded-sm border border-outline-variant/30 focus-within:border-primary/50 overflow-hidden">
+<span class="px-3 py-2 text-primary font-label text-sm flex items-center">&gt;</span>
+<input class="w-full bg-transparent border-none text-sm font-body text-on-surface focus:ring-0 px-0 py-2" type="text" value="Compiling habits..."/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Appearance Panel -->
+<section class="bg-surface-container-low rounded-lg relative overflow-hidden ghost-border">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary"></div>
+<div class="p-6">
+<h3 class="font-label text-xs text-secondary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">palette</span>
+                                &gt; system/appearance
+                            </h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between py-2 hover:bg-surface-container-high transition-colors -mx-2 px-2 rounded-sm">
+<div>
+<p class="font-label text-sm text-on-surface">ENABLE_SCANLINES</p>
+<p class="font-body text-xs text-on-surface-variant mt-1">CRT overlay effect on active modules.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest border border-outline-variant/30 peer-focus:outline-none rounded-sm peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-2 hover:bg-surface-container-high transition-colors -mx-2 px-2 rounded-sm">
+<div>
+<p class="font-label text-sm text-on-surface">MONOSPACE_OVERRIDE</p>
+<p class="font-body text-xs text-on-surface-variant mt-1">Force terminal font for all text blocks.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest border border-outline-variant/30 peer-focus:outline-none rounded-sm peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div>
+<label class="block font-label text-xs text-on-surface-variant mb-2 mt-2">TERMINAL_THEME</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm rounded-sm focus:ring-primary focus:border-primary block p-2.5 font-label">
+<option>OBSIDIAN_GREEN (DEFAULT)</option>
+<option>AMBER_MONOCHROME</option>
+<option>CYAN_PHOSPHOR</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Column 2 -->
+<div class="space-y-8">
+<!-- Notifications Panel -->
+<section class="bg-surface-container-low rounded-lg relative overflow-hidden ghost-border">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary"></div>
+<div class="p-6">
+<h3 class="font-label text-xs text-secondary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">campaign</span>
+                                &gt; system/notifications
+                            </h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between py-2 hover:bg-surface-container-high transition-colors -mx-2 px-2 rounded-sm">
+<div>
+<p class="font-label text-sm text-on-surface">MILESTONE_ALERTS</p>
+<p class="font-body text-xs text-on-surface-variant mt-1">System broadcasts on streak achievements.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest border border-outline-variant/30 peer-focus:outline-none rounded-sm peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between py-2 hover:bg-surface-container-high transition-colors -mx-2 px-2 rounded-sm">
+<div>
+<p class="font-label text-sm text-on-surface">DAILY_CRON_REMINDERS</p>
+<p class="font-body text-xs text-on-surface-variant mt-1">Automated ping for incomplete dailies.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest border border-outline-variant/30 peer-focus:outline-none rounded-sm peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Data & Danger Panel -->
+<section class="bg-surface-container-low rounded-lg relative overflow-hidden ghost-border">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-error"></div>
+<div class="p-6">
+<h3 class="font-label text-xs text-error mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">database</span>
+                                &gt; system/data
+                            </h3>
+<div class="space-y-4">
+<div class="grid grid-cols-2 gap-4 mb-6">
+<button class="bg-surface-container-lowest border border-outline-variant/30 hover:border-secondary/50 text-secondary font-label text-xs py-3 px-4 rounded-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                                        EXPORT_LOGS (.json)
+                                    </button>
+<button class="bg-surface-container-lowest border border-outline-variant/30 hover:border-secondary/50 text-secondary font-label text-xs py-3 px-4 rounded-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">upload</span>
+                                        IMPORT_BACKUP
+                                    </button>
+</div>
+<div class="bg-error-container/10 border border-error/20 p-4 rounded-sm">
+<h4 class="font-label text-sm text-error mb-2">DANGER_ZONE: PURGE_ALL_RECORDS</h4>
+<p class="font-body text-xs text-on-surface-variant mb-4">Warning: Executing this command will irreversibly wipe all habit history, streaks, and system configurations. This action cannot be undone.</p>
+<button class="w-full bg-transparent border border-error text-error hover:bg-error/10 font-label text-xs font-bold py-2.5 rounded-sm transition-colors uppercase tracking-wider">
+                                        execute sudo rm -rf /habits
+                                    </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-outline-variant/20 flex justify-between items-center text-xs font-label text-on-surface-variant/50">
+<span>SYSTEM_VERSION: v2.4.1-stable</span>
+<span>UPTIME: 42d 16h 04m</span>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: #10141a;
+  --color-surface: #10141a;
+  --color-surface-dim: #10141a;
+  --color-surface-bright: #353940;
+  --color-surface-container-lowest: #0a0e14;
+  --color-surface-container-low: #181c22;
+  --color-surface-container: #1c2026;
+  --color-surface-container-high: #262a31;
+  --color-surface-container-highest: #31353c;
+  --color-surface-variant: #31353c;
+  --color-surface-tint: #6cdd81;
+
+  --color-on-surface: #dfe2eb;
+  --color-on-surface-variant: #bdcaba;
+  --color-on-background: #dfe2eb;
+
+  --color-primary: #6cdd81;
+  --color-primary-container: #2fa550;
+  --color-primary-fixed: #88fb9a;
+  --color-primary-fixed-dim: #6cdd81;
+  --color-on-primary: #003913;
+  --color-on-primary-container: #003210;
+  --color-on-primary-fixed: #002108;
+  --color-inverse-primary: #006e2c;
+
+  --color-secondary: #a2c9ff;
+  --color-secondary-container: #0071c7;
+  --color-secondary-fixed: #d3e4ff;
+  --color-secondary-fixed-dim: #a2c9ff;
+  --color-on-secondary: #00315c;
+  --color-on-secondary-container: #f0f4ff;
+
+  --color-tertiary: #fabc45;
+  --color-tertiary-container: #bd8708;
+  --color-tertiary-fixed: #ffdeaa;
+  --color-tertiary-fixed-dim: #fabc45;
+  --color-on-tertiary: #422c00;
+  --color-on-tertiary-container: #392600;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-outline: #889486;
+  --color-outline-variant: #3e4a3e;
+  --color-inverse-surface: #dfe2eb;
+  --color-inverse-on-surface: #2d3137;
+
+  --font-headline: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-label: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Grotesk', monospace;
+
+  --radius-sm: 0.125rem;
+  --radius-DEFAULT: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #31353c #10141a;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #10141a;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #31353c;
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #3e4a3e;
+}
+
+body {
+  background-color: #10141a;
+  color: #dfe2eb;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.bg-scanline-gradient {
+  background: linear-gradient(180deg, #6cdd81 0%, #2fa550 100%);
+}
+
+.font-headline {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+.font-label {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Space Grotesk', monospace;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108, 221, 129, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(108, 221, 129, 0.15); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Status ribbon left border utility */
+.ribbon-success { border-left: 2px solid #6cdd81; }
+.ribbon-info { border-left: 2px solid #a2c9ff; }
+.ribbon-warning { border-left: 2px solid #fabc45; }
+.ribbon-error { border-left: 2px solid #ffb4ab; }
+.ribbon-muted { border-left: 2px solid #bdcaba; }
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #31353c;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle-switch.active {
+  background: #2fa550;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #dfe2eb;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(20px);
+}
+
+/* Terminal cursor */
+.terminal-cursor::after {
+  content: '_';
+  animation: blink 1s steps(1) infinite;
+  color: #6cdd81;
+}
+
+input, select, textarea {
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: none;
+}

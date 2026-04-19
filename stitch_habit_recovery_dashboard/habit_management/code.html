@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Console - Habits Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#6cdd81",
+                        "on-surface-variant": "#bdcaba",
+                        "on-secondary-fixed-variant": "#004882",
+                        "on-tertiary-fixed": "#271900",
+                        "tertiary-fixed-dim": "#fabc45",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#6cdd81",
+                        "outline": "#889486",
+                        "surface-container": "#1c2026",
+                        "inverse-primary": "#006e2c",
+                        "secondary-fixed-dim": "#a2c9ff",
+                        "on-secondary": "#00315c",
+                        "background": "#10141a",
+                        "surface-container-highest": "#31353c",
+                        "surface-container-low": "#181c22",
+                        "surface-container-high": "#262a31",
+                        "outline-variant": "#3e4a3e",
+                        "on-error": "#690005",
+                        "surface-bright": "#353940",
+                        "surface-dim": "#10141a",
+                        "secondary-container": "#0071c7",
+                        "on-primary-fixed-variant": "#00531f",
+                        "on-surface": "#dfe2eb",
+                        "surface": "#10141a",
+                        "on-background": "#dfe2eb",
+                        "on-secondary-fixed": "#001c38",
+                        "on-tertiary-container": "#392600",
+                        "primary-fixed": "#88fb9a",
+                        "on-primary-fixed": "#002108",
+                        "tertiary-fixed": "#ffdeaa",
+                        "inverse-surface": "#dfe2eb",
+                        "surface-variant": "#31353c",
+                        "on-tertiary": "#422c00",
+                        "on-primary": "#003913",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "on-primary-container": "#003210",
+                        "surface-container-lowest": "#0a0e14",
+                        "tertiary": "#fabc45",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#f0f4ff",
+                        "primary-container": "#2fa550",
+                        "tertiary-container": "#bd8708",
+                        "secondary": "#a2c9ff",
+                        "primary": "#6cdd81",
+                        "inverse-on-surface": "#2d3137",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#d3e4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {},
+                    "fontFamily": {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Space Grotesk", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline, .font-label { font-family: 'Space Grotesk', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar for terminal feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #10141a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #31353c; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6cdd81; 
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex selection:bg-primary-container selection:text-primary">
+<!-- SideNavBar Component -->
+<nav class="hidden md:flex flex-col fixed left-0 top-0 h-screen py-6 bg-[#0a0e14] dark:bg-[#0a0e14] w-64 border-r border-[#181c22] z-50">
+<!-- Brand Logo -->
+<div class="px-6 mb-10">
+<h1 class="text-lg font-bold text-[#6cdd81] tracking-tighter uppercase font-headline">
+<span class="text-on-surface-variant font-mono mr-2">&gt;_</span>system/user
+            </h1>
+<p class="text-xs text-on-surface-variant mt-1 font-mono">Status: Online</p>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 flex flex-col gap-2 w-full">
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="terminal">terminal</span>
+                Today
+            </a>
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="healing">healing</span>
+                Recovery Journey
+            </a>
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="calendar_today">calendar_today</span>
+                Calendar
+            </a>
+<!-- Active Tab -->
+<a class="flex items-center text-[#6cdd81] font-bold border-l-2 border-[#6cdd81] pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="cached">cached</span>
+                Habits
+            </a>
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-4 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+<!-- CTA -->
+<div class="px-6 mb-6">
+<button class="w-full bg-primary text-on-primary font-headline text-sm uppercase py-2 px-4 rounded-DEFAULT flex items-center justify-center gap-2 hover:bg-primary-container transition-colors font-bold tracking-wider relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-b from-primary to-primary-container opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined relative z-10 text-sm" data-icon="add">add</span>
+<span class="relative z-10">New Entry</span>
+</button>
+</div>
+<!-- Footer Links -->
+<div class="px-0 flex flex-col gap-1 border-t border-outline-variant/15 pt-4">
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-6 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="menu_book">menu_book</span>
+                Docs
+            </a>
+<a class="flex items-center text-slate-500 dark:text-slate-500 hover:text-slate-200 pl-6 py-2 transition-all hover:bg-[#181c22] duration-150 scale-98 active:opacity-80 font-['Space_Grotesk'] tracking-tight antialiased text-sm uppercase" href="#">
+<span aria-hidden="true" class="material-symbols-outlined mr-3 text-lg" data-icon="logout">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen relative">
+<!-- TopNavBar Component -->
+<header class="flex justify-between items-center w-full px-8 h-14 bg-[#10141a] dark:bg-[#10141a] border-b border-[#181c22] sticky top-0 z-40 max-w-[calc(100vw)] md:max-w-[calc(100%-16rem)]">
+<div class="flex items-center gap-6">
+<span class="text-xl font-black text-[#6cdd81] italic font-['Space_Grotesk'] tracking-tighter">SOVEREIGN_CONSOLE</span>
+<nav class="hidden lg:flex items-center gap-6 ml-4">
+<a class="text-slate-400 dark:text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 font-['Space_Grotesk'] text-xs tracking-widest uppercase" href="#">System</a>
+<a class="text-slate-400 dark:text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 font-['Space_Grotesk'] text-xs tracking-widest uppercase" href="#">Network</a>
+<a class="text-slate-400 dark:text-slate-400 hover:text-[#6cdd81] hover:bg-[#181c22] cursor-pointer transition-colors px-2 py-1 font-['Space_Grotesk'] text-xs tracking-widest uppercase" href="#">Logs</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button aria-label="Notifications" class="p-1.5 hover:bg-[#181c22] hover:text-[#6cdd81] transition-colors rounded-DEFAULT">
+<span class="material-symbols-outlined text-sm" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Terminal" class="p-1.5 hover:bg-[#181c22] hover:text-[#6cdd81] transition-colors rounded-DEFAULT">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+</button>
+</div>
+<button class="hidden sm:block border border-outline-variant/20 text-primary font-headline text-xs uppercase px-4 py-1.5 hover:bg-surface-container-high transition-colors tracking-widest rounded-DEFAULT">
+                    Execute
+                </button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 flex-1 overflow-y-auto w-full max-w-7xl mx-auto flex flex-col gap-8">
+<!-- Page Header -->
+<div class="mb-2">
+<h2 class="text-on-surface font-headline text-2xl tracking-tight flex items-center gap-3">
+<span class="text-primary font-mono text-xl">&gt;</span> 
+                    system/config --habits
+                </h2>
+<p class="text-on-surface-variant text-sm mt-2 font-body max-w-2xl">Manage recurring behavioral protocols and track consistency streaks across system sectors.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Left Column: Active Habits List (Takes up more space) -->
+<div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+<!-- Section Title -->
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-on-surface font-headline text-sm tracking-widest uppercase text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                            Active Protocols
+                        </h3>
+<span class="text-xs font-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded-DEFAULT border border-outline-variant/15">COUNT: 04</span>
+</div>
+<!-- Habit Item 1: Active -->
+<div class="bg-surface-container-low rounded-lg p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden group border border-outline-variant/15 hover:bg-surface-container-high transition-colors">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex-1 pl-2">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="code">code</span>
+<h4 class="font-headline text-on-surface text-base tracking-tight font-medium">Deep Work Session</h4>
+</div>
+<div class="flex items-center gap-3 mt-2 text-xs font-mono text-on-surface-variant">
+<span class="bg-surface-container-lowest px-2 py-0.5 rounded-DEFAULT border border-outline-variant/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="repeat">repeat</span> Daily
+                                </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="category">category</span> Focus
+                                </span>
+<span class="text-primary flex items-center gap-1 ml-auto sm:ml-0">
+<span class="material-symbols-outlined text-[10px]" data-icon="local_fire_department">local_fire_department</span> STREAK: 12
+                                </span>
+</div>
+</div>
+<!-- Action / Toggle -->
+<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-outline-variant/10 sm:border-t-0">
+<button aria-label="Edit" class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+<!-- Custom Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-outline after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container border border-outline-variant/30"></div>
+</label>
+</div>
+</div>
+<!-- Habit Item 2: Active -->
+<div class="bg-surface-container-low rounded-lg p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden group border border-outline-variant/15 hover:bg-surface-container-high transition-colors">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex-1 pl-2">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="fitness_center">fitness_center</span>
+<h4 class="font-headline text-on-surface text-base tracking-tight font-medium">Physical Conditioning</h4>
+</div>
+<div class="flex items-center gap-3 mt-2 text-xs font-mono text-on-surface-variant">
+<span class="bg-surface-container-lowest px-2 py-0.5 rounded-DEFAULT border border-outline-variant/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="repeat">repeat</span> Weekdays
+                                </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="category">category</span> Health
+                                </span>
+<span class="text-primary flex items-center gap-1 ml-auto sm:ml-0">
+<span class="material-symbols-outlined text-[10px]" data-icon="local_fire_department">local_fire_department</span> STREAK: 5
+                                </span>
+</div>
+</div>
+<!-- Action / Toggle -->
+<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-outline-variant/10 sm:border-t-0">
+<button aria-label="Edit" class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+<!-- Custom Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-outline after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container border border-outline-variant/30"></div>
+</label>
+</div>
+</div>
+<!-- Habit Item 3: Warning/Lagging -->
+<div class="bg-surface-container-low rounded-lg p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden group border border-outline-variant/15 hover:bg-surface-container-high transition-colors">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="flex-1 pl-2">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="menu_book">menu_book</span>
+<h4 class="font-headline text-on-surface text-base tracking-tight font-medium">Technical Reading</h4>
+</div>
+<div class="flex items-center gap-3 mt-2 text-xs font-mono text-on-surface-variant">
+<span class="bg-surface-container-lowest px-2 py-0.5 rounded-DEFAULT border border-outline-variant/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="repeat">repeat</span> Custom (M,W,F)
+                                </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="category">category</span> Learning
+                                </span>
+<span class="text-tertiary flex items-center gap-1 ml-auto sm:ml-0">
+<span class="material-symbols-outlined text-[10px]" data-icon="warning">warning</span> MISSED: 1
+                                </span>
+</div>
+</div>
+<!-- Action / Toggle -->
+<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-outline-variant/10 sm:border-t-0">
+<button aria-label="Edit" class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+<!-- Custom Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-outline after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container border border-outline-variant/30"></div>
+</label>
+</div>
+</div>
+<!-- Habit Item 4: Inactive -->
+<div class="bg-surface-container-lowest rounded-lg p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden group border border-outline-variant/10 opacity-70 hover:opacity-100 transition-opacity">
+<!-- Status Ribbon -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<div class="flex-1 pl-2">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-outline-variant text-sm" data-icon="medication">medication</span>
+<h4 class="font-headline text-on-surface-variant text-base tracking-tight font-medium line-through decoration-outline-variant">Supplement Intake</h4>
+</div>
+<div class="flex items-center gap-3 mt-2 text-xs font-mono text-outline-variant">
+<span class="bg-surface-container-lowest px-2 py-0.5 rounded-DEFAULT border border-outline-variant/10 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="block">block</span> Paused
+                                </span>
+</div>
+</div>
+<!-- Action / Toggle -->
+<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-outline-variant/10 sm:border-t-0">
+<button aria-label="Edit" class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+<!-- Custom Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-lowest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-outline after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container border border-outline-variant/30"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Right Column: Create New Habit Form (Terminal Panel) -->
+<div class="lg:col-span-5 xl:col-span-4 sticky top-20">
+<div class="bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/15 shadow-[0_0_24px_rgba(223,226,235,0.02)]">
+<!-- Terminal Header -->
+<div class="bg-surface-container-highest px-4 py-2 border-b border-outline-variant/20 flex items-center gap-2">
+<div class="flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-error/80"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary/80"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-primary/80"></div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant tracking-widest ml-2 uppercase">init_protocol.sh</span>
+</div>
+<!-- Form Content -->
+<div class="p-6">
+<h3 class="font-headline text-lg text-primary mb-6 flex items-center gap-2 tracking-tight">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+                                Define New Protocol
+                            </h3>
+<form class="flex flex-col gap-5">
+<!-- Title Input -->
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-2" for="habit-title">
+<span class="text-primary font-mono">&gt;</span> Protocol Name
+                                    </label>
+<input class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm rounded-DEFAULT px-3 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none font-mono placeholder-on-surface-variant/30 transition-all" id="habit-title" placeholder="e.g. Morning Hydration" type="text"/>
+</div>
+<!-- Category Dropdown -->
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-2" for="habit-category">
+<span class="text-primary font-mono">&gt;</span> Sector
+                                    </label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm rounded-DEFAULT px-3 py-2.5 appearance-none focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none font-mono transition-all" id="habit-category">
+<option value="health">Health &amp; Fitness</option>
+<option value="focus">Deep Work</option>
+<option value="learning">Learning</option>
+<option value="system">System Maintenance</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Recurrence Logic -->
+<div class="flex flex-col gap-3">
+<label class="font-label text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="text-primary font-mono">&gt;</span> Execution Frequency
+                                    </label>
+<div class="grid grid-cols-3 gap-2">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="frequency" type="radio"/>
+<div class="text-center font-mono text-xs py-2 border border-outline-variant/30 rounded-DEFAULT text-on-surface-variant peer-checked:bg-primary-container/20 peer-checked:border-primary peer-checked:text-primary transition-all hover:bg-surface-container-highest">
+                                                DAILY
+                                            </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="frequency" type="radio"/>
+<div class="text-center font-mono text-xs py-2 border border-outline-variant/30 rounded-DEFAULT text-on-surface-variant peer-checked:bg-primary-container/20 peer-checked:border-primary peer-checked:text-primary transition-all hover:bg-surface-container-highest">
+                                                WEEKDAYS
+                                            </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="frequency" type="radio"/>
+<div class="text-center font-mono text-xs py-2 border border-outline-variant/30 rounded-DEFAULT text-on-surface-variant peer-checked:bg-primary-container/20 peer-checked:border-primary peer-checked:text-primary transition-all hover:bg-surface-container-highest">
+                                                CUSTOM
+                                            </div>
+</label>
+</div>
+</div>
+<!-- Priority -->
+<div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/10">
+<label class="font-label text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+<span class="text-primary font-mono">&gt;</span> Priority Level
+                                    </label>
+<input class="w-full h-1 bg-surface-container-lowest rounded-lg appearance-none cursor-pointer accent-primary" max="3" min="1" type="range" value="2"/>
+<div class="flex justify-between text-[10px] font-mono text-on-surface-variant mt-1">
+<span>LOW</span>
+<span>NOMINAL</span>
+<span class="text-tertiary">CRITICAL</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="mt-4 flex gap-3">
+<button class="flex-1 bg-transparent border border-outline-variant/30 text-on-surface font-headline text-xs uppercase py-2.5 rounded-DEFAULT hover:bg-surface-container-highest transition-colors tracking-widest" type="button">
+                                        Cancel
+                                    </button>
+<button class="flex-1 bg-primary text-on-primary font-headline text-xs uppercase py-2.5 rounded-DEFAULT hover:bg-primary-container transition-colors tracking-widest font-bold relative overflow-hidden group" type="button">
+<div class="absolute inset-0 bg-gradient-to-b from-primary to-primary-container opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="relative z-10 flex items-center justify-center gap-2">
+                                            Commit <span class="material-symbols-outlined text-[14px]" data-icon="keyboard_return">keyboard_return</span>
+</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Small ambient terminal output below form -->
+<div class="mt-4 bg-surface-container-lowest border border-outline-variant/10 p-3 rounded-DEFAULT font-mono text-[10px] text-on-surface-variant/50 leading-relaxed max-h-24 overflow-hidden">
+<div>&gt; system integrity check... OK</div>
+<div>&gt; loading protocol definitions... OK</div>
+<div class="text-primary/70">&gt; awaiting user input for new configuration block.</div>
+<div class="animate-pulse">_</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
