@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
+import Logo from '@/components/ui/Logo';
 
 const navItems = [
   { href: '/today', label: 'Today', icon: 'terminal' },
@@ -41,9 +42,7 @@ export default function Sidebar() {
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <div className="font-headline text-lg font-black text-primary italic tracking-tighter">
-          SOVEREIGN_CONSOLE
-        </div>
+        <Logo size="sm" />
         <div className="w-8" />
       </nav>
 

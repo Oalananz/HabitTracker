@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Sidebar from '@/components/layout/Sidebar';
+import Logo from '@/components/ui/Logo';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,9 +23,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <div className="font-headline text-xl font-bold text-primary italic tracking-tighter mb-3">
-            SOVEREIGN_CONSOLE
+        <div className="text-center animate-fade-in flex flex-col items-center">
+          <div className="mb-6">
+            <Logo size="lg" />
           </div>
           <div className="flex items-center gap-2 text-on-surface-variant text-sm font-mono">
             <span className="animate-blink text-primary">▊</span>

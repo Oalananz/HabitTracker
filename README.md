@@ -1,4 +1,4 @@
-# SOVEREIGN_CONSOLE — Habit Tracker + Recovery Journey
+# HabitTerminal — Habit Tracker + Recovery Journey
 
 A production-grade, full-stack habit tracking and recovery monitoring web application with a **GitHub + Terminal** inspired aesthetic ("Editorial Terminalism").
 

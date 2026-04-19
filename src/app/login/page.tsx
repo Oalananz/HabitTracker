@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { createClient } from '@/utils/supabase/client';
+import Logo from '@/components/ui/Logo';
 
 function LoginContent() {
   const router = useRouter();
@@ -83,11 +84,9 @@ function LoginContent() {
         {/* Terminal Body */}
         <div className="bg-surface-container-lowest border border-outline-variant/15 border-t-0 rounded-b-md p-8">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <h1 className="font-headline text-3xl font-black text-primary italic tracking-tighter">
-              SOVEREIGN_CONSOLE
-            </h1>
-            <p className="font-mono text-xs text-on-surface-variant mt-2 tracking-wide">
+          <div className="text-center mb-8 flex flex-col items-center">
+            <Logo size="lg" />
+            <p className="font-mono text-xs text-on-surface-variant mt-6 tracking-wide">
               {isRegister ? '> system/register --new-user' : '> system/authenticate --login'}
             </p>
           </div>

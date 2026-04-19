@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SOVEREIGN_CONSOLE — Habit Tracker + Recovery Journey",
+  title: "HabitTerminal",
   description: "A production-grade habit tracking and recovery monitoring system with terminal-inspired aesthetics.",
 };
 

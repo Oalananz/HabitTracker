@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
+import Logo from '@/components/ui/Logo';
 
 function HomeContent() {
   const router = useRouter();
@@ -31,9 +32,9 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center animate-fade-in">
-        <div className="font-headline text-2xl font-bold text-primary italic tracking-tighter mb-4">
-          SOVEREIGN_CONSOLE
+      <div className="text-center animate-fade-in flex flex-col items-center">
+        <div className="mb-8">
+          <Logo size="lg" />
         </div>
         <div className="flex items-center gap-2 text-on-surface-variant text-sm font-mono">
           <span className="animate-blink text-primary">▊</span>

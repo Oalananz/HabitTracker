@@ -21,6 +21,9 @@ export default function TodayPage() {
   const [newCategory, setNewCategory] = useState('General');
   const [newPriority, setNewPriority] = useState('nominal');
 
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
   useEffect(() => {
     const today = dayjs().format('YYYY-MM-DD');
     setSelectedDate(today);
@@ -59,8 +62,17 @@ export default function TodayPage() {
     try { await deleteTask(id); } catch (err) { console.error(err); }
   };
 
-  const pendingTasks = tasks.filter(t => !t.completed);
-  const completedTasks = tasks.filter(t => t.completed);
+  const filteredTasks = tasks.filter(t => {
+    if (filterStatus === 'pending' && t.completed) return false;
+    if (filterStatus === 'completed' && !t.completed) return false;
+    if (filterCategory !== 'all' && t.category.toLowerCase() !== filterCategory.toLowerCase()) return false;
+    return true;
+  });
+
+  const pendingTasks = filteredTasks.filter(t => !t.completed);
+  const completedTasks = filteredTasks.filter(t => t.completed);
+
+  const uniqueCategories = Array.from(new Set(tasks.map(t => t.category || 'General')));
 
   return (
     <AppShell>
@@ -83,12 +95,39 @@ export default function TodayPage() {
               rightContent={taskSummary ? `${taskSummary.pending} Pending / ${taskSummary.completed} Completed` : ''}
             />
 
+            {tasks.length > 0 && (
+              <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2">
+                <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">&gt; FILTER</span>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors uppercase cursor-pointer"
+                >
+                  <option value="all">ALL_STATUS</option>
+                  <option value="pending">PENDING</option>
+                  <option value="completed">COMPLETED</option>
+                </select>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors uppercase cursor-pointer"
+                >
+                  <option value="all">ALL_CATEGORIES</option>
+                  {uniqueCategories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {isTasksLoading ? (
               <div className="flex items-center gap-2 py-8 justify-center font-mono text-sm text-on-surface-variant">
                 <span className="animate-blink text-primary">▊</span> Loading tasks...
               </div>
             ) : tasks.length === 0 ? (
               <EmptyState title="No tasks for today" description="Create a habit or add a manual task to get started." icon="task_alt" />
+            ) : filteredTasks.length === 0 ? (
+              <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
             ) : (
               <div className="flex flex-col gap-2">
                 {pendingTasks.map(task => (
