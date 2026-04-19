@@ -65,7 +65,7 @@ export default function TodayPage() {
   const filteredTasks = tasks.filter(t => {
     if (filterStatus === 'pending' && t.completed) return false;
     if (filterStatus === 'completed' && !t.completed) return false;
-    if (filterCategory !== 'all' && t.category.toLowerCase() !== filterCategory.toLowerCase()) return false;
+    if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
     return true;
   });
 
