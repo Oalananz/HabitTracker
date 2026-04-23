@@ -8,19 +8,21 @@ import Logo from '@/components/ui/Logo';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, isAuthLoading, checkAuth } = useStore();
+  const { user, isAuthLoading, authInitialized, checkAuth } = useStore();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!authInitialized) {
+      checkAuth();
+    }
+  }, [authInitialized, checkAuth]);
 
   useEffect(() => {
-    if (!isAuthLoading && !user) {
+    if (authInitialized && !isAuthLoading && !user) {
       router.replace('/login');
     }
-  }, [user, isAuthLoading, router]);
+  }, [user, authInitialized, isAuthLoading, router]);
 
-  if (isAuthLoading) {
+  if (!authInitialized && isAuthLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center animate-fade-in flex flex-col items-center">

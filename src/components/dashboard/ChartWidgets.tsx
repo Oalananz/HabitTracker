@@ -22,8 +22,8 @@ export default function ChartWidgets({ weeklyTrend }: ChartWidgetsProps) {
         </h3>
         <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">12 WEEKS</span>
       </div>
-      <div className="h-[250px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[250px] w-full">
+        <ResponsiveContainer width="99%" height="100%">
           <AreaChart data={weeklyTrend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
@@ -53,7 +53,7 @@ export default function ChartWidgets({ weeklyTrend }: ChartWidgetsProps) {
                 fontFamily: 'Space Grotesk',
                 color: '#dfe2eb',
               }}
-              formatter={(value) => [`${value}%`, 'Rate']}
+              formatter={(value: any) => [`${value}%`, 'Rate']}
               labelStyle={{ color: '#bdcaba' }}
             />
             <Area

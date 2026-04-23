@@ -96,23 +96,30 @@ export async function getHabits(userId: string) {
 
   if (error) throw new Error(error.message);
 
-  // Get completed task counts for each habit
-  const habitsWithCounts = await Promise.all(
-    (habits || []).map(async (habit) => {
-      const { count } = await supabase
-        .from('task_instances')
-        .select('*', { count: 'exact', head: true })
-        .eq('habit_id', habit.id)
-        .eq('completed', true);
+  const habitRows = habits || [];
+  if (habitRows.length === 0) return [];
 
-      return {
-        ...mapHabit(habit),
-        _count: { tasks: count || 0 },
-      };
-    })
-  );
+  const habitIds = habitRows.map((habit) => habit.id);
 
-  return habitsWithCounts;
+  const { data: completedTaskRows, error: completedError } = await supabase
+    .from('task_instances')
+    .select('habit_id')
+    .eq('user_id', userId)
+    .eq('completed', true)
+    .in('habit_id', habitIds);
+
+  if (completedError) throw new Error(completedError.message);
+
+  const completedCountByHabit = (completedTaskRows || []).reduce<Record<string, number>>((acc, row) => {
+    if (!row.habit_id) return acc;
+    acc[row.habit_id] = (acc[row.habit_id] || 0) + 1;
+    return acc;
+  }, {});
+
+  return habitRows.map((habit) => ({
+    ...mapHabit(habit),
+    _count: { tasks: completedCountByHabit[habit.id] || 0 },
+  }));
 }
 
 export async function getHabit(habitId: string, userId: string) {

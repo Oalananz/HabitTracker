@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuthId } from '@/lib/auth';
 import {
   getGoals,
   createGoal,
@@ -11,18 +11,19 @@ import {
 } from '@/lib/services/goalService';
 
 export async function GET(request: NextRequest) {
+  const t0 = performance.now();
   try {
-    const user = await requireAuth();
+    const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const summary = searchParams.get('summary');
 
     if (summary === 'true') {
-      const summaryData = await getGoalsSummary(user.id);
+      const summaryData = await getGoalsSummary(userId);
       return NextResponse.json({ summary: summaryData });
     }
 
-    const goals = await getGoals(user.id, type || undefined);
+    const goals = await getGoals(userId, type || undefined);
     return NextResponse.json({ goals });
   } catch (error) {
     if ((error as Error).message === 'Unauthorized') {
@@ -30,18 +31,21 @@ export async function GET(request: NextRequest) {
     }
     console.error('GET /api/goals error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    const t1 = performance.now();
+    console.log(`[GET /api/goals] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const userId = await requireAuthId();
     const body = await request.json();
     const { action } = body;
 
     switch (action) {
       case 'create': {
-        const goal = await createGoal(user.id, {
+        const goal = await createGoal(userId, {
           title: body.title,
           description: body.description,
           goalType: body.goalType,
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ goal });
       }
       case 'update': {
-        const goal = await updateGoal(body.goalId, user.id, {
+        const goal = await updateGoal(body.goalId, userId, {
           title: body.title,
           description: body.description,
           goalType: body.goalType,
@@ -62,15 +66,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ goal });
       }
       case 'toggle': {
-        const goal = await toggleGoalComplete(body.goalId, user.id);
+        const goal = await toggleGoalComplete(body.goalId, userId);
         return NextResponse.json({ goal });
       }
       case 'increment': {
-        const goal = await incrementGoalProgress(body.goalId, user.id, body.amount || 1);
+        const goal = await incrementGoalProgress(body.goalId, userId, body.amount || 1);
         return NextResponse.json({ goal });
       }
       case 'delete': {
-        await deleteGoal(body.goalId, user.id);
+        await deleteGoal(body.goalId, userId);
         return NextResponse.json({ success: true });
       }
       default:

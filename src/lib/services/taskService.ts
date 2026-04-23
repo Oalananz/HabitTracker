@@ -36,8 +36,17 @@ export async function generateTasksForDate(userId: string, date: string) {
     .eq('user_id', userId)
     .eq('is_active', true);
 
-  if (error || !habits) return [];
+  if (error || !habits || habits.length === 0) return [];
 
+  // Get existing task instances for this date in a single query
+  const { data: existingTasks } = await supabase
+    .from('task_instances')
+    .select('habit_id')
+    .eq('user_id', userId)
+    .eq('date', dateStr);
+
+  const existingHabits = new Set(existingTasks?.map(t => t.habit_id) || []);
+  const toInsert: Database['public']['Tables']['task_instances']['Insert'][] = [];
   const created: string[] = [];
 
   for (const habit of habits) {
@@ -48,33 +57,23 @@ export async function generateTasksForDate(userId: string, date: string) {
     // Skip if habit was created after this date
     if (dayjs(habit.created_at).startOf('day').isAfter(targetDate)) continue;
 
-    // Check if task already exists for this habit+date
-    const { data: existing } = await supabase
-      .from('task_instances')
-      .select('id')
-      .eq('habit_id', habit.id)
-      .eq('date', dateStr)
-      .limit(1)
-      .maybeSingle();
-
-    if (!existing) {
-      const { error: insertError } = await supabase
-        .from('task_instances')
-        .insert({
-          user_id: userId,
-          habit_id: habit.id,
-          title: habit.title,
-          description: habit.description,
-          category: habit.category,
-          priority: habit.priority,
-          date: dateStr,
-          source_type: 'habit',
-        });
-
-      if (!insertError) {
-        created.push(habit.title);
-      }
+    if (!existingHabits.has(habit.id)) {
+      toInsert.push({
+        user_id: userId,
+        habit_id: habit.id,
+        title: habit.title,
+        description: habit.description,
+        category: habit.category,
+        priority: habit.priority,
+        date: dateStr,
+        source_type: 'habit',
+      });
+      created.push(habit.title);
     }
+  }
+
+  if (toInsert.length > 0) {
+    await supabase.from('task_instances').insert(toInsert);
   }
 
   return created;
@@ -116,31 +115,43 @@ export async function getTasksForDate(userId: string, date: string) {
 
   if (error) throw new Error(error.message);
 
-  // Fetch associated habit info for habit-generated tasks
-  const habitIds = [...new Set((tasks || []).filter(t => t.habit_id).map(t => t.habit_id as string))];
-  let habitsMap: Record<string, { id: string; title: string; repeat_rule: Database['public']['Tables']['habits']['Row']['repeat_rule'] }> = {};
+  return (tasks || []).map(mapTask);
+}
 
-  if (habitIds.length > 0) {
-    const { data: habits } = await supabase
-      .from('habits')
-      .select('id, title, repeat_rule')
-      .in('id', habitIds);
+export async function getTaskSummaryForRange(
+  userId: string,
+  startDate: string,
+  endDate: string
+) {
+  const start = dayjs(startDate).startOf('day').format('YYYY-MM-DD');
+  const end = dayjs(endDate).startOf('day').format('YYYY-MM-DD');
 
-    if (habits) {
-      habitsMap = Object.fromEntries(habits.map(h => [h.id, h]));
+  const { data: rows, error } = await supabase
+    .from('task_instances')
+    .select('date, completed')
+    .eq('user_id', userId)
+    .gte('date', start)
+    .lte('date', end);
+
+  if (error) throw new Error(error.message);
+
+  const summary: Record<string, { total: number; completed: number; pending: number }> = {};
+
+  for (const row of rows || []) {
+    const key = dayjs(row.date).format('YYYY-MM-DD');
+    if (!summary[key]) {
+      summary[key] = { total: 0, completed: 0, pending: 0 };
+    }
+
+    summary[key].total += 1;
+    if (row.completed) {
+      summary[key].completed += 1;
+    } else {
+      summary[key].pending += 1;
     }
   }
 
-  return (tasks || []).map(t => ({
-    ...mapTask(t),
-    habit: t.habit_id && habitsMap[t.habit_id]
-      ? {
-          id: habitsMap[t.habit_id].id,
-          title: habitsMap[t.habit_id].title,
-          repeatRule: habitsMap[t.habit_id].repeat_rule,
-        }
-      : null,
-  }));
+  return summary;
 }
 
 export async function completeTask(taskId: string, userId: string) {

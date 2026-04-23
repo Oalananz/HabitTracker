@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 import { createClient } from '@/utils/supabase/client';
 
+let authCheckPromise: Promise<void> | null = null;
+const generatedTaskDates = new Set<string>();
+
+function applySummaryDelta(summary: TaskSummary | null, totalDelta: number, completedDelta: number) {
+  if (!summary) return summary;
+
+  const total = Math.max(0, summary.total + totalDelta);
+  const completed = Math.max(0, summary.completed + completedDelta);
+
+  return {
+    ...summary,
+    total,
+    completed,
+    pending: Math.max(0, total - completed),
+  };
+}
+
 interface User {
   id: string;
   email: string;
@@ -83,6 +100,50 @@ interface GoalsSummary {
   completionRate: number;
 }
 
+interface Plan {
+  id: string;
+  userId: string;
+  title: string;
+  description: string | null;
+  planType: 'daily' | 'weekly' | 'monthly' | 'custom';
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  priority: string;
+  category: string | null;
+  notes: string | null;
+  startDate: string;
+  endDate: string | null;
+  prayerBlock: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PlansSummary {
+  totalPlans: number;
+  todayCount: number;
+  todayCompleted: number;
+  weekCount: number;
+  weekCompleted: number;
+  monthCount: number;
+  monthCompleted: number;
+  overdueCount: number;
+  upcomingCount: number;
+}
+
+interface PrayerTimesData {
+  id: string;
+  userId: string;
+  date: string;
+  fajr: string;
+  sunrise: string | null;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+  source: string;
+  createdAt: string;
+}
+
 interface DashboardMetrics {
   currentStreak: number;
   longestStreak: number;
@@ -111,11 +172,12 @@ interface AppState {
   // Auth
   user: User | null;
   isAuthLoading: boolean;
+  authInitialized: boolean;
   setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  checkAuth: () => Promise<void>;
+  checkAuth: (options?: { force?: boolean; background?: boolean }) => Promise<void>;
 
   // Tasks
   tasks: Task[];
@@ -171,6 +233,26 @@ interface AppState {
   isMetricsLoading: boolean;
   fetchMetrics: () => Promise<void>;
 
+  // Planner
+  plans: Plan[];
+  plansSummary: PlansSummary | null;
+  prayerTimes: PrayerTimesData | null;
+  isPlansLoading: boolean;
+  isPrayerTimesLoading: boolean;
+  plannerDate: string;
+  setPlannerDate: (date: string) => void;
+  fetchPlans: (date: string) => Promise<void>;
+  fetchPlansByRange: (startDate: string, endDate: string) => Promise<void>;
+  fetchWeeklyPlans: (weekOf?: string) => Promise<void>;
+  fetchMonthlyPlans: (month?: string) => Promise<void>;
+  fetchPlansSummary: () => Promise<void>;
+  createPlan: (data: { title: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate: string; endDate?: string; prayerBlock?: string }) => Promise<void>;
+  updatePlan: (planId: string, data: { title?: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate?: string; endDate?: string; prayerBlock?: string | null }) => Promise<void>;
+  deletePlan: (planId: string) => Promise<void>;
+  assignPlanToPrayerBlock: (planId: string, prayerBlock: string | null) => Promise<void>;
+  fetchPrayerTimes: (date: string) => Promise<void>;
+  setManualPrayerTimes: (date: string, times: { fajr?: string; dhuhr?: string; asr?: string; maghrib?: string; isha?: string }) => Promise<void>;
+
   // UI
   selectedDate: string;
   setSelectedDate: (date: string) => void;
@@ -182,16 +264,17 @@ export const useStore = create<AppState>((set, get) => ({
   // Auth
   user: null,
   isAuthLoading: true,
+  authInitialized: false,
   setUser: (user) => set({ user }),
 
   login: async (email, password) => {
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) throw new Error(error.message);
-    await get().checkAuth();
+    await get().checkAuth({ force: true, background: true });
   },
 
   register: async (email, username, password) => {
@@ -205,7 +288,7 @@ export const useStore = create<AppState>((set, get) => ({
     });
     if (error) throw new Error(error.message);
     if (data.session) {
-      await get().checkAuth();
+      await get().checkAuth({ force: true, background: true });
     } else {
       throw new Error('Check your email for the confirmation link.');
     }
@@ -214,18 +297,42 @@ export const useStore = create<AppState>((set, get) => ({
   logout: async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    set({ user: null });
+    generatedTaskDates.clear();
+    set({ user: null, isAuthLoading: false, authInitialized: true });
   },
 
-  checkAuth: async () => {
-    try {
+  checkAuth: async (options) => {
+    const force = options?.force ?? false;
+    const background = options?.background ?? false;
+    const { authInitialized } = get();
+
+    if (authCheckPromise) {
+      return authCheckPromise;
+    }
+
+    if (authInitialized && !force) {
+      return;
+    }
+
+    if (!background) {
       set({ isAuthLoading: true });
-      const res = await fetch('/api/auth/me');
-      if (!res.ok) throw new Error('Not authenticated');
-      const data = await res.json();
-      set({ user: data.user || null, isAuthLoading: false });
-    } catch {
-      set({ user: null, isAuthLoading: false });
+    }
+
+    authCheckPromise = (async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) throw new Error('Not authenticated');
+        const data = await res.json();
+        set({ user: data.user || null, isAuthLoading: false, authInitialized: true });
+      } catch {
+        set({ user: null, isAuthLoading: false, authInitialized: true });
+      }
+    })();
+
+    try {
+      await authCheckPromise;
+    } finally {
+      authCheckPromise = null;
     }
   },
 
@@ -235,12 +342,30 @@ export const useStore = create<AppState>((set, get) => ({
   isTasksLoading: false,
 
   fetchTasks: async (date) => {
-    set({ isTasksLoading: true });
+    const hasCachedDateData = get().taskSummary?.date === date;
+    if (!hasCachedDateData) {
+      set({ isTasksLoading: true });
+    }
     try {
+      if (!generatedTaskDates.has(date)) {
+        generatedTaskDates.add(date);
+        const generateRes = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate', date }),
+        });
+
+        if (!generateRes.ok) {
+          generatedTaskDates.delete(date);
+        }
+      }
+
       const res = await fetch(`/api/tasks?date=${date}`);
       const data = await res.json();
       if (res.ok) {
         set({ tasks: data.tasks, taskSummary: data.summary, isTasksLoading: false });
+      } else {
+        set({ isTasksLoading: false });
       }
     } catch {
       set({ isTasksLoading: false });
@@ -248,23 +373,75 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   completeTask: async (taskId) => {
-    await fetch('/api/tasks', {
+    const prevTasks = get().tasks;
+    const prevSummary = get().taskSummary;
+    const current = prevTasks.find((t) => t.id === taskId);
+
+    if (current && !current.completed) {
+      set({
+        tasks: prevTasks.map((t) =>
+          t.id === taskId
+            ? { ...t, completed: true, completedAt: new Date().toISOString() }
+            : t
+        ),
+        taskSummary: applySummaryDelta(prevSummary, 0, 1),
+      });
+    }
+
+    const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'complete', taskId }),
     });
-    const { selectedDate, fetchTasks } = get();
-    await fetchTasks(selectedDate);
+
+    if (!res.ok) {
+      set({ tasks: prevTasks, taskSummary: prevSummary });
+      const err = await res.json().catch(() => ({ error: 'Failed to complete task' }));
+      throw new Error(err.error || 'Failed to complete task');
+    }
+
+    const data = await res.json();
+    if (data?.task) {
+      set((state) => ({
+        tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...data.task } : t)),
+      }));
+    }
   },
 
   uncompleteTask: async (taskId) => {
-    await fetch('/api/tasks', {
+    const prevTasks = get().tasks;
+    const prevSummary = get().taskSummary;
+    const current = prevTasks.find((t) => t.id === taskId);
+
+    if (current && current.completed) {
+      set({
+        tasks: prevTasks.map((t) =>
+          t.id === taskId
+            ? { ...t, completed: false, completedAt: null }
+            : t
+        ),
+        taskSummary: applySummaryDelta(prevSummary, 0, -1),
+      });
+    }
+
+    const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'uncomplete', taskId }),
     });
-    const { selectedDate, fetchTasks } = get();
-    await fetchTasks(selectedDate);
+
+    if (!res.ok) {
+      set({ tasks: prevTasks, taskSummary: prevSummary });
+      const err = await res.json().catch(() => ({ error: 'Failed to uncomplete task' }));
+      throw new Error(err.error || 'Failed to uncomplete task');
+    }
+
+    const data = await res.json();
+    if (data?.task) {
+      set((state) => ({
+        tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...data.task } : t)),
+      }));
+    }
   },
 
   createTask: async (data) => {
@@ -277,8 +454,17 @@ export const useStore = create<AppState>((set, get) => ({
       const err = await res.json();
       throw new Error(err.error);
     }
-    const { selectedDate, fetchTasks } = get();
-    await fetchTasks(selectedDate);
+
+    const payload = await res.json();
+    const createdTask = payload?.task;
+    const { selectedDate } = get();
+
+    if (createdTask && createdTask.date === selectedDate) {
+      set((state) => ({
+        tasks: [createdTask, ...state.tasks],
+        taskSummary: applySummaryDelta(state.taskSummary, 1, createdTask.completed ? 1 : 0),
+      }));
+    }
   },
 
   updateTask: async (taskId, data) => {
@@ -292,17 +478,28 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   deleteTask: async (taskId) => {
+    const prevTasks = get().tasks;
+    const prevSummary = get().taskSummary;
+    const toDelete = prevTasks.find((t) => t.id === taskId);
+
+    if (toDelete) {
+      set({
+        tasks: prevTasks.filter((t) => t.id !== taskId),
+        taskSummary: applySummaryDelta(prevSummary, -1, toDelete.completed ? -1 : 0),
+      });
+    }
+
     const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', taskId }),
     });
+
     if (!res.ok) {
+      set({ tasks: prevTasks, taskSummary: prevSummary });
       const err = await res.json();
       throw new Error(err.error);
     }
-    const { selectedDate, fetchTasks } = get();
-    await fetchTasks(selectedDate);
   },
 
   // Habits
@@ -330,6 +527,7 @@ export const useStore = create<AppState>((set, get) => ({
       const err = await res.json();
       throw new Error(err.error);
     }
+    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -339,6 +537,7 @@ export const useStore = create<AppState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', habitId, ...data }),
     });
+    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -351,6 +550,7 @@ export const useStore = create<AppState>((set, get) => ({
         habitId,
       }),
     });
+    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -360,6 +560,7 @@ export const useStore = create<AppState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', habitId }),
     });
+    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -551,6 +752,169 @@ export const useStore = create<AppState>((set, get) => ({
     } catch {
       set({ isMetricsLoading: false });
     }
+  },
+
+  // Planner
+  plans: [],
+  plansSummary: null,
+  prayerTimes: null,
+  isPlansLoading: false,
+  isPrayerTimesLoading: false,
+  plannerDate: new Date().toISOString().split('T')[0],
+  setPlannerDate: (date) => set({ plannerDate: date }),
+
+  fetchPlans: async (date) => {
+    set({ isPlansLoading: true });
+    try {
+      const res = await fetch(`/api/plans?date=${date}`);
+      const data = await res.json();
+      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
+      else set({ isPlansLoading: false });
+    } catch {
+      set({ isPlansLoading: false });
+    }
+  },
+
+  fetchPlansByRange: async (startDate, endDate) => {
+    set({ isPlansLoading: true });
+    try {
+      const res = await fetch(`/api/plans?startDate=${startDate}&endDate=${endDate}`);
+      const data = await res.json();
+      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
+      else set({ isPlansLoading: false });
+    } catch {
+      set({ isPlansLoading: false });
+    }
+  },
+
+  fetchWeeklyPlans: async (weekOf) => {
+    set({ isPlansLoading: true });
+    try {
+      const param = weekOf ? `?week=${weekOf}` : `?week=${new Date().toISOString().split('T')[0]}`;
+      const res = await fetch(`/api/plans${param}`);
+      const data = await res.json();
+      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
+      else set({ isPlansLoading: false });
+    } catch {
+      set({ isPlansLoading: false });
+    }
+  },
+
+  fetchMonthlyPlans: async (month) => {
+    set({ isPlansLoading: true });
+    try {
+      const param = month ? `?month=${month}` : `?month=${new Date().toISOString().substring(0, 7)}`;
+      const res = await fetch(`/api/plans${param}`);
+      const data = await res.json();
+      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
+      else set({ isPlansLoading: false });
+    } catch {
+      set({ isPlansLoading: false });
+    }
+  },
+
+  fetchPlansSummary: async () => {
+    try {
+      const res = await fetch('/api/plans?summary=true');
+      const data = await res.json();
+      if (res.ok) set({ plansSummary: data.summary });
+    } catch {
+      // silently fail
+    }
+  },
+
+  createPlan: async (data) => {
+    const res = await fetch('/api/plans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', ...data }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+    const payload = await res.json();
+    if (payload?.plan) {
+      set((state) => ({ plans: [payload.plan, ...state.plans] }));
+    }
+  },
+
+  updatePlan: async (planId, data) => {
+    const res = await fetch('/api/plans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', planId, ...data }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+    const payload = await res.json();
+    if (payload?.plan) {
+      set((state) => ({
+        plans: state.plans.map((p) => (p.id === planId ? { ...p, ...payload.plan } : p)),
+      }));
+    }
+  },
+
+  deletePlan: async (planId) => {
+    const prevPlans = get().plans;
+    set({ plans: prevPlans.filter((p) => p.id !== planId) });
+
+    const res = await fetch('/api/plans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', planId }),
+    });
+    if (!res.ok) {
+      set({ plans: prevPlans });
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+  },
+
+  assignPlanToPrayerBlock: async (planId, prayerBlock) => {
+    const res = await fetch('/api/plans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'assignPrayer', planId, prayerBlock }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+    const payload = await res.json();
+    if (payload?.plan) {
+      set((state) => ({
+        plans: state.plans.map((p) => (p.id === planId ? { ...p, ...payload.plan } : p)),
+      }));
+    }
+  },
+
+  fetchPrayerTimes: async (date) => {
+    set({ isPrayerTimesLoading: true });
+    try {
+      const res = await fetch(`/api/prayer-times?date=${date}`);
+      const data = await res.json();
+      if (res.ok) set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false });
+      else set({ isPrayerTimesLoading: false });
+    } catch {
+      set({ isPrayerTimesLoading: false });
+    }
+  },
+
+  setManualPrayerTimes: async (date, times) => {
+    const res = await fetch('/api/prayer-times', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'setManual', date, ...times }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+    const data = await res.json();
+    if (data?.prayerTimes) set({ prayerTimes: data.prayerTimes });
   },
 
   // UI

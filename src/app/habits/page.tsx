@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 import HabitForm from '@/components/habits/HabitForm';
 
 const REPEAT_LABELS: Record<string, string> = {
@@ -53,8 +52,7 @@ export default function HabitsPage() {
   const inactiveHabits = habits.filter(h => !h.isActive);
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
             <span className="text-primary">&gt;</span> system/config --habits
@@ -196,6 +194,5 @@ export default function HabitsPage() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

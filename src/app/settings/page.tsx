@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 
 export default function SettingsPage() {
   const { user, logout } = useStore();
@@ -22,8 +21,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         <header className="flex justify-between items-start">
           <div>
             <div className="font-label text-xs uppercase tracking-widest text-primary mb-2">&gt; TERMINAL_CONFIG</div>
@@ -156,6 +154,5 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-    </AppShell>
   );
 }

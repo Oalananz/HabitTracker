@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 import dayjs from 'dayjs';
 
 type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
@@ -72,8 +71,7 @@ export default function GoalsPage() {
   };
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
@@ -330,6 +328,5 @@ export default function GoalsPage() {
           </div>
         )}
       </div>
-    </AppShell>
   );
 }

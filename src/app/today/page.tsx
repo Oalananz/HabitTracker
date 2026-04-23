@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 import SectionHeader from '@/components/ui/SectionHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
@@ -27,8 +26,14 @@ export default function TodayPage() {
   useEffect(() => {
     const today = dayjs().format('YYYY-MM-DD');
     setSelectedDate(today);
-    fetchTasks(today);
-    fetchMetrics();
+
+    void fetchTasks(today);
+
+    const metricsTimer = setTimeout(() => {
+      void fetchMetrics();
+    }, 250);
+
+    return () => clearTimeout(metricsTimer);
   }, [fetchTasks, setSelectedDate, fetchMetrics]);
 
   const handleToggle = async (id: string, completed: boolean) => {
@@ -62,7 +67,9 @@ export default function TodayPage() {
     try { await deleteTask(id); } catch (err) { console.error(err); }
   };
 
-  const filteredTasks = tasks.filter(t => {
+  const nonHabitTasks = tasks.filter(t => t.sourceType !== 'habit');
+
+  const filteredTasks = nonHabitTasks.filter(t => {
     if (filterStatus === 'pending' && t.completed) return false;
     if (filterStatus === 'completed' && !t.completed) return false;
     if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
@@ -72,11 +79,14 @@ export default function TodayPage() {
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
 
-  const uniqueCategories = Array.from(new Set(tasks.map(t => t.category || 'General')));
+  const uniqueCategories = Array.from(new Set(nonHabitTasks.map(t => t.category || 'General')));
+
+  const activePendingCount = nonHabitTasks.filter(t => !t.completed).length;
+  const activeCompletedCount = nonHabitTasks.filter(t => t.completed).length;
+  const activeTotalCount = nonHabitTasks.length;
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         {/* Header */}
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
@@ -92,15 +102,15 @@ export default function TodayPage() {
           <div className="lg:col-span-2 space-y-6">
             <SectionHeader
               title="ACTIVE_ROUTINES"
-              rightContent={taskSummary ? `${taskSummary.pending} Pending / ${taskSummary.completed} Completed` : ''}
+              rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
             />
 
-            {tasks.length > 0 && (
+            {nonHabitTasks.length > 0 && (
               <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2">
                 <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">&gt; FILTER</span>
                 <select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'completed')}
                   className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors uppercase cursor-pointer"
                 >
                   <option value="all">ALL_STATUS</option>
@@ -124,8 +134,8 @@ export default function TodayPage() {
               <div className="flex items-center gap-2 py-8 justify-center font-mono text-sm text-on-surface-variant">
                 <span className="animate-blink text-primary">▊</span> Loading tasks...
               </div>
-            ) : tasks.length === 0 ? (
-              <EmptyState title="No tasks for today" description="Create a habit or add a manual task to get started." icon="task_alt" />
+            ) : nonHabitTasks.length === 0 ? (
+              <EmptyState title="No tasks for today" description="Create a manual task to get started." icon="task_alt" />
             ) : filteredTasks.length === 0 ? (
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
             ) : (
@@ -252,11 +262,11 @@ export default function TodayPage() {
                   <span className="text-secondary">SYSTEM:</span>
                   <span>Daily initialization complete.</span>
                 </div>
-                {taskSummary && (
+                {nonHabitTasks.length > 0 && (
                   <div className="flex gap-2">
                     <span className="text-outline">[{dayjs().format('HH:mm')}]</span>
                     <span className="text-primary">TASKS:</span>
-                    <span>{taskSummary.total} loaded, {taskSummary.completed} complete.</span>
+                    <span>{activeTotalCount} loaded, {activeCompletedCount} complete.</span>
                   </div>
                 )}
                 {completedTasks.slice(0, 3).map(t => (
@@ -274,6 +284,5 @@ export default function TodayPage() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }

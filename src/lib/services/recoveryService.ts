@@ -17,22 +17,29 @@ export async function getJourneys(userId: string) {
 
   if (error) throw new Error(error.message);
 
-  // Get failure counts per journey
-  const result = await Promise.all(
-    (journeys || []).map(async (j) => {
-      const { count } = await supabase
-        .from('failure_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('journey_id', j.id);
+  const journeyRows = journeys || [];
+  if (journeyRows.length === 0) return [];
 
-      return {
-        ...mapJourney(j),
-        failureCount: count || 0,
-      };
-    })
-  );
+  const journeyIds = journeyRows.map((journey) => journey.id);
 
-  return result;
+  const { data: failureRows, error: failureError } = await supabase
+    .from('failure_logs')
+    .select('journey_id')
+    .eq('user_id', userId)
+    .in('journey_id', journeyIds);
+
+  if (failureError) throw new Error(failureError.message);
+
+  const failuresByJourney = (failureRows || []).reduce<Record<string, number>>((acc, row) => {
+    if (!row.journey_id) return acc;
+    acc[row.journey_id] = (acc[row.journey_id] || 0) + 1;
+    return acc;
+  }, {});
+
+  return journeyRows.map((journey) => ({
+    ...mapJourney(journey),
+    failureCount: failuresByJourney[journey.id] || 0,
+  }));
 }
 
 export async function getJourney(journeyId: string, userId: string) {
@@ -123,13 +130,12 @@ export async function recordJourneyFailure(journeyId: string, userId: string, no
 
   if (logError) throw new Error(logError.message);
 
-  // Reset the journey start_time to now
+  // Fetch the journey without resetting start time
   const { data: journey, error: journeyError } = await supabase
     .from('recovery_journeys')
-    .update({ start_time: new Date().toISOString() })
+    .select('*')
     .eq('id', journeyId)
     .eq('user_id', userId)
-    .select()
     .single();
 
   if (journeyError) throw new Error(journeyError.message);

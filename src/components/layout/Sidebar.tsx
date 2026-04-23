@@ -8,6 +8,8 @@ import Logo from '@/components/ui/Logo';
 const navItems = [
   { href: '/today', label: 'Today', icon: 'terminal' },
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/planner', label: 'Planner', icon: 'event_note' },
+  { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },

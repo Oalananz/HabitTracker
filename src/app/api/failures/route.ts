@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuthId } from '@/lib/auth';
 import { getAllFailures, deleteFailureLog } from '@/lib/services/recoveryService';
 import { NextRequest } from 'next/server';
 
 export async function GET() {
   try {
-    const user = await requireAuth();
-    const logs = await getAllFailures(user.id);
+    const userId = await requireAuthId();
+    const logs = await getAllFailures(userId);
     return NextResponse.json({ failures: logs });
   } catch (error) {
     if ((error as Error).message === 'Unauthorized') {
@@ -18,11 +18,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const userId = await requireAuthId();
     const body = await request.json();
 
     if (body.action === 'delete') {
-      await deleteFailureLog(body.id, user.id);
+      await deleteFailureLog(body.id, userId);
       return NextResponse.json({ success: true });
     }
 

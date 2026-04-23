@@ -5,12 +5,27 @@ export async function calculateMetrics(userId: string) {
   const now = dayjs();
   const today = now.startOf('day');
 
-  // Get all tasks for the user
-  const { data: allTasks, error } = await supabase
-    .from('task_instances')
-    .select('*')
-    .eq('user_id', userId)
-    .order('date', { ascending: true });
+  const [
+    { data: allTasks, error },
+    { data: recoveryState },
+    { data: failureLogs }
+  ] = await Promise.all([
+    supabase
+      .from('task_instances')
+      .select('date, completed')
+      .eq('user_id', userId)
+      .order('date', { ascending: true }),
+    supabase
+      .from('recovery_states')
+      .select('start_time')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('failure_logs')
+      .select('timestamp')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: false }),
+  ]);
 
   if (error) throw new Error(error.message);
   const tasks = allTasks || [];
@@ -128,19 +143,6 @@ export async function calculateMetrics(userId: string) {
       total: wTotal,
     });
   }
-
-  // Recovery analytics
-  const { data: recoveryState } = await supabase
-    .from('recovery_states')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  const { data: failureLogs } = await supabase
-    .from('failure_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .order('timestamp', { ascending: false });
 
   const logs = failureLogs || [];
 

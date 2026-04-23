@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/ui/StatCard';
 import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
 import ChartWidgets from '@/components/dashboard/ChartWidgets';
@@ -22,8 +21,7 @@ export default function DashboardPage() {
   }, [fetchMetrics, fetchJourneys, fetchGoalsSummary]);
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
             <span className="text-primary">&gt;</span> system/analytics --verbose
@@ -194,6 +192,5 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-    </AppShell>
   );
 }

@@ -1,5 +1,36 @@
 import { createClient } from '@/utils/supabase/server';
 import { supabase } from '@/lib/supabase';
+import { cookies } from 'next/headers';
+
+const AUTH_ID_CACHE_TTL_MS = 15_000;
+const AUTH_ID_CACHE_MAX_ENTRIES = 200;
+
+const authIdCache = new Map<string, { userId: string; expiresAt: number }>();
+
+function buildAuthCookieCacheKey(allCookies: Array<{ name: string; value: string }>) {
+  // Only keep Supabase auth cookies in cache key to keep key size bounded.
+  return allCookies
+    .filter((cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('auth-token'))
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .sort()
+    .join(';');
+}
+
+function pruneAuthIdCache(now: number) {
+  for (const [key, entry] of authIdCache) {
+    if (entry.expiresAt <= now) {
+      authIdCache.delete(key);
+    }
+  }
+
+  if (authIdCache.size <= AUTH_ID_CACHE_MAX_ENTRIES) return;
+
+  const sorted = Array.from(authIdCache.entries()).sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+  const removeCount = authIdCache.size - AUTH_ID_CACHE_MAX_ENTRIES;
+  for (let i = 0; i < removeCount; i++) {
+    authIdCache.delete(sorted[i][0]);
+  }
+}
 
 export async function getCurrentUser() {
   const supabaseServer = await createClient();
@@ -74,4 +105,37 @@ export async function requireAuth() {
     throw new Error('Unauthorized');
   }
   return user;
+}
+
+export async function requireAuthId() {
+  const now = Date.now();
+  pruneAuthIdCache(now);
+
+  const cookieStore = await cookies();
+  const authCookieKey = buildAuthCookieCacheKey(cookieStore.getAll());
+  if (authCookieKey) {
+    const cached = authIdCache.get(authCookieKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.userId;
+    }
+  }
+
+  const supabaseServer = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseServer.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error('Unauthorized');
+  }
+
+  if (authCookieKey) {
+    authIdCache.set(authCookieKey, {
+      userId: user.id,
+      expiresAt: now + AUTH_ID_CACHE_TTL_MS,
+    });
+  }
+
+  return user.id;
 }

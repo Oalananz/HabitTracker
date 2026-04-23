@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
-import AppShell from '@/components/layout/AppShell';
 import TaskItem from '@/components/ui/TaskItem';
 import dayjs from 'dayjs';
 
@@ -17,23 +16,36 @@ export default function CalendarPage() {
     const end = currentMonth.endOf('month');
     const data: Record<string, { completed: number; total: number; hasFailure: boolean }> = {};
 
-    let d = start;
-    while (d.isBefore(end) || d.isSame(end, 'day')) {
-      const dateStr = d.format('YYYY-MM-DD');
-      try {
-        const res = await fetch(`/api/tasks?date=${dateStr}`);
-        const json = await res.json();
+    const monthKey = currentMonth.format('YYYY-MM');
+
+    try {
+      const res = await fetch(`/api/tasks/month?month=${monthKey}`);
+      const json = await res.json();
+      const summary = (res.ok ? json.summary : null) || {};
+
+      let d = start;
+      while (d.isBefore(end) || d.isSame(end, 'day')) {
+        const dateStr = d.format('YYYY-MM-DD');
         const hasFailure = failures.some(f => dayjs(f.timestamp).format('YYYY-MM-DD') === dateStr);
+        const daySummary = summary[dateStr] || { completed: 0, total: 0 };
+
         data[dateStr] = {
-          completed: json.summary?.completed || 0,
-          total: json.summary?.total || 0,
+          completed: daySummary.completed || 0,
+          total: daySummary.total || 0,
           hasFailure,
         };
-      } catch {
-        data[dateStr] = { completed: 0, total: 0, hasFailure: false };
+        d = d.add(1, 'day');
       }
-      d = d.add(1, 'day');
+    } catch {
+      let d = start;
+      while (d.isBefore(end) || d.isSame(end, 'day')) {
+        const dateStr = d.format('YYYY-MM-DD');
+        const hasFailure = failures.some(f => dayjs(f.timestamp).format('YYYY-MM-DD') === dateStr);
+        data[dateStr] = { completed: 0, total: 0, hasFailure };
+        d = d.add(1, 'day');
+      }
     }
+
     setMonthData(data);
   }, [currentMonth, failures]);
 
@@ -42,7 +54,11 @@ export default function CalendarPage() {
   }, [fetchFailures]);
 
   useEffect(() => {
-    loadMonthData();
+    const timeoutId = setTimeout(() => {
+      void loadMonthData();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [loadMonthData]);
 
   useEffect(() => {
@@ -56,14 +72,16 @@ export default function CalendarPage() {
   const handleToggle = async (id: string, completed: boolean) => {
     if (completed) await uncompleteTask(id);
     else await completeTask(id);
-    if (selectedDay) fetchTasks(selectedDay);
+    if (selectedDay) {
+      await fetchTasks(selectedDay);
+    }
+    await loadMonthData();
   };
 
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
   return (
-    <AppShell>
-      <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
             <span className="text-primary">&gt;</span> system/calendar --logs
@@ -229,6 +247,5 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }
