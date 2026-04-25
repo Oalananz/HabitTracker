@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import TimerDisplay from '@/components/recovery/TimerDisplay';
+import CompetitiveMode from '@/components/recovery/competitive/CompetitiveMode';
 import dayjs from 'dayjs';
 
 export default function RecoveryPage() {
@@ -18,10 +19,16 @@ export default function RecoveryPage() {
   const [newStartTime, setNewStartTime] = useState(dayjs().format('YYYY-MM-DDTHH:mm'));
   const [confirmFail, setConfirmFail] = useState<string | null>(null);
   const [expandedJourney, setExpandedJourney] = useState<string | null>(null);
+  const [clockNow, setClockNow] = useState(() => Date.now());
 
   useEffect(() => {
     fetchJourneys();
   }, [fetchJourneys]);
+
+  useEffect(() => {
+    const id = setInterval(() => setClockNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
@@ -43,7 +50,7 @@ export default function RecoveryPage() {
 
   const getMilestones = (startTime: string) => {
     const start = new Date(startTime).getTime();
-    const now = Date.now();
+    const now = clockNow;
     const days = (now - start) / (1000 * 60 * 60 * 24);
 
     return [
@@ -289,6 +296,10 @@ export default function RecoveryPage() {
             })}
           </div>
         )}
+
+        <div className="pt-2 border-t border-outline-variant/10">
+          <CompetitiveMode />
+        </div>
       </div>
   );
 }

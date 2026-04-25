@@ -249,6 +249,409 @@ export interface Database {
           }
         ];
       };
+      competitive_journeys: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          owner_id: string;
+          start_date: string;
+          end_date: string | null;
+          rules_text: string | null;
+          rules_json: Json;
+          max_failures: number | null;
+          consequence_rules: string | null;
+          visibility: string;
+          invite_code: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          owner_id: string;
+          start_date: string;
+          end_date?: string | null;
+          rules_text?: string | null;
+          rules_json?: Json;
+          max_failures?: number | null;
+          consequence_rules?: string | null;
+          visibility?: string;
+          invite_code?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          owner_id?: string;
+          start_date?: string;
+          end_date?: string | null;
+          rules_text?: string | null;
+          rules_json?: Json;
+          max_failures?: number | null;
+          consequence_rules?: string | null;
+          visibility?: string;
+          invite_code?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "competitive_journeys_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_participants: {
+        Row: {
+          id: string;
+          journey_id: string;
+          user_id: string;
+          joined_at: string;
+          role: string;
+          status: string;
+          current_streak: number;
+          total_failures: number;
+          last_failure_at: string | null;
+          last_check_in_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          user_id: string;
+          joined_at?: string;
+          role?: string;
+          status?: string;
+          current_streak?: number;
+          total_failures?: number;
+          last_failure_at?: string | null;
+          last_check_in_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          user_id?: string;
+          joined_at?: string;
+          role?: string;
+          status?: string;
+          current_streak?: number;
+          total_failures?: number;
+          last_failure_at?: string | null;
+          last_check_in_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_participants_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_participants_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_failures: {
+        Row: {
+          id: string;
+          journey_id: string;
+          user_id: string;
+          timestamp: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          user_id: string;
+          timestamp?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          user_id?: string;
+          timestamp?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_failures_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_failures_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_consequences: {
+        Row: {
+          id: string;
+          journey_id: string;
+          failure_threshold: number;
+          description: string;
+          consequence_type: string;
+          symbol: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          failure_threshold: number;
+          description: string;
+          consequence_type?: string;
+          symbol?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          failure_threshold?: number;
+          description?: string;
+          consequence_type?: string;
+          symbol?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_consequences_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_consequence_statuses: {
+        Row: {
+          id: string;
+          journey_id: string;
+          participant_id: string;
+          consequence_id: string;
+          status: string;
+          triggered_at: string;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          participant_id: string;
+          consequence_id: string;
+          status?: string;
+          triggered_at?: string;
+          resolved_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          participant_id?: string;
+          consequence_id?: string;
+          status?: string;
+          triggered_at?: string;
+          resolved_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_consequence_statuses_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_consequence_statuses_participant_id_fkey";
+            columns: ["participant_id"];
+            isOneToOne: false;
+            referencedRelation: "journey_participants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_consequence_statuses_consequence_id_fkey";
+            columns: ["consequence_id"];
+            isOneToOne: false;
+            referencedRelation: "journey_consequences";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_invites: {
+        Row: {
+          id: string;
+          journey_id: string;
+          invited_by: string;
+          invitee_user_id: string | null;
+          invitee_email: string | null;
+          invitee_username: string | null;
+          token: string;
+          status: string;
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          invited_by: string;
+          invitee_user_id?: string | null;
+          invitee_email?: string | null;
+          invitee_username?: string | null;
+          token?: string;
+          status?: string;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          invited_by?: string;
+          invitee_user_id?: string | null;
+          invitee_email?: string | null;
+          invitee_username?: string | null;
+          token?: string;
+          status?: string;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_invites_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_invites_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_invites_invitee_user_id_fkey";
+            columns: ["invitee_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_reactions: {
+        Row: {
+          id: string;
+          journey_id: string;
+          from_user_id: string;
+          to_user_id: string | null;
+          emoji: string;
+          message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          from_user_id: string;
+          to_user_id?: string | null;
+          emoji?: string;
+          message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          from_user_id?: string;
+          to_user_id?: string | null;
+          emoji?: string;
+          message?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_reactions_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_reactions_from_user_id_fkey";
+            columns: ["from_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_reactions_to_user_id_fkey";
+            columns: ["to_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      journey_check_ins: {
+        Row: {
+          id: string;
+          journey_id: string;
+          user_id: string;
+          check_in_date: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          user_id: string;
+          check_in_date: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          user_id?: string;
+          check_in_date?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "journey_check_ins_journey_id_fkey";
+            columns: ["journey_id"];
+            isOneToOne: false;
+            referencedRelation: "competitive_journeys";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "journey_check_ins_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       goals: {
         Row: {
           id: string;
