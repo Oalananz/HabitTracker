@@ -82,7 +82,10 @@ export async function POST(request: NextRequest) {
           category: body.category,
           notes: body.notes,
           startDate: body.startDate,
+          startTime: body.startTime,
           endDate: body.endDate,
+          endTime: body.endTime,
+          dayOfWeek: body.dayOfWeek,
           prayerBlock: body.prayerBlock,
         });
         return NextResponse.json({ plan });
@@ -97,7 +100,10 @@ export async function POST(request: NextRequest) {
           category: body.category,
           notes: body.notes,
           startDate: body.startDate,
+          startTime: body.startTime,
           endDate: body.endDate,
+          endTime: body.endTime,
+          dayOfWeek: body.dayOfWeek,
           prayerBlock: body.prayerBlock,
         });
         return NextResponse.json({ plan });

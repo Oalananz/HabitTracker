@@ -1,15 +1,21 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
-import SectionHeader from '@/components/ui/SectionHeader';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
 import PlanCard from '@/components/planner/PlanCard';
 import PlanForm from '@/components/planner/PlanForm';
+import DayTimeline from '@/components/planner/DayTimeline';
+import type { TimelineEvent } from '@/components/planner/DayTimeline';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 
-type ViewMode = 'daily' | 'weekly' | 'monthly' | 'overview';
+dayjs.extend(isoWeek);
+
+type ViewMode = 'daily' | 'weekly' | 'monthly';
+
+const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export default function PlannerPage() {
   const {
@@ -19,41 +25,49 @@ export default function PlannerPage() {
     plannerDate, setPlannerDate,
   } = useStore();
 
-  const [view, setView] = useState<ViewMode>('daily');
+  const [view, setView] = useState<ViewMode>('weekly');
+  const [weekAnchor, setWeekAnchor] = useState(() => dayjs().startOf('week'));
+  const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'));
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [currentMonth, setCurrentMonth] = useState(dayjs());
+  const [timelineDraft, setTimelineDraft] = useState<{ startTime: string; endTime: string } | null>(null);
 
-  // Load data based on view
+  // Derived week range (stable strings for deps)
+  const weekStartStr = weekAnchor.startOf('week').format('YYYY-MM-DD');
+  const weekEndStr = weekAnchor.endOf('week').format('YYYY-MM-DD');
+  const weekStart = dayjs(weekStartStr);
+  const weekEnd = dayjs(weekEndStr);
+  const monthStr = currentMonth.format('YYYY-MM');
+
   const loadData = useCallback(() => {
-    switch (view) {
-      case 'daily':
-        fetchPlans(plannerDate);
-        break;
-      case 'weekly':
-        fetchWeeklyPlans(plannerDate);
-        break;
-      case 'monthly':
-        fetchMonthlyPlans(currentMonth.format('YYYY-MM'));
-        break;
-      case 'overview':
-        fetchPlans(plannerDate);
-        break;
+    if (view === 'daily') {
+      fetchPlans(plannerDate);
+    } else if (view === 'weekly') {
+      fetchWeeklyPlans(weekStartStr);
+    } else {
+      fetchMonthlyPlans(monthStr);
     }
     fetchPlansSummary();
-  }, [view, plannerDate, currentMonth, fetchPlans, fetchWeeklyPlans, fetchMonthlyPlans, fetchPlansSummary]);
+  }, [view, plannerDate, weekStartStr, monthStr, fetchPlans, fetchWeeklyPlans, fetchMonthlyPlans, fetchPlansSummary]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
+  // When switching to daily from weekly, jump to that week's Monday
+  const switchView = (v: ViewMode) => {
+    setView(v);
+    if (v === 'daily') {
+      // keep plannerDate as-is
+    }
+  };
+
+  // --- Handlers ---
   const handleCreate = async (data: Parameters<typeof createPlan>[0]) => {
     await createPlan(data);
     setShowForm(false);
+    setTimelineDraft(null);
     loadData();
   };
 
@@ -61,14 +75,12 @@ export default function PlannerPage() {
     if (!editingPlan) return;
     await updatePlan(editingPlan, data);
     setEditingPlan(null);
+    setTimelineDraft(null);
     loadData();
   };
 
   const handleDelete = async (id: string) => {
-    if (deleteConfirm !== id) {
-      setDeleteConfirm(id);
-      return;
-    }
+    if (deleteConfirm !== id) { setDeleteConfirm(id); return; }
     await deletePlan(id);
     setDeleteConfirm(null);
     loadData();
@@ -79,161 +91,218 @@ export default function PlannerPage() {
     loadData();
   };
 
-  const editPlanData = editingPlan ? plans.find(p => p.id === editingPlan) : null;
-
-  // Filtering
-  const filteredPlans = plans.filter(p => {
+  // --- Filtering ---
+  const filteredPlans = useMemo(() => plans.filter(p => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
-    if (filterCategory !== 'all' && (p.category || '').toLowerCase() !== filterCategory.toLowerCase()) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!p.title.toLowerCase().includes(q) && !(p.description || '').toLowerCase().includes(q)) return false;
     }
     return true;
-  });
+  }), [plans, filterStatus, searchQuery]);
 
-  const categories = Array.from(new Set(plans.map(p => p.category).filter(Boolean)));
-
-  // Group plans by date for weekly/monthly views
-  const plansByDate = filteredPlans.reduce<Record<string, typeof plans>>((acc, plan) => {
+  const plansByDate = useMemo(() => filteredPlans.reduce<Record<string, typeof plans>>((acc, plan) => {
     const key = plan.startDate;
     if (!acc[key]) acc[key] = [];
     acc[key].push(plan);
     return acc;
-  }, {});
+  }, {}), [filteredPlans]);
 
-  const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const editPlanData = editingPlan ? plans.find(p => p.id === editingPlan) : null;
+
+  // Timeline events for daily view
+  const timelineEvents: TimelineEvent[] = useMemo(() => filteredPlans.map(p => ({
+    id: p.id,
+    title: p.title,
+    status: p.status,
+    priority: p.priority,
+    category: p.category,
+    prayerBlock: p.prayerBlock,
+    startTime: p.startTime,
+    endTime: p.endTime,
+  })), [filteredPlans]);
+
+  // Timeline handlers
+  const handleTimelineCreate = useCallback((startTime: string, endTime: string) => {
+    setTimelineDraft({ startTime, endTime });
+    setEditingPlan(null);
+    setShowForm(true);
+  }, []);
+
+  const handleTimelineMove = useCallback(async (id: string, startTime: string, endTime: string) => {
+    await updatePlan(id, { startTime, endTime });
+    loadData();
+  }, [updatePlan, loadData]);
+
+  const handleTimelineResize = useCallback(async (id: string, startTime: string, endTime: string) => {
+    await updatePlan(id, { startTime, endTime });
+    loadData();
+  }, [updatePlan, loadData]);
+
+  const handleTimelineSelect = useCallback((id: string) => {
+    setEditingPlan(id);
+    setShowForm(false);
+    setTimelineDraft(null);
+  }, []);
+  const today = dayjs().format('YYYY-MM-DD');
+
+  // --- Nav helpers ---
+  const goWeekPrev = () => setWeekAnchor(a => a.subtract(1, 'week'));
+  const goWeekNext = () => setWeekAnchor(a => a.add(1, 'week'));
+  const goWeekToday = () => setWeekAnchor(dayjs().startOf('week'));
+  const isCurrentWeek = weekStart.format('YYYY-MM-DD') === dayjs().startOf('week').format('YYYY-MM-DD');
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> system/planner --mode={view}
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          Centralized planning and execution command center.
-        </p>
+    <div className="space-y-6 animate-fade-in">
+
+      {/* ── Header ── */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tighter text-on-surface">
+            <span className="text-primary">&gt;</span> system/planner
+          </h1>
+          <p className="font-mono text-xs text-on-surface-variant mt-1">
+            {view === 'daily' && `-- date ${plannerDate}`}
+            {view === 'weekly' && `-- week ${weekStart.format('MMM D')} → ${weekEnd.format('MMM D, YYYY')}`}
+            {view === 'monthly' && `-- month ${currentMonth.format('MMMM YYYY')}`}
+          </p>
+        </div>
+        <button
+          onClick={() => { setShowForm(true); setEditingPlan(null); }}
+          className="flex items-center gap-2 px-4 py-2 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity tracking-wider"
+          id="new-plan-btn"
+        >
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          New Plan
+        </button>
       </header>
 
-      {/* Summary Stats */}
+      {/* ── Summary Stats ── */}
       {plansSummary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="TODAY" value={plansSummary.todayCount} subtitle={`${plansSummary.todayCompleted} completed`} icon="today" variant="primary" />
-          <StatCard label="THIS_WEEK" value={plansSummary.weekCount} subtitle={`${plansSummary.weekCompleted} completed`} icon="date_range" />
-          <StatCard label="THIS_MONTH" value={plansSummary.monthCount} subtitle={`${plansSummary.monthCompleted} completed`} icon="calendar_month" />
+          <StatCard label="TODAY" value={plansSummary.todayCount} subtitle={`${plansSummary.todayCompleted} done`} icon="today" variant="primary" />
+          <StatCard label="THIS_WEEK" value={plansSummary.weekCount} subtitle={`${plansSummary.weekCompleted} done`} icon="date_range" />
+          <StatCard label="THIS_MONTH" value={plansSummary.monthCount} subtitle={`${plansSummary.monthCompleted} done`} icon="calendar_month" />
           <StatCard label="OVERDUE" value={plansSummary.overdueCount} subtitle={`${plansSummary.upcomingCount} upcoming`} icon="warning" variant="warning" />
         </div>
       )}
 
-      {/* Controls Bar */}
-      <div className="flex flex-wrap gap-3 items-center justify-between bg-surface-container-low p-3 rounded-md border border-outline-variant/15">
+      {/* ── Controls Bar ── */}
+      <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3 flex flex-wrap gap-3 items-center">
+
         {/* View Tabs */}
-        <div className="flex gap-1">
-          {(['daily', 'weekly', 'monthly', 'overview'] as const).map(v => (
+        <div className="flex gap-0.5 bg-surface-container-lowest rounded-sm p-0.5 border border-outline-variant/10">
+          {(['daily', 'weekly', 'monthly'] as const).map(v => (
             <button
               key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1.5 text-[10px] font-label uppercase tracking-widest rounded-sm transition-colors ${
+              onClick={() => switchView(v)}
+              className={`px-3 py-1.5 text-[10px] font-label uppercase tracking-widest rounded-[2px] transition-all ${
                 view === v
                   ? 'bg-primary/20 text-primary font-bold'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
+              id={`view-${v}`}
             >
               {v}
             </button>
           ))}
         </div>
 
-        {/* Date Navigation */}
-        {view === 'daily' && (
-          <div className="flex items-center gap-3">
-            <button onClick={() => setPlannerDate(dayjs(plannerDate).subtract(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-            </button>
-            <input
-              type="date"
-              value={plannerDate}
-              onChange={(e) => setPlannerDate(e.target.value)}
-              className="bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-mono text-on-surface"
-            />
-            <button onClick={() => setPlannerDate(dayjs(plannerDate).add(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-            </button>
-            <button
-              onClick={() => setPlannerDate(dayjs().format('YYYY-MM-DD'))}
-              className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
-            >
-              Today
-            </button>
-          </div>
-        )}
+        {/* Date / Week / Month Navigation */}
+        <div className="flex items-center gap-2 ml-auto">
+          {view === 'daily' && (
+            <>
+              <button onClick={() => setPlannerDate(dayjs(plannerDate).subtract(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              <input
+                type="date"
+                value={plannerDate}
+                onChange={e => setPlannerDate(e.target.value)}
+                className="bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-mono text-on-surface"
+              />
+              <button onClick={() => setPlannerDate(dayjs(plannerDate).add(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+              {plannerDate !== today && (
+                <button onClick={() => setPlannerDate(today)} className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                  Today
+                </button>
+              )}
+            </>
+          )}
 
-        {view === 'monthly' && (
-          <div className="flex items-center gap-3">
-            <button onClick={() => setCurrentMonth(m => m.subtract(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-            </button>
-            <span className="font-headline text-xs font-bold uppercase tracking-wider text-on-surface min-w-[120px] text-center">
-              {currentMonth.format('MMMM YYYY')}
-            </span>
-            <button onClick={() => setCurrentMonth(m => m.add(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-            </button>
-          </div>
-        )}
+          {view === 'weekly' && (
+            <>
+              <button onClick={goWeekPrev} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-prev">
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              <span className="font-headline text-xs font-bold text-on-surface min-w-[160px] text-center uppercase tracking-wide">
+                {weekStart.format('MMM D')} – {weekEnd.format('MMM D')}
+              </span>
+              <button onClick={goWeekNext} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-next">
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+              {!isCurrentWeek && (
+                <button onClick={goWeekToday} className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                  This week
+                </button>
+              )}
+            </>
+          )}
 
-        {/* Add Plan Button */}
-        <button
-          onClick={() => { setShowForm(true); setEditingPlan(null); }}
-          className="px-4 py-1.5 bg-scanline-gradient text-on-primary text-[10px] font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity tracking-wider"
-        >
-          + New Plan
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <span className="text-primary font-headline">&gt;</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search plans..."
-            className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-3 py-1.5 text-xs font-body text-on-surface placeholder:text-outline focus:border-primary/50 transition-colors"
-          />
+          {view === 'monthly' && (
+            <>
+              <button onClick={() => setCurrentMonth(m => m.subtract(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              <span className="font-headline text-xs font-bold text-on-surface min-w-[120px] text-center uppercase tracking-wide">
+                {currentMonth.format('MMM YYYY')}
+              </span>
+              <button onClick={() => setCurrentMonth(m => m.add(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+            </>
+          )}
         </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-[10px] font-label text-on-surface-variant uppercase tracking-widest cursor-pointer"
-        >
-          <option value="all">ALL_STATUS</option>
-          <option value="planned">PLANNED</option>
-          <option value="in_progress">IN_PROGRESS</option>
-          <option value="completed">COMPLETED</option>
-          <option value="cancelled">CANCELLED</option>
-        </select>
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-[10px] font-label text-on-surface-variant uppercase tracking-widest cursor-pointer"
-        >
-          <option value="all">ALL_CATEGORIES</option>
-          {categories.map(c => <option key={c!} value={c!}>{c}</option>)}
-        </select>
+
+        {/* Search + Status Filter */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 min-w-[180px]">
+            <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-outline">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-sm pl-7 pr-3 py-1.5 text-xs font-body text-on-surface placeholder:text-outline focus:border-primary/50 transition-colors"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-2 py-1.5 text-[10px] font-label text-on-surface-variant uppercase tracking-widest cursor-pointer focus:border-primary/50 transition-colors"
+          >
+            <option value="all">ALL</option>
+            <option value="planned">PLANNED</option>
+            <option value="in_progress">IN PROG</option>
+            <option value="completed">DONE</option>
+            <option value="cancelled">CANCELLED</option>
+          </select>
+        </div>
       </div>
 
-      {/* Form */}
+      {/* ── Form (Create / Edit) ── */}
       {showForm && (
         <PlanForm
           onSubmit={handleCreate}
-          onCancel={() => setShowForm(false)}
-          initialData={{ startDate: plannerDate }}
+          onCancel={() => { setShowForm(false); setTimelineDraft(null); }}
+          initialData={{
+            startDate: plannerDate,
+            ...(timelineDraft ? { startTime: timelineDraft.startTime, endTime: timelineDraft.endTime } : {}),
+          }}
         />
       )}
-
       {editingPlan && editPlanData && (
         <PlanForm
           isEdit
@@ -248,186 +317,232 @@ export default function PlannerPage() {
             category: editPlanData.category || '',
             notes: editPlanData.notes || '',
             startDate: editPlanData.startDate,
+            startTime: editPlanData.startTime,
             endDate: editPlanData.endDate || '',
+            endTime: editPlanData.endTime,
+            dayOfWeek: editPlanData.dayOfWeek,
             prayerBlock: editPlanData.prayerBlock,
           }}
         />
       )}
 
-      {/* Content */}
+      {/* ── Main Content ── */}
       {isPlansLoading ? (
-        <div className="flex items-center gap-2 py-8 justify-center font-mono text-sm text-on-surface-variant">
-          <span className="animate-blink text-primary">▊</span> Loading plans...
+        <div className="flex items-center justify-center gap-3 py-16 text-on-surface-variant font-mono text-sm">
+          <span className="animate-blink text-primary text-xl">▊</span>
+          Loading plans...
         </div>
-      ) : view === 'daily' || view === 'overview' ? (
-        /* Daily / Overview View */
-        <div className="space-y-3">
-          <SectionHeader
-            title={view === 'daily' ? `PLANS_${dayjs(plannerDate).format('MMM_DD').toUpperCase()}` : 'ALL_PLANS'}
-            rightContent={`${filteredPlans.length} plans`}
-          />
-          {filteredPlans.length === 0 ? (
-            <EmptyState title="No plans found" description="Create a new plan to get started." icon="event_note" />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {filteredPlans.map(plan => (
-                <PlanCard
-                  key={plan.id}
-                  id={plan.id}
-                  title={plan.title}
-                  description={plan.description}
-                  planType={plan.planType}
-                  status={plan.status}
-                  priority={plan.priority}
-                  category={plan.category}
-                  prayerBlock={plan.prayerBlock}
-                  startDate={plan.startDate}
-                  endDate={plan.endDate}
-                  onStatusChange={handleStatusChange}
-                  onEdit={(id) => { setEditingPlan(id); setShowForm(false); }}
-                  onDelete={handleDelete}
-                />
-              ))}
+      ) : (
+        <>
+          {/* DAILY VIEW */}
+          {view === 'daily' && (
+            <div className="space-y-4">
+              {/* Timeline header */}
+              <div className="flex items-center justify-between">
+                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  <span className="text-primary">&gt;</span> Timeline — {dayjs(plannerDate).format('ddd, MMM D YYYY')}
+                </span>
+                <span className="font-mono text-[10px] text-outline">
+                  {filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''} · drag to add
+                </span>
+              </div>
+
+              {/* Day Timeline */}
+              <DayTimeline
+                date={plannerDate}
+                events={timelineEvents}
+                onCreateSlot={handleTimelineCreate}
+                onMoveEvent={handleTimelineMove}
+                onResizeEvent={handleTimelineResize}
+                onSelectEvent={handleTimelineSelect}
+                onDeleteEvent={handleDelete}
+              />
+
+              {/* Plan cards list below timeline */}
+              {filteredPlans.length > 0 && (
+                <div className="space-y-2">
+                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    <span className="text-primary">&gt;</span> Plan list
+                  </span>
+                  <div className="flex flex-col gap-2">
+                    {filteredPlans.map(plan => (
+                      <PlanCard
+                        key={plan.id}
+                        {...plan}
+                        onStatusChange={handleStatusChange}
+                        onEdit={id => { setEditingPlan(id); setShowForm(false); }}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      ) : view === 'weekly' ? (
-        /* Weekly View */
-        <div className="space-y-4">
-          <SectionHeader title="WEEKLY_PLANNER" rightContent={`Week of ${dayjs(plannerDate).startOf('week').format('MMM D')}`} />
-          {(() => {
-            const weekStart = dayjs(plannerDate).startOf('week');
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+
+          {/* WEEKLY VIEW */}
+          {view === 'weekly' && (
+            <div className="space-y-3">
+              {/* Week summary bar */}
+              <div className="flex items-center justify-between">
+                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  <span className="text-primary">&gt;</span> Week {weekStart.isoWeek()} — {weekStart.format('MMM D')} to {weekEnd.format('MMM D, YYYY')}
+                </span>
+                <span className="font-mono text-[10px] text-outline">{filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}</span>
+              </div>
+
+              {/* 7-day grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
                 {Array.from({ length: 7 }).map((_, i) => {
                   const day = weekStart.add(i, 'day');
                   const dayStr = day.format('YYYY-MM-DD');
-                  const dayPlans = (plansByDate[dayStr] || []);
-                  const isToday = dayStr === dayjs().format('YYYY-MM-DD');
+                  const dayPlans = plansByDate[dayStr] || [];
+                  const isToday = dayStr === today;
+                  const isSelected = dayStr === plannerDate;
+                  const completedCount = dayPlans.filter(p => p.status === 'completed').length;
 
                   return (
                     <div
                       key={dayStr}
-                      className={`bg-surface-container-lowest rounded-md border p-3 min-h-[140px] flex flex-col ${
-                        isToday ? 'border-primary/40' : 'border-outline-variant/15'
+                      className={`rounded-md border flex flex-col min-h-[160px] transition-colors ${
+                        isToday
+                          ? 'border-primary/40 bg-primary/5'
+                          : 'border-outline-variant/15 bg-surface-container-lowest'
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className={`font-label text-[10px] uppercase tracking-widest ${isToday ? 'text-primary font-bold' : 'text-on-surface-variant'}`}>
-                          {dayNames[i]}
+                      {/* Day header — click to drill into daily */}
+                      <button
+                        onClick={() => { setPlannerDate(dayStr); setWeekAnchor(day.startOf('week')); switchView('daily'); }}
+                        className={`flex items-center justify-between px-3 py-2 border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors rounded-t-md ${
+                          isToday ? 'border-primary/20' : ''
+                        }`}
+                        title={`View ${day.format('ddd D')}`}
+                      >
+                        <span className={`font-label text-[10px] uppercase tracking-widest font-bold ${isToday ? 'text-primary' : 'text-on-surface-variant'}`}>
+                          {DAY_NAMES[i]}
                         </span>
-                        <span className={`font-headline text-xs font-semibold ${isToday ? 'text-primary' : 'text-on-surface'}`}>
-                          {day.format('DD')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          {dayPlans.length > 0 && (
+                            <span className="font-mono text-[9px] text-outline">{completedCount}/{dayPlans.length}</span>
+                          )}
+                          <span className={`font-headline text-xs font-semibold ${isToday ? 'text-primary' : 'text-on-surface'}`}>
+                            {day.format('D')}
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Plans list */}
+                      <div className="flex flex-col gap-1 p-2 flex-1">
                         {dayPlans.length === 0 ? (
-                          <span className="font-mono text-[9px] text-outline text-center mt-4">—</span>
+                          <span className="font-mono text-[9px] text-outline text-center mt-6">—</span>
                         ) : (
                           dayPlans.map(plan => (
                             <PlanCard
                               key={plan.id}
+                              {...plan}
                               compact
-                              id={plan.id}
-                              title={plan.title}
-                              description={plan.description}
-                              planType={plan.planType}
-                              status={plan.status}
-                              priority={plan.priority}
-                              category={plan.category}
-                              prayerBlock={plan.prayerBlock}
-                              startDate={plan.startDate}
-                              endDate={plan.endDate}
                               onStatusChange={handleStatusChange}
-                              onEdit={(id) => { setEditingPlan(id); setShowForm(false); }}
+                              onEdit={id => { setEditingPlan(id); setShowForm(false); }}
                               onDelete={handleDelete}
                             />
                           ))
                         )}
                       </div>
+
+                      {/* Quick-add for this day */}
+                      <button
+                        onClick={() => { setPlannerDate(dayStr); setShowForm(true); setEditingPlan(null); }}
+                        className="flex items-center justify-center gap-1 py-1.5 text-[9px] font-label uppercase tracking-widest text-outline hover:text-primary hover:bg-surface-container-low/30 transition-colors rounded-b-md border-t border-outline-variant/10"
+                        title={`Add plan for ${day.format('ddd D')}`}
+                      >
+                        <span className="material-symbols-outlined text-[12px]">add</span>
+                        Add
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            );
-          })()}
-        </div>
-      ) : (
-        /* Monthly Calendar View */
-        <div className="space-y-4">
-          <SectionHeader title="MONTHLY_PLANNER" rightContent={currentMonth.format('MMMM YYYY')} />
-          <div className="bg-surface-container-low rounded-md border border-outline-variant/15 overflow-hidden">
-            {/* Day Headers */}
-            <div className="grid grid-cols-7 border-b border-outline-variant/15">
-              {dayNames.map(d => (
-                <div key={d} className="py-2 text-center font-label text-[10px] uppercase tracking-widest text-on-surface-variant">{d}</div>
-              ))}
             </div>
-            {/* Day Cells */}
-            <div className="grid grid-cols-7">
-              {Array.from({ length: currentMonth.startOf('month').day() }).map((_, i) => (
-                <div key={`empty-${i}`} className="aspect-square border-b border-r border-outline-variant/10" />
-              ))}
-              {Array.from({ length: currentMonth.daysInMonth() }).map((_, i) => {
-                const day = i + 1;
-                const dateStr = currentMonth.date(day).format('YYYY-MM-DD');
-                const dayPlans = plansByDate[dateStr] || [];
-                const isToday = dateStr === dayjs().format('YYYY-MM-DD');
-                const isSelected = dateStr === plannerDate;
+          )}
 
-                return (
-                  <button
-                    key={day}
-                    onClick={() => { setPlannerDate(dateStr); setView('daily'); }}
-                    className={`aspect-square border-b border-r border-outline-variant/10 p-1 text-left flex flex-col transition-colors ${
-                      isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <span className={`font-headline text-xs font-semibold ${
-                      isToday ? 'text-primary' : 'text-on-surface'
-                    }`}>
-                      {String(day).padStart(2, '0')}
-                    </span>
-                    <div className="flex flex-col gap-0.5 mt-0.5 overflow-hidden flex-1">
-                      {dayPlans.slice(0, 3).map(p => (
-                        <div
-                          key={p.id}
-                          className={`text-[7px] font-label truncate px-0.5 rounded-[1px] ${
-                            p.status === 'completed' ? 'bg-primary/20 text-primary' :
-                            p.status === 'in_progress' ? 'bg-tertiary/20 text-tertiary' :
-                            'bg-secondary/10 text-secondary'
-                          }`}
-                        >
-                          {p.title}
+          {/* MONTHLY VIEW */}
+          {view === 'monthly' && (
+            <div className="space-y-3">
+              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                <span className="text-primary">&gt;</span> {currentMonth.format('MMMM YYYY')} — {filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}
+              </span>
+              <div className="bg-surface-container-lowest rounded-md border border-outline-variant/15 overflow-hidden">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 border-b border-outline-variant/15">
+                  {DAY_NAMES.map(d => (
+                    <div key={d} className="py-2.5 text-center font-label text-[10px] uppercase tracking-widest text-on-surface-variant">{d}</div>
+                  ))}
+                </div>
+                {/* Day cells */}
+                <div className="grid grid-cols-7">
+                  {Array.from({ length: currentMonth.startOf('month').day() }).map((_, i) => (
+                    <div key={`e-${i}`} className="border-b border-r border-outline-variant/10 min-h-[80px]" />
+                  ))}
+                  {Array.from({ length: currentMonth.daysInMonth() }).map((_, i) => {
+                    const day = currentMonth.date(i + 1);
+                    const dateStr = day.format('YYYY-MM-DD');
+                    const dayPlans = plansByDate[dateStr] || [];
+                    const isToday = dateStr === today;
+
+                    return (
+                      <button
+                        key={dateStr}
+                        onClick={() => { setPlannerDate(dateStr); setWeekAnchor(day.startOf('week')); switchView('daily'); }}
+                        className={`border-b border-r border-outline-variant/10 min-h-[80px] p-1.5 text-left flex flex-col transition-colors hover:bg-surface-container-low ${
+                          isToday ? 'bg-primary/8 ring-1 ring-inset ring-primary/30' : ''
+                        }`}
+                      >
+                        <span className={`font-headline text-xs font-semibold mb-1 ${isToday ? 'text-primary' : 'text-on-surface'}`}>
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
+                          {dayPlans.slice(0, 3).map(p => (
+                            <div key={p.id} className={`text-[7px] font-label truncate px-1 py-0.5 rounded-[1px] ${
+                              p.status === 'completed' ? 'bg-primary/20 text-primary' :
+                              p.status === 'in_progress' ? 'bg-tertiary/20 text-tertiary' :
+                              p.status === 'cancelled' ? 'bg-error/15 text-error' :
+                              'bg-secondary/10 text-secondary'
+                            }`}>
+                              {p.title}
+                            </div>
+                          ))}
+                          {dayPlans.length > 3 && (
+                            <span className="text-[7px] text-outline font-mono">+{dayPlans.length - 3} more</span>
+                          )}
                         </div>
-                      ))}
-                      {dayPlans.length > 3 && (
-                        <span className="text-[7px] text-outline font-mono">+{dayPlans.length - 3}</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
-      {/* Delete Confirmation */}
+      {/* ── Delete Confirmation Modal ── */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-surface-container-lowest border border-outline-variant/15 rounded-md p-6 max-w-sm mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
-            <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-2">
-              <span className="text-error">&gt;</span> CONFIRM_DELETE
-            </h3>
-            <p className="font-body text-sm text-on-surface-variant mb-4">
-              Are you sure you want to delete this plan? This action cannot be undone.
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-fade-in" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-surface-container border border-outline-variant/20 rounded-md p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-error text-[20px]">warning</span>
+              <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
+                Confirm Delete
+              </h3>
+            </div>
+            <p className="font-body text-sm text-on-surface-variant mb-5">
+              This plan will be permanently removed. This action cannot be undone.
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1.5 text-xs font-label uppercase text-on-surface-variant hover:text-on-surface transition-colors">
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-xs font-label uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors">
                 Cancel
               </button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-1.5 bg-error text-on-error text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity">
+              <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 bg-error/90 text-on-error text-xs font-label uppercase font-bold rounded-sm hover:bg-error transition-colors">
                 Delete
               </button>
             </div>

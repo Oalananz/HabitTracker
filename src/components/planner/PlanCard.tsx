@@ -10,146 +10,129 @@ interface PlanCardProps {
   category: string | null;
   prayerBlock: string | null;
   startDate: string;
+  startTime?: string | null;
   endDate: string | null;
+  endTime?: string | null;
+  dayOfWeek?: string | null;
   onStatusChange?: (id: string, status: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   compact?: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  planned: 'bg-secondary/20 text-secondary',
-  in_progress: 'bg-tertiary/20 text-tertiary',
-  completed: 'bg-primary/20 text-primary',
-  cancelled: 'bg-error/20 text-error',
+const STATUS_CYCLE: Record<string, string> = {
+  planned: 'in_progress',
+  in_progress: 'completed',
+  completed: 'planned',
+  cancelled: 'planned',
 };
 
-const PRIORITY_RIBBONS: Record<string, string> = {
-  low: 'ribbon-muted',
-  nominal: 'ribbon-info',
-  critical: 'ribbon-error',
+const STATUS_STYLES: Record<string, { badge: string; ribbon: string; icon: string }> = {
+  planned:     { badge: 'bg-secondary/15 text-secondary',  ribbon: 'border-l-secondary/60',  icon: 'radio_button_unchecked' },
+  in_progress: { badge: 'bg-tertiary/15 text-tertiary',   ribbon: 'border-l-tertiary/60',   icon: 'pending' },
+  completed:   { badge: 'bg-primary/15 text-primary',     ribbon: 'border-l-primary/60',    icon: 'check_circle' },
+  cancelled:   { badge: 'bg-error/15 text-error',         ribbon: 'border-l-error/60',      icon: 'cancel' },
+};
+
+const PRIORITY_DOT: Record<string, string> = {
+  critical: 'bg-error',
+  nominal:  'bg-secondary',
+  low:      'bg-on-surface-variant/40',
+};
+
+const PRAYER_EMOJI: Record<string, string> = {
+  fajr: '🌙', dhuhr: '☀️', asr: '🌤', maghrib: '🌅', isha: '🌠',
 };
 
 export default function PlanCard({
-  id,
-  title,
-  description,
-  planType,
-  status,
-  priority,
-  category,
-  prayerBlock,
-  startDate,
-  endDate,
-  onStatusChange,
-  onEdit,
-  onDelete,
-  compact,
+  id, title, description, planType, status, priority,
+  category, prayerBlock, startDate, startTime, endDate, endTime,
+  dayOfWeek, onStatusChange, onEdit, onDelete, compact,
 }: PlanCardProps) {
-  const statusColor = STATUS_COLORS[status] || STATUS_COLORS.planned;
-  const ribbon = PRIORITY_RIBBONS[priority] || PRIORITY_RIBBONS.nominal;
+  const st = STATUS_STYLES[status] || STATUS_STYLES.planned;
   const isCompleted = status === 'completed';
   const isCancelled = status === 'cancelled';
-
-  const handleCycleStatus = () => {
-    if (!onStatusChange) return;
-    const cycle: Record<string, string> = {
-      planned: 'in_progress',
-      in_progress: 'completed',
-      completed: 'planned',
-      cancelled: 'planned',
-    };
-    onStatusChange(id, cycle[status] || 'planned');
-  };
+  const timeLabel = startTime ? `${startTime}${endTime ? `–${endTime}` : ''}` : null;
 
   return (
-    <div
-      className={`${ribbon} bg-surface-container-lowest rounded-md border border-outline-variant/15 transition-all duration-150 hover:bg-surface-container-low/50 group ${
-        isCompleted || isCancelled ? 'opacity-60' : ''
-      } ${compact ? 'p-3' : 'p-4'}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          {/* Status toggle */}
-          <button
-            onClick={handleCycleStatus}
-            className={`mt-0.5 w-5 h-5 rounded-sm border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-              isCompleted
-                ? 'bg-primary border-primary'
-                : isCancelled
-                ? 'bg-error/20 border-error'
-                : status === 'in_progress'
-                ? 'border-tertiary bg-tertiary/10'
-                : 'border-outline-variant hover:border-primary'
-            }`}
-          >
-            {isCompleted && (
-              <span className="material-symbols-outlined text-[14px] text-on-primary font-bold">check</span>
-            )}
-            {isCancelled && (
-              <span className="material-symbols-outlined text-[14px] text-error font-bold">close</span>
-            )}
-            {status === 'in_progress' && (
-              <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse" />
-            )}
-          </button>
+    <div className={`relative border-l-2 ${st.ribbon} bg-surface-container-low rounded-r-md border border-l-0 border-outline-variant/10 group transition-all hover:bg-surface-container-high/50 ${
+      isCompleted || isCancelled ? 'opacity-55' : ''
+    } ${compact ? 'p-2' : 'p-3.5'}`}>
 
-          <div className="min-w-0 flex-1">
-            <h4 className={`font-headline text-sm font-semibold tracking-tight ${
+      <div className="flex items-start gap-3">
+        {/* Status toggle button */}
+        <button
+          onClick={() => onStatusChange?.(id, STATUS_CYCLE[status] || 'planned')}
+          title={`Status: ${status} — click to advance`}
+          className="mt-0.5 flex-shrink-0 hover:scale-110 transition-transform"
+        >
+          <span className={`material-symbols-outlined text-[18px] ${
+            isCompleted ? 'text-primary' : isCancelled ? 'text-error' :
+            status === 'in_progress' ? 'text-tertiary' : 'text-outline'
+          }`} style={status === 'in_progress' ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+            {st.icon}
+          </span>
+        </button>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className={`font-headline text-sm font-semibold leading-snug ${
               isCompleted ? 'line-through text-on-surface-variant' : 'text-on-surface'
             }`}>
               {title}
             </h4>
 
-            {!compact && description && (
-              <p className="font-body text-xs text-on-surface-variant mt-0.5 line-clamp-2">{description}</p>
-            )}
-
-            {/* Tags row */}
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[9px] uppercase tracking-wider ${statusColor}`}>
-                {status.replace('_', ' ')}
-              </span>
-
-              {category && (
-                <span className="px-1.5 py-0.5 rounded-[2px] bg-surface-container-high font-label text-[9px] text-on-surface-variant uppercase tracking-wider">
-                  {category}
-                </span>
+            {/* Action buttons — show on hover */}
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              {onEdit && (
+                <button onClick={() => onEdit(id)} className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-sm" title="Edit">
+                  <span className="material-symbols-outlined text-[15px]">edit</span>
+                </button>
               )}
-
-              {prayerBlock && (
-                <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/10 font-label text-[9px] text-primary uppercase tracking-wider">
-                  ☪ {prayerBlock}
-                </span>
-              )}
-
-              {!compact && (
-                <span className="font-mono text-[9px] text-outline">
-                  {planType} • {startDate}{endDate && endDate !== startDate ? ` → ${endDate}` : ''}
-                </span>
+              {onDelete && (
+                <button onClick={() => onDelete(id)} className="p-1 text-on-surface-variant hover:text-error transition-colors rounded-sm" title="Delete">
+                  <span className="material-symbols-outlined text-[15px]">delete</span>
+                </button>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-          {onEdit && (
-            <button
-              onClick={() => onEdit(id)}
-              className="text-on-surface-variant hover:text-primary transition-colors p-1"
-            >
-              <span className="material-symbols-outlined text-[16px]">edit</span>
-            </button>
+          {!compact && description && (
+            <p className="font-body text-xs text-on-surface-variant mt-0.5 line-clamp-2">{description}</p>
           )}
-          {onDelete && (
-            <button
-              onClick={() => onDelete(id)}
-              className="text-on-surface-variant hover:text-error transition-colors p-1"
-            >
-              <span className="material-symbols-outlined text-[16px]">delete</span>
-            </button>
-          )}
+
+          {/* Meta tags */}
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            {/* Priority dot */}
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[priority] || PRIORITY_DOT.nominal}`} title={`Priority: ${priority}`} />
+
+            <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[9px] uppercase tracking-wide ${st.badge}`}>
+              {status.replace('_', ' ')}
+            </span>
+
+            {category && (
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-surface-container-highest font-label text-[9px] text-on-surface-variant uppercase tracking-wide">
+                {category}
+              </span>
+            )}
+
+            {prayerBlock && (
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/10 font-label text-[9px] text-primary uppercase tracking-wide">
+                {PRAYER_EMOJI[prayerBlock] || '🕌'} {prayerBlock}
+              </span>
+            )}
+
+            {timeLabel && (
+              <span className="font-mono text-[9px] text-outline ml-auto">⏱ {timeLabel}</span>
+            )}
+
+            {!compact && !timeLabel && (
+              <span className="font-mono text-[9px] text-outline ml-auto">
+                {planType} · {startDate}{endDate && endDate !== startDate ? ` → ${endDate}` : ''}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

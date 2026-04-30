@@ -24,7 +24,10 @@ export interface PlanRow {
   category: string | null;
   notes: string | null;
   start_date: string;
+  start_time: string | null;
   end_date: string | null;
+  end_time: string | null;
+  day_of_week: string | null;
   prayer_block: string | null;
   completed_at: string | null;
   created_at: string;
@@ -42,7 +45,10 @@ export interface Plan {
   category: string | null;
   notes: string | null;
   startDate: string;
+  startTime: string | null;
   endDate: string | null;
+  endTime: string | null;
+  dayOfWeek: string | null;
   prayerBlock: PrayerBlock | null;
   completedAt: string | null;
   createdAt: string;
@@ -65,7 +71,10 @@ function mapPlan(p: PlanRow): Plan {
     category: p.category,
     notes: p.notes,
     startDate: p.start_date,
+    startTime: p.start_time,
     endDate: p.end_date,
+    endTime: p.end_time,
+    dayOfWeek: p.day_of_week,
     prayerBlock: p.prayer_block as PrayerBlock | null,
     completedAt: p.completed_at,
     createdAt: p.created_at,
@@ -88,7 +97,10 @@ export async function createPlan(
     category?: string;
     notes?: string;
     startDate: string;
+    startTime?: string;
     endDate?: string;
+    endTime?: string;
+    dayOfWeek?: string;
     prayerBlock?: string;
   }
 ) {
@@ -104,7 +116,10 @@ export async function createPlan(
       category: data.category || null,
       notes: data.notes || null,
       start_date: data.startDate,
+      start_time: data.startTime || null,
       end_date: data.endDate || null,
+      end_time: data.endTime || null,
+      day_of_week: data.dayOfWeek || null,
       prayer_block: data.prayerBlock || null,
     })
     .select()
@@ -126,7 +141,10 @@ export async function updatePlan(
     category?: string;
     notes?: string;
     startDate?: string;
+    startTime?: string | null;
     endDate?: string;
+    endTime?: string | null;
+    dayOfWeek?: string | null;
     prayerBlock?: string | null;
   }
 ) {
@@ -149,7 +167,10 @@ export async function updatePlan(
   if (data.category !== undefined) updateData.category = data.category;
   if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.startDate !== undefined) updateData.start_date = data.startDate;
+  if (data.startTime !== undefined) updateData.start_time = data.startTime;
   if (data.endDate !== undefined) updateData.end_date = data.endDate;
+  if (data.endTime !== undefined) updateData.end_time = data.endTime;
+  if (data.dayOfWeek !== undefined) updateData.day_of_week = data.dayOfWeek;
   if (data.prayerBlock !== undefined) updateData.prayer_block = data.prayerBlock;
 
   const { data: plan, error } = await supabase

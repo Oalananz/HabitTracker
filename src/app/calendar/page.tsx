@@ -5,11 +5,55 @@ import { useStore } from '@/store/useStore';
 import TaskItem from '@/components/ui/TaskItem';
 import dayjs from 'dayjs';
 
+type GroupByOption = 'none' | 'category' | 'priority' | 'source' | 'status';
+
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  priority: string;
+  completed: boolean;
+  sourceType: string;
+}
+
+function groupTasks(tasks: Task[], groupBy: GroupByOption): { label: string; tasks: Task[] }[] {
+  if (groupBy === 'none') return [{ label: '', tasks }];
+
+  const groups: Record<string, Task[]> = {};
+
+  for (const task of tasks) {
+    let key = '';
+    if (groupBy === 'category') key = task.category ?? 'Uncategorized';
+    else if (groupBy === 'priority') key = task.priority ?? 'normal';
+    else if (groupBy === 'source') key = task.sourceType === 'habit' ? 'Habit' : 'Manual';
+    else if (groupBy === 'status') key = task.completed ? 'Completed' : 'Pending';
+
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(task);
+  }
+
+  // Define sort order for priority groups
+  const priorityOrder: Record<string, number> = { critical: 0, normal: 1, low: 2 };
+  const entries = Object.entries(groups);
+
+  if (groupBy === 'priority') {
+    entries.sort(([a], [b]) => (priorityOrder[a] ?? 99) - (priorityOrder[b] ?? 99));
+  } else if (groupBy === 'status') {
+    entries.sort(([a]) => (a === 'Pending' ? -1 : 1));
+  } else {
+    entries.sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  return entries.map(([label, tasks]) => ({ label, tasks }));
+}
+
 export default function CalendarPage() {
   const { tasks, fetchTasks, completeTask, uncompleteTask, failures, fetchFailures } = useStore();
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [selectedDay, setSelectedDay] = useState<string | null>(dayjs().format('YYYY-MM-DD'));
   const [monthData, setMonthData] = useState<Record<string, { completed: number; total: number; hasFailure: boolean }>>({});
+  const [groupBy, setGroupBy] = useState<GroupByOption>('none');
 
   const loadMonthData = useCallback(async () => {
     const start = currentMonth.startOf('month');
@@ -179,7 +223,7 @@ export default function CalendarPage() {
           {/* Day Detail Sidebar */}
           <div className="space-y-4">
             <div className="bg-surface-container-lowest rounded-md border border-outline-variant/15 p-5">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-1">
                 <div>
                   <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
                     <span className="text-primary">&gt;</span> LOG_DETAILS
@@ -201,25 +245,63 @@ export default function CalendarPage() {
                 )}
               </div>
 
+              {/* Group By Controls */}
+              <div className="flex items-center gap-2 mt-3 mb-4 pt-3 border-t border-outline-variant/10">
+                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant flex-shrink-0">
+                  GROUP_BY
+                </span>
+                <div className="flex gap-1 flex-wrap">
+                  {(['none', 'category', 'priority', 'source', 'status'] as GroupByOption[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setGroupBy(opt)}
+                      className={`px-2 py-0.5 rounded-[2px] font-label text-[10px] uppercase tracking-wide border transition-colors ${
+                        groupBy === opt
+                          ? 'bg-primary/20 text-primary border-primary/40'
+                          : 'bg-surface-container-low text-on-surface-variant border-outline-variant/15 hover:border-primary/30 hover:text-on-surface'
+                      }`}
+                      id={`group-by-${opt}`}
+                    >
+                      {opt === 'none' ? 'OFF' : opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {selectedDay && (
                 <>
                   <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-3">ROUTINE_ARRAY</div>
                   {tasks.length === 0 ? (
                     <p className="font-mono text-xs text-outline text-center py-4">No tasks for this date.</p>
                   ) : (
-                    <div className="space-y-2">
-                      {tasks.map(t => (
-                        <TaskItem
-                          key={t.id}
-                          id={t.id}
-                          title={t.title}
-                          description={t.description}
-                          category={t.category}
-                          priority={t.priority}
-                          completed={t.completed}
-                          sourceType={t.sourceType}
-                          onToggle={handleToggle}
-                        />
+                    <div className="space-y-4">
+                      {groupTasks(tasks, groupBy).map(({ label, tasks: groupedTasks }) => (
+                        <div key={label || '__all__'}>
+                          {label && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                                {label === 'critical' ? 'HIGH_PRIO' : label === 'low' ? 'LOW_PRIO' : label === 'normal' ? 'MED_PRIO' : label.replace(/ /g, '_').toUpperCase()}
+                              </span>
+                              <span className="flex-1 h-px bg-outline-variant/15" />
+                              <span className="font-mono text-[9px] text-outline">{groupedTasks.length}</span>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            {groupedTasks.map(t => (
+                              <TaskItem
+                                key={t.id}
+                                id={t.id}
+                                title={t.title}
+                                description={t.description}
+                                category={t.category}
+                                priority={t.priority}
+                                completed={t.completed}
+                                sourceType={t.sourceType}
+                                onToggle={handleToggle}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}

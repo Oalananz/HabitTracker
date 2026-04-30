@@ -111,7 +111,10 @@ interface Plan {
   category: string | null;
   notes: string | null;
   startDate: string;
+  startTime: string | null;
   endDate: string | null;
+  endTime: string | null;
+  dayOfWeek: string | null;
   prayerBlock: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | null;
   completedAt: string | null;
   createdAt: string;
@@ -246,11 +249,12 @@ interface AppState {
   fetchWeeklyPlans: (weekOf?: string) => Promise<void>;
   fetchMonthlyPlans: (month?: string) => Promise<void>;
   fetchPlansSummary: () => Promise<void>;
-  createPlan: (data: { title: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate: string; endDate?: string; prayerBlock?: string }) => Promise<void>;
-  updatePlan: (planId: string, data: { title?: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate?: string; endDate?: string; prayerBlock?: string | null }) => Promise<void>;
+  createPlan: (data: { title: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate: string; startTime?: string; endDate?: string; endTime?: string; dayOfWeek?: string; prayerBlock?: string }) => Promise<void>;
+  updatePlan: (planId: string, data: { title?: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate?: string; startTime?: string | null; endDate?: string; endTime?: string | null; dayOfWeek?: string | null; prayerBlock?: string | null }) => Promise<void>;
   deletePlan: (planId: string) => Promise<void>;
   assignPlanToPrayerBlock: (planId: string, prayerBlock: string | null) => Promise<void>;
   fetchPrayerTimes: (date: string) => Promise<void>;
+  fetchPrayerTimesFromLocation: (date: string, latitude: number, longitude: number) => Promise<void>;
   setManualPrayerTimes: (date: string, times: { fajr?: string; dhuhr?: string; asr?: string; maghrib?: string; isha?: string }) => Promise<void>;
 
   // UI
@@ -898,6 +902,25 @@ export const useStore = create<AppState>((set, get) => ({
       const data = await res.json();
       if (res.ok) set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false });
       else set({ isPrayerTimesLoading: false });
+    } catch {
+      set({ isPrayerTimesLoading: false });
+    }
+  },
+
+  fetchPrayerTimesFromLocation: async (date, latitude, longitude) => {
+    set({ isPrayerTimesLoading: true });
+    try {
+      const res = await fetch('/api/prayer-times', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'fetchFromLocation', date, latitude, longitude }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.prayerTimes) {
+        set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false });
+      } else {
+        set({ isPrayerTimesLoading: false });
+      }
     } catch {
       set({ isPrayerTimesLoading: false });
     }

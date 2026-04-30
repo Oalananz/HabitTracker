@@ -91,7 +91,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* New Entry Button */}
+        {/* New Entry Button
         <div className="px-4 mb-4">
           <Link
             href="/today"
@@ -100,7 +100,7 @@ export default function Sidebar() {
           >
             + New Entry
           </Link>
-        </div>
+        </div> */}
 
         {/* Bottom Links */}
         <div className="space-y-0.5 border-t border-outline-variant/10 pt-2">

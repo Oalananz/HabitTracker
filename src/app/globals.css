@@ -199,3 +199,49 @@ input:focus, select:focus, textarea:focus {
   outline: none;
   box-shadow: none;
 }
+
+/* Override react-big-calendar for dark mode */
+.rbc-calendar {
+  color: #dfe2eb;
+  background: transparent !important;
+}
+.rbc-time-view, .rbc-month-view {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-header {
+  border-bottom: 1px solid rgba(62, 74, 62, 0.15) !important;
+  border-left: 1px solid rgba(62, 74, 62, 0.15) !important;
+  color: #bdcaba !important;
+  padding: 8px !important;
+}
+.rbc-day-bg {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-time-content {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-time-header {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-day-slot {
+  background: transparent !important;
+}
+.rbc-timeslot-group {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-time-slot {
+  border-color: rgba(62, 74, 62, 0.15) !important;
+}
+.rbc-off-range-bg {
+  background: #31353c !important;
+}
+.rbc-today {
+  background: rgba(108, 221, 129, 0.1) !important;
+}
+.rbc-event {
+  background-color: transparent;
+  padding: 0;
+}
+.rbc-btn-group button {
+  color: #dfe2eb !important;
+}

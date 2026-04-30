@@ -28,7 +28,7 @@ export default function PrayerPlannerPage() {
   const {
     plans, isPlansLoading,
     fetchPlans, createPlan, updatePlan, deletePlan,
-    prayerTimes, fetchPrayerTimes,
+    prayerTimes, isPrayerTimesLoading, fetchPrayerTimes, fetchPrayerTimesFromLocation,
     plannerDate, setPlannerDate,
   } = useStore();
 
@@ -36,12 +36,33 @@ export default function PrayerPlannerPage() {
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [showTimeEditor, setShowTimeEditor] = useState(false);
   const [editTimes, setEditTimes] = useState<Record<string, string>>({});
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'fetching' | 'success' | 'denied' | 'error'>('idle');
   const { setManualPrayerTimes } = useStore();
 
+  // Auto-fetch real prayer times using browser geolocation
   useEffect(() => {
     fetchPlans(plannerDate);
-    fetchPrayerTimes(plannerDate);
-  }, [plannerDate, fetchPlans, fetchPrayerTimes]);
+
+    // Try geolocation → real prayer times, fallback to defaults
+    if (navigator.geolocation) {
+      setLocationStatus('fetching');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocationStatus('success');
+          fetchPrayerTimesFromLocation(plannerDate, pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          // Geolocation denied or unavailable — use stored/defaults
+          setLocationStatus('denied');
+          fetchPrayerTimes(plannerDate);
+        },
+        { timeout: 8000, maximumAge: 300_000 } // cache position for 5 min
+      );
+    } else {
+      setLocationStatus('error');
+      fetchPrayerTimes(plannerDate);
+    }
+  }, [plannerDate, fetchPlans, fetchPrayerTimes, fetchPrayerTimesFromLocation]);
 
   // Group plans by prayer block
   const plansByPrayer = useMemo(() => {
@@ -190,6 +211,20 @@ export default function PrayerPlannerPage() {
             <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">COMPLETION</div>
             <div className="font-headline text-sm font-bold text-on-surface">
               {completedPlans}<span className="text-on-surface-variant">/{totalPlans}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">SOURCE</div>
+            <div className="font-mono text-[10px] flex items-center gap-1 justify-end">
+              {isPrayerTimesLoading || locationStatus === 'fetching' ? (
+                <><span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" /><span className="text-tertiary">Locating...</span></>
+              ) : prayerTimes?.source === 'api' ? (
+                <><span className="w-1.5 h-1.5 rounded-full bg-primary" /><span className="text-primary">GPS</span></>
+              ) : prayerTimes?.source === 'manual' ? (
+                <><span className="w-1.5 h-1.5 rounded-full bg-tertiary" /><span className="text-tertiary">Manual</span></>
+              ) : (
+                <><span className="w-1.5 h-1.5 rounded-full bg-outline" /><span className="text-outline">Default</span></>
+              )}
             </div>
           </div>
           <button

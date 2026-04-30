@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import TimerDisplay from '@/components/recovery/TimerDisplay';
 import CompetitiveMode from '@/components/recovery/competitive/CompetitiveMode';
+import FailureLogList from '@/components/recovery/FailureLogList';
 import dayjs from 'dayjs';
 
 export default function RecoveryPage() {
   const {
-    journeys, isRecoveryLoading,
-    fetchJourneys, createJourney, deleteJourney,
+    journeys, isRecoveryLoading, failures,
+    fetchJourneys, fetchFailures, createJourney, deleteJourney,
     recordJourneyFailure, resetJourney,
   } = useStore();
 
@@ -23,7 +24,8 @@ export default function RecoveryPage() {
 
   useEffect(() => {
     fetchJourneys();
-  }, [fetchJourneys]);
+    fetchFailures();
+  }, [fetchJourneys, fetchFailures]);
 
   useEffect(() => {
     const id = setInterval(() => setClockNow(Date.now()), 60_000);
@@ -241,6 +243,14 @@ export default function RecoveryPage() {
                               </div>
                             </div>
                           ))}
+                        </div>
+
+                        {/* Recent Failure Logs */}
+                        <div className="mb-4">
+                          <FailureLogList
+                            failures={failures.filter(f => f.journeyId === journey.id)}
+                            startTime={journey.startTime}
+                          />
                         </div>
 
                         {/* Actions */}

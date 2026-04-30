@@ -717,7 +717,10 @@ export interface Database {
           category: string | null;
           notes: string | null;
           start_date: string;
+          start_time: string | null;
           end_date: string | null;
+          end_time: string | null;
+          day_of_week: string | null;
           prayer_block: string | null;
           completed_at: string | null;
           created_at: string;
@@ -734,7 +737,10 @@ export interface Database {
           category?: string | null;
           notes?: string | null;
           start_date: string;
+          start_time?: string | null;
           end_date?: string | null;
+          end_time?: string | null;
+          day_of_week?: string | null;
           prayer_block?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -751,7 +757,10 @@ export interface Database {
           category?: string | null;
           notes?: string | null;
           start_date?: string;
+          start_time?: string | null;
           end_date?: string | null;
+          end_time?: string | null;
+          day_of_week?: string | null;
           prayer_block?: string | null;
           completed_at?: string | null;
           created_at?: string;
