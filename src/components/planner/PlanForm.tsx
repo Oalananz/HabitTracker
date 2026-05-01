@@ -16,7 +16,7 @@ interface PlanFormProps {
     startTime?: string;
     endDate?: string;
     endTime?: string;
-    dayOfWeek?: string;
+    dayOfWeek?: string | null;
     prayerBlock?: string;
   }) => Promise<void>;
   onCancel: () => void;
@@ -43,14 +43,13 @@ const STATUSES   = ['planned', 'in_progress', 'completed', 'cancelled'];
 const PRIORITIES = ['low', 'nominal', 'critical'];
 const CATEGORIES = ['General', 'Work', 'Health', 'Learning', 'Personal', 'Worship', 'Admin', 'Finance'];
 const DAYS_OF_WEEK = [
-  { value: '',    label: 'None' },
+  { value: 'sun', label: 'Sun' },
   { value: 'mon', label: 'Mon' },
   { value: 'tue', label: 'Tue' },
   { value: 'wed', label: 'Wed' },
   { value: 'thu', label: 'Thu' },
   { value: 'fri', label: 'Fri' },
   { value: 'sat', label: 'Sat' },
-  { value: 'sun', label: 'Sun' },
 ];
 const PRAYER_BLOCKS = [
   { value: '',        label: 'None',    emoji: '' },
@@ -60,6 +59,11 @@ const PRAYER_BLOCKS = [
   { value: 'maghrib',label: 'Maghrib', emoji: '🌅' },
   { value: 'isha',   label: 'Isha',    emoji: '🌠' },
 ];
+
+function parseDaySelection(value: string | null | undefined) {
+  const selected = (value || '').split(',').map(day => day.trim()).filter(Boolean);
+  return DAYS_OF_WEEK.map(day => day.value).filter(day => selected.includes(day));
+}
 
 export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: PlanFormProps) {
   const [title,       setTitle]       = useState(initialData?.title || '');
@@ -73,7 +77,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
   const [startTime,   setStartTime]   = useState(initialData?.startTime || '');
   const [endDate,     setEndDate]     = useState(initialData?.endDate || '');
   const [endTime,     setEndTime]     = useState(initialData?.endTime || '');
-  const [dayOfWeek,   setDayOfWeek]   = useState(initialData?.dayOfWeek || '');
+  const [selectedDays, setSelectedDays] = useState<string[]>(() => parseDaySelection(initialData?.dayOfWeek));
   const [prayerBlock, setPrayerBlock] = useState(initialData?.prayerBlock || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(Boolean(initialData?.startTime || initialData?.endTime || initialData?.notes));
@@ -106,7 +110,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         startTime:   normalized.startTime || undefined,
         endDate:     endDate || undefined,
         endTime:     normalized.endTime || undefined,
-        dayOfWeek:   dayOfWeek || undefined,
+        dayOfWeek:   planType === 'weekly' ? selectedDays.join(',') || undefined : isEdit ? null : undefined,
         prayerBlock: prayerBlock || undefined,
       });
     } catch (err) {
@@ -166,7 +170,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className={labelCls}>Type</label>
-            <select value={planType} onChange={e => { setPlanType(e.target.value); if (e.target.value !== 'weekly') setDayOfWeek(''); }} className={selectCls}>
+            <select value={planType} onChange={e => { setPlanType(e.target.value); if (e.target.value !== 'weekly') setSelectedDays([]); }} className={selectCls}>
               {PLAN_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
@@ -206,15 +210,19 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         {/* Day of week (weekly type only) */}
         {planType === 'weekly' && (
           <div>
-            <label className={labelCls}>Day of Week</label>
+            <label className={labelCls}>Days of Week</label>
             <div className="flex gap-1">
-              {DAYS_OF_WEEK.filter(d => d.value).map(d => (
+              {DAYS_OF_WEEK.map(d => (
                 <button
                   type="button"
                   key={d.value}
-                  onClick={() => setDayOfWeek(dayOfWeek === d.value ? '' : d.value)}
+                  onClick={() => setSelectedDays(days => (
+                    days.includes(d.value)
+                      ? days.filter(day => day !== d.value)
+                      : [...days, d.value]
+                  ))}
                   className={`flex-1 py-1.5 text-[10px] font-label uppercase tracking-wide rounded-sm border transition-colors ${
-                    dayOfWeek === d.value
+                    selectedDays.includes(d.value)
                       ? 'bg-primary/20 text-primary border-primary/40'
                       : 'bg-surface-container border-outline-variant/15 text-on-surface-variant hover:border-primary/30'
                   }`}

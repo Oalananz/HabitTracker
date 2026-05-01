@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
-import EmptyState from '@/components/ui/EmptyState';
 import PlanCard from '@/components/planner/PlanCard';
 import PlanForm from '@/components/planner/PlanForm';
 import DayTimeline from '@/components/planner/DayTimeline';
@@ -42,7 +41,18 @@ export default function PlannerPage() {
   const weekEnd = dayjs(weekEndStr);
   const monthStr = currentMonth.format('YYYY-MM');
 
-  const loadData = useCallback(() => {
+  const loadData = () => {
+    if (view === 'daily') {
+      fetchPlans(plannerDate);
+    } else if (view === 'weekly') {
+      fetchWeeklyPlans(weekStartStr);
+    } else {
+      fetchMonthlyPlans(monthStr);
+    }
+    fetchPlansSummary();
+  };
+
+  useEffect(() => {
     if (view === 'daily') {
       fetchPlans(plannerDate);
     } else if (view === 'weekly') {
@@ -52,8 +62,6 @@ export default function PlannerPage() {
     }
     fetchPlansSummary();
   }, [view, plannerDate, weekStartStr, monthStr, fetchPlans, fetchWeeklyPlans, fetchMonthlyPlans, fetchPlansSummary]);
-
-  useEffect(() => { loadData(); }, [loadData]);
 
   // When switching to daily from weekly, jump to that week's Monday
   const switchView = (v: ViewMode) => {
@@ -92,17 +100,26 @@ export default function PlannerPage() {
   };
 
   // --- Filtering ---
-  const filteredPlans = useMemo(() => plans.filter(p => {
-    if (filterStatus !== 'all' && p.status !== filterStatus) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!p.title.toLowerCase().includes(q) && !(p.description || '').toLowerCase().includes(q)) return false;
-    }
-    return true;
-  }), [plans, filterStatus, searchQuery]);
+  const filteredPlans = useMemo(() => {
+    const seenOccurrences = new Set<string>();
+
+    return plans.filter(p => {
+      if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!p.title.toLowerCase().includes(q) && !(p.description || '').toLowerCase().includes(q)) return false;
+      }
+
+      const occurrenceKey = p.occurrenceKey || `${p.id}:${p.occurrenceDate || p.startDate}`;
+      if (seenOccurrences.has(occurrenceKey)) return false;
+      seenOccurrences.add(occurrenceKey);
+
+      return true;
+    });
+  }, [plans, filterStatus, searchQuery]);
 
   const plansByDate = useMemo(() => filteredPlans.reduce<Record<string, typeof plans>>((acc, plan) => {
-    const key = plan.startDate;
+    const key = plan.occurrenceDate || plan.startDate;
     if (!acc[key]) acc[key] = [];
     acc[key].push(plan);
     return acc;
@@ -113,6 +130,7 @@ export default function PlannerPage() {
   // Timeline events for daily view
   const timelineEvents: TimelineEvent[] = useMemo(() => filteredPlans.map(p => ({
     id: p.id,
+    occurrenceKey: p.occurrenceKey || `${p.id}:${p.occurrenceDate || p.startDate}`,
     title: p.title,
     status: p.status,
     priority: p.priority,
@@ -123,27 +141,27 @@ export default function PlannerPage() {
   })), [filteredPlans]);
 
   // Timeline handlers
-  const handleTimelineCreate = useCallback((startTime: string, endTime: string) => {
+  const handleTimelineCreate = (startTime: string, endTime: string) => {
     setTimelineDraft({ startTime, endTime });
     setEditingPlan(null);
     setShowForm(true);
-  }, []);
+  };
 
-  const handleTimelineMove = useCallback(async (id: string, startTime: string, endTime: string) => {
+  const handleTimelineMove = async (id: string, startTime: string, endTime: string) => {
     await updatePlan(id, { startTime, endTime });
     loadData();
-  }, [updatePlan, loadData]);
+  };
 
-  const handleTimelineResize = useCallback(async (id: string, startTime: string, endTime: string) => {
+  const handleTimelineResize = async (id: string, startTime: string, endTime: string) => {
     await updatePlan(id, { startTime, endTime });
     loadData();
-  }, [updatePlan, loadData]);
+  };
 
-  const handleTimelineSelect = useCallback((id: string) => {
+  const handleTimelineSelect = (id: string) => {
     setEditingPlan(id);
     setShowForm(false);
     setTimelineDraft(null);
-  }, []);
+  };
   const today = dayjs().format('YYYY-MM-DD');
 
   // --- Nav helpers ---
@@ -367,7 +385,7 @@ export default function PlannerPage() {
                   <div className="flex flex-col gap-2">
                     {filteredPlans.map(plan => (
                       <PlanCard
-                        key={plan.id}
+                        key={plan.occurrenceKey || plan.id}
                         {...plan}
                         onStatusChange={handleStatusChange}
                         onEdit={id => { setEditingPlan(id); setShowForm(false); }}
@@ -398,7 +416,6 @@ export default function PlannerPage() {
                   const dayStr = day.format('YYYY-MM-DD');
                   const dayPlans = plansByDate[dayStr] || [];
                   const isToday = dayStr === today;
-                  const isSelected = dayStr === plannerDate;
                   const completedCount = dayPlans.filter(p => p.status === 'completed').length;
 
                   return (
@@ -438,7 +455,7 @@ export default function PlannerPage() {
                         ) : (
                           dayPlans.map(plan => (
                             <PlanCard
-                              key={plan.id}
+                              key={plan.occurrenceKey || plan.id}
                               {...plan}
                               compact
                               onStatusChange={handleStatusChange}
@@ -502,7 +519,7 @@ export default function PlannerPage() {
                         </span>
                         <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
                           {dayPlans.slice(0, 3).map(p => (
-                            <div key={p.id} className={`text-[7px] font-label truncate px-1 py-0.5 rounded-[1px] ${
+                            <div key={p.occurrenceKey || p.id} className={`text-[7px] font-label truncate px-1 py-0.5 rounded-[1px] ${
                               p.status === 'completed' ? 'bg-primary/20 text-primary' :
                               p.status === 'in_progress' ? 'bg-tertiary/20 text-tertiary' :
                               p.status === 'cancelled' ? 'bg-error/15 text-error' :

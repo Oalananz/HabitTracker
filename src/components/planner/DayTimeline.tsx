@@ -6,6 +6,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 
 export interface TimelineEvent {
   id: string;
+  occurrenceKey?: string;
   title: string;
   status: string;
   priority: string;
@@ -79,6 +80,7 @@ export default function DayTimeline({
     startY: number;
     currentY: number;
     eventId?: string;
+    eventKey?: string;
     offsetMinutes?: number;  // for move: cursor offset from event start
     originalStart?: number;
     originalEnd?: number;
@@ -109,8 +111,9 @@ export default function DayTimeline({
   // ── Timed events (with valid times) ──
 
   const timedEvents = useMemo(() =>
-    events.filter(e => e.startTime && e.endTime).map(e => ({
+    events.filter(e => e.startTime && e.endTime).map((e, index) => ({
       ...e,
+      eventKey: e.occurrenceKey || `${e.id}:${e.startTime}:${e.endTime}:${index}`,
       startMin: timeToMinutes(e.startTime!),
       endMin: timeToMinutes(e.endTime!),
     })),
@@ -130,18 +133,19 @@ export default function DayTimeline({
 
   // ── Drag-to-move an event ──
 
-  const handleEventMouseDown = useCallback((e: React.MouseEvent, eventId: string, startMin: number) => {
+  const handleEventMouseDown = useCallback((e: React.MouseEvent, eventKey: string, startMin: number) => {
     e.stopPropagation();
     if (e.button !== 0) return;
     const cursorMin = yToMinutes(e.clientY);
-    const ev = timedEvents.find(ev => ev.id === eventId);
+    const ev = timedEvents.find(ev => ev.eventKey === eventKey);
     if (!ev) return;
 
     setDragState({
       type: 'move',
       startY: cursorMin,
       currentY: cursorMin,
-      eventId,
+      eventId: ev.id,
+      eventKey,
       offsetMinutes: cursorMin - startMin,
       originalStart: ev.startMin,
       originalEnd: ev.endMin,
@@ -150,17 +154,18 @@ export default function DayTimeline({
 
   // ── Resize handle ──
 
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent, eventId: string) => {
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent, eventKey: string) => {
     e.stopPropagation();
     if (e.button !== 0) return;
-    const ev = timedEvents.find(ev => ev.id === eventId);
+    const ev = timedEvents.find(ev => ev.eventKey === eventKey);
     if (!ev) return;
 
     setDragState({
       type: 'resize',
       startY: ev.endMin,
       currentY: yToMinutes(e.clientY),
-      eventId,
+      eventId: ev.id,
+      eventKey,
       originalStart: ev.startMin,
       originalEnd: ev.endMin,
     });
@@ -224,20 +229,20 @@ export default function DayTimeline({
   // ── Compute move preview positions ──
 
   const movePreview = useMemo(() => {
-    if (!dragState || dragState.type !== 'move' || !dragState.eventId) return null;
+    if (!dragState || dragState.type !== 'move' || !dragState.eventId || !dragState.eventKey) return null;
     const delta = dragState.currentY - dragState.startY;
     const duration = (dragState.originalEnd || 0) - (dragState.originalStart || 0);
     let newStart = snapMinutes((dragState.originalStart || 0) + delta);
     newStart = Math.max(0, Math.min(1440 - duration, newStart));
-    return { eventId: dragState.eventId, startMin: newStart, endMin: newStart + duration };
+    return { eventId: dragState.eventId, eventKey: dragState.eventKey, startMin: newStart, endMin: newStart + duration };
   }, [dragState]);
 
   // ── Compute resize preview ──
 
   const resizePreview = useMemo(() => {
-    if (!dragState || dragState.type !== 'resize' || !dragState.eventId) return null;
+    if (!dragState || dragState.type !== 'resize' || !dragState.eventId || !dragState.eventKey) return null;
     const newEnd = Math.max((dragState.originalStart || 0) + MIN_DURATION_MINUTES, dragState.currentY);
-    return { eventId: dragState.eventId, startMin: dragState.originalStart || 0, endMin: snapMinutes(newEnd) };
+    return { eventId: dragState.eventId, eventKey: dragState.eventKey, startMin: dragState.originalStart || 0, endMin: snapMinutes(newEnd) };
   }, [dragState]);
 
   // ── Now marker ──
@@ -325,18 +330,18 @@ export default function DayTimeline({
 
         {/* ── Event blocks ── */}
         {timedEvents.map(ev => {
-          const isMoving = movePreview?.eventId === ev.id;
-          const isResizing = resizePreview?.eventId === ev.id;
+          const isMoving = movePreview?.eventKey === ev.eventKey;
+          const isResizing = resizePreview?.eventKey === ev.eventKey;
           const startMin = isMoving ? movePreview.startMin : isResizing ? resizePreview.startMin : ev.startMin;
           const endMin = isMoving ? movePreview.endMin : isResizing ? resizePreview.endMin : ev.endMin;
           const colors = STATUS_COLORS[ev.status] || STATUS_COLORS.planned;
           const isDragging = isMoving || isResizing;
-          const isHovered = hoveredEvent === ev.id;
+          const isHovered = hoveredEvent === ev.eventKey;
           const blockHeight = minutesToY(endMin) - minutesToY(startMin);
 
           return (
             <div
-              key={ev.id}
+              key={ev.eventKey}
               data-event-block="true"
               className={`absolute left-14 right-2 rounded-md overflow-hidden transition-shadow ${
                 isDragging ? 'shadow-lg z-40 opacity-90' : 'z-10'
@@ -348,8 +353,8 @@ export default function DayTimeline({
                 border: `1px solid ${colors.border}`,
                 cursor: dragState?.type === 'move' ? 'grabbing' : 'grab',
               }}
-              onMouseDown={e => handleEventMouseDown(e, ev.id, startMin)}
-              onMouseEnter={() => setHoveredEvent(ev.id)}
+              onMouseDown={e => handleEventMouseDown(e, ev.eventKey, startMin)}
+              onMouseEnter={() => setHoveredEvent(ev.eventKey)}
               onMouseLeave={() => setHoveredEvent(null)}
             >
               {/* Content */}
@@ -410,7 +415,7 @@ export default function DayTimeline({
               <div
                 data-resize-handle="true"
                 className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize group/resize"
-                onMouseDown={e => handleResizeMouseDown(e, ev.id)}
+                onMouseDown={e => handleResizeMouseDown(e, ev.eventKey)}
               >
                 <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-8 h-[2px] rounded-full bg-white/20 group-hover/resize:bg-white/50 transition-colors" />
               </div>

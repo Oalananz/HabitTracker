@@ -44,6 +44,16 @@ const PRAYER_EMOJI: Record<string, string> = {
   fajr: '🌙', dhuhr: '☀️', asr: '🌤', maghrib: '🌅', isha: '🌠',
 };
 
+const WEEKDAY_LABELS: Record<string, string> = {
+  sun: 'Sun',
+  mon: 'Mon',
+  tue: 'Tue',
+  wed: 'Wed',
+  thu: 'Thu',
+  fri: 'Fri',
+  sat: 'Sat',
+};
+
 export default function PlanCard({
   id, title, description, planType, status, priority,
   category, prayerBlock, startDate, startTime, endDate, endTime,
@@ -53,6 +63,9 @@ export default function PlanCard({
   const isCompleted = status === 'completed';
   const isCancelled = status === 'cancelled';
   const timeLabel = startTime ? `${startTime}${endTime ? `–${endTime}` : ''}` : null;
+  const weekdayLabel = dayOfWeek
+    ? dayOfWeek.split(',').map(day => WEEKDAY_LABELS[day] || day).join(', ')
+    : null;
 
   return (
     <div className={`relative border-l-2 ${st.ribbon} bg-surface-container-low rounded-r-md border border-l-0 border-outline-variant/10 group transition-all hover:bg-surface-container-high/50 ${
@@ -114,6 +127,12 @@ export default function PlanCard({
             {category && (
               <span className="px-1.5 py-0.5 rounded-[2px] bg-surface-container-highest font-label text-[9px] text-on-surface-variant uppercase tracking-wide">
                 {category}
+              </span>
+            )}
+
+            {planType === 'weekly' && weekdayLabel && (
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-secondary/10 font-label text-[9px] text-secondary uppercase tracking-wide">
+                {weekdayLabel}
               </span>
             )}
 
