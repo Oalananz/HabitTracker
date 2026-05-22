@@ -118,6 +118,79 @@ export async function getTasksForDate(userId: string, date: string) {
   return (tasks || []).map(mapTask);
 }
 
+/**
+ * Combined generate + fetch in a single operation.
+ * Runs habit lookup and existing-task lookup in parallel, inserts missing
+ * habit-tasks, then returns the full task list — all in one round-trip
+ * instead of the previous two-request pattern.
+ */
+export async function getOrGenerateTasksForDate(userId: string, date: string) {
+  const targetDate = dayjs(date).startOf('day');
+  const dateStr = targetDate.format('YYYY-MM-DD');
+
+  // Run habit lookup and existing-task lookup in PARALLEL
+  const [{ data: habits }, { data: existingTasks }] = await Promise.all([
+    supabase
+      .from('habits')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true),
+    supabase
+      .from('task_instances')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('date', dateStr)
+      .order('completed', { ascending: true })
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: true }),
+  ]);
+
+  const allExisting = existingTasks || [];
+
+  // Determine which habit-tasks still need to be created
+  if (habits && habits.length > 0) {
+    const existingHabitIds = new Set(allExisting.map(t => t.habit_id));
+    const toInsert: Database['public']['Tables']['task_instances']['Insert'][] = [];
+
+    for (const habit of habits) {
+      const rule = habit.repeat_rule as unknown as RepeatRule;
+      if (!shouldGenerateForDate(rule, targetDate)) continue;
+      if (dayjs(habit.created_at).startOf('day').isAfter(targetDate)) continue;
+      if (existingHabitIds.has(habit.id)) continue;
+
+      toInsert.push({
+        user_id: userId,
+        habit_id: habit.id,
+        title: habit.title,
+        description: habit.description,
+        category: habit.category,
+        priority: habit.priority,
+        date: dateStr,
+        source_type: 'habit',
+      });
+    }
+
+    if (toInsert.length > 0) {
+      // Insert missing tasks and return them
+      const { data: inserted } = await supabase
+        .from('task_instances')
+        .insert(toInsert)
+        .select('*');
+
+      // Merge inserted tasks with existing, re-sort
+      const merged = [...allExisting, ...(inserted || [])];
+      merged.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        if (a.priority !== b.priority) return (b.priority || '').localeCompare(a.priority || '');
+        return (a.created_at || '').localeCompare(b.created_at || '');
+      });
+      return merged.map(mapTask);
+    }
+  }
+
+  return allExisting.map(mapTask);
+}
+
 export async function getTaskSummaryForRange(
   userId: string,
   startDate: string,

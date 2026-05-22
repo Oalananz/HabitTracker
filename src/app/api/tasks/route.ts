@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import {
   getTasksForDate,
+  getOrGenerateTasksForDate,
   completeTask,
   uncompleteTask,
   createManualTask,
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date') || dayjs().format('YYYY-MM-DD');
 
-    const tasks = await getTasksForDate(userId, date);
+    // Combined generate + fetch: auto-creates missing habit tasks in a single request
+    const tasks = await getOrGenerateTasksForDate(userId, date);
     const completed = tasks.filter((t) => t.completed).length;
     const pending = tasks.length - completed;
 

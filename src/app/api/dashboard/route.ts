@@ -7,7 +7,9 @@ export async function GET() {
   try {
     const userId = await requireAuthId();
     const metrics = await calculateMetrics(userId);
-    return NextResponse.json({ metrics });
+    const response = NextResponse.json({ metrics });
+    response.headers.set('Cache-Control', 'private, s-maxage=30, stale-while-revalidate=120');
+    return response;
   } catch (error) {
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

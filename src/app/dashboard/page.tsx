@@ -21,7 +21,7 @@ export default function DashboardPage() {
   }, [fetchMetrics, fetchJourneys, fetchGoalsSummary]);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-page-enter">
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
             <span className="text-primary">&gt;</span> system/analytics --verbose
@@ -32,8 +32,21 @@ export default function DashboardPage() {
         </header>
 
         {isMetricsLoading || !metrics ? (
-          <div className="flex items-center gap-2 py-16 justify-center font-mono text-sm text-on-surface-variant">
-            <span className="animate-blink text-primary">▊</span> Computing analytics...
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-surface-container-low rounded-md p-5 border border-outline-variant/15 space-y-3">
+                  <div className="h-2.5 w-24 animate-shimmer rounded-md" />
+                  <div className="h-10 w-20 animate-shimmer rounded-md" />
+                  <div className="h-2.5 w-32 animate-shimmer rounded-md" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 h-40 animate-shimmer" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 h-64 animate-shimmer" />
+              <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 h-64 animate-shimmer" />
+            </div>
           </div>
         ) : (
           <div className="space-y-6">

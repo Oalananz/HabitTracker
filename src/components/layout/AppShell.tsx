@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Sidebar from '@/components/layout/Sidebar';
 import Logo from '@/components/ui/Logo';
+import ToastContainer from '@/components/ui/Toast';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -42,16 +43,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet"
-      />
       <Sidebar />
       <main className="flex-1 md:ml-64 pt-16 md:pt-0 min-h-screen">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
+      <ToastContainer />
     </div>
   );
 }

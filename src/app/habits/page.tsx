@@ -52,7 +52,7 @@ export default function HabitsPage() {
   const inactiveHabits = habits.filter(h => !h.isActive);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-page-enter">
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
             <span className="text-primary">&gt;</span> system/config --habits

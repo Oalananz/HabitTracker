@@ -171,7 +171,7 @@ export default function PlannerPage() {
   const isCurrentWeek = weekStart.format('YYYY-MM-DD') === dayjs().startOf('week').format('YYYY-MM-DD');
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-page-enter">
 
       {/* ── Header ── */}
       <header className="flex flex-wrap items-end justify-between gap-4">

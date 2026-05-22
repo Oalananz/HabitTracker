@@ -31,7 +31,7 @@ export default function Sidebar() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -76,13 +76,16 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-150 ${
+                className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${
                   isActive
-                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50'
+                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
                     : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
                 }`}
               >
-                <span className="material-symbols-outlined text-[20px]">
+                <span
+                  className="material-symbols-outlined text-[20px] transition-all duration-200"
+                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                >
                   {item.icon}
                 </span>
                 {item.label}

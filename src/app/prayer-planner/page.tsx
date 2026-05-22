@@ -160,7 +160,7 @@ export default function PrayerPlannerPage() {
   const completedPlans = plans.filter(p => p.status === 'completed').length;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-page-enter">
       {/* Header */}
       <header>
         <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">

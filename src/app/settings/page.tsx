@@ -21,7 +21,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-page-enter">
         <header className="flex justify-between items-start">
           <div>
             <div className="font-label text-xs uppercase tracking-widest text-primary mb-2">&gt; TERMINAL_CONFIG</div>

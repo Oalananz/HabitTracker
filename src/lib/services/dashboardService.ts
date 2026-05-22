@@ -14,6 +14,7 @@ export async function calculateMetrics(userId: string) {
       .from('task_instances')
       .select('date, completed')
       .eq('user_id', userId)
+      .gte('date', now.subtract(365, 'day').format('YYYY-MM-DD'))
       .order('date', { ascending: true }),
     supabase
       .from('recovery_states')

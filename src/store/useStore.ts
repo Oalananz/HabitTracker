@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { createClient } from '@/utils/supabase/client';
 
 let authCheckPromise: Promise<void> | null = null;
-const generatedTaskDates = new Set<string>();
 
 function applySummaryDelta(summary: TaskSummary | null, totalDelta: number, completedDelta: number) {
   if (!summary) return summary;
@@ -303,7 +302,6 @@ export const useStore = create<AppState>((set, get) => ({
   logout: async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    generatedTaskDates.clear();
     set({ user: null, isAuthLoading: false, authInitialized: true });
   },
 
@@ -353,19 +351,7 @@ export const useStore = create<AppState>((set, get) => ({
       set({ isTasksLoading: true });
     }
     try {
-      if (!generatedTaskDates.has(date)) {
-        generatedTaskDates.add(date);
-        const generateRes = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'generate', date }),
-        });
-
-        if (!generateRes.ok) {
-          generatedTaskDates.delete(date);
-        }
-      }
-
+      // Server now auto-generates missing habit tasks in the GET handler
       const res = await fetch(`/api/tasks?date=${date}`);
       const data = await res.json();
       if (res.ok) {
@@ -533,7 +519,6 @@ export const useStore = create<AppState>((set, get) => ({
       const err = await res.json();
       throw new Error(err.error);
     }
-    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -543,7 +528,6 @@ export const useStore = create<AppState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', habitId, ...data }),
     });
-    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -556,7 +540,6 @@ export const useStore = create<AppState>((set, get) => ({
         habitId,
       }),
     });
-    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 
@@ -566,7 +549,6 @@ export const useStore = create<AppState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', habitId }),
     });
-    generatedTaskDates.clear();
     await get().fetchHabits();
   },
 

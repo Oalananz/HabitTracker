@@ -5,6 +5,7 @@ import { useStore } from '@/store/useStore';
 import SectionHeader from '@/components/ui/SectionHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
+import { useToast } from '@/store/useToast';
 import dayjs from 'dayjs';
 
 export default function TodayPage() {
@@ -13,6 +14,8 @@ export default function TodayPage() {
     completeTask, uncompleteTask, createTask, deleteTask,
     selectedDate, setSelectedDate, metrics, fetchMetrics,
   } = useStore();
+
+  const { addToast } = useToast();
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -37,10 +40,15 @@ export default function TodayPage() {
   }, [fetchTasks, setSelectedDate, fetchMetrics]);
 
   const handleToggle = async (id: string, completed: boolean) => {
-    if (completed) {
-      await uncompleteTask(id);
-    } else {
-      await completeTask(id);
+    try {
+      if (completed) {
+        await uncompleteTask(id);
+      } else {
+        await completeTask(id);
+        addToast('Task completed!', 'success', 2000);
+      }
+    } catch {
+      addToast('Failed to update task', 'error');
     }
   };
 
@@ -64,7 +72,12 @@ export default function TodayPage() {
   };
 
   const handleDelete = async (id: string) => {
-    try { await deleteTask(id); } catch (err) { console.error(err); }
+    try {
+      await deleteTask(id);
+      addToast('Task deleted', 'info', 2000);
+    } catch {
+      addToast('Failed to delete task', 'error');
+    }
   };
 
   const nonHabitTasks = tasks.filter(t => t.sourceType !== 'habit');
@@ -86,7 +99,7 @@ export default function TodayPage() {
   const activeTotalCount = nonHabitTasks.length;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-page-enter">
         {/* Header */}
         <header>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
@@ -131,8 +144,17 @@ export default function TodayPage() {
             )}
 
             {isTasksLoading ? (
-              <div className="flex items-center gap-2 py-8 justify-center font-mono text-sm text-on-surface-variant">
-                <span className="animate-blink text-primary">▊</span> Loading tasks...
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-surface-container-low rounded-md p-4 flex gap-4 items-start">
+                    <div className="w-5 h-5 animate-shimmer rounded-[2px] flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 animate-shimmer rounded-md" />
+                      <div className="h-3 w-1/2 animate-shimmer rounded-md" />
+                    </div>
+                    <div className="h-5 w-16 animate-shimmer rounded-[2px] flex-shrink-0" />
+                  </div>
+                ))}
               </div>
             ) : nonHabitTasks.length === 0 ? (
               <EmptyState title="No tasks for today" description="Create a manual task to get started." icon="task_alt" />
@@ -140,33 +162,35 @@ export default function TodayPage() {
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
             ) : (
               <div className="flex flex-col gap-2">
-                {pendingTasks.map(task => (
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    description={task.description}
-                    category={task.category}
-                    priority={task.priority}
-                    completed={task.completed}
-                    sourceType={task.sourceType}
-                    onToggle={handleToggle}
-                    onDelete={handleDelete}
-                  />
+                {pendingTasks.map((task, i) => (
+                  <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                    <TaskItem
+                      id={task.id}
+                      title={task.title}
+                      description={task.description}
+                      category={task.category}
+                      priority={task.priority}
+                      completed={task.completed}
+                      sourceType={task.sourceType}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                    />
+                  </div>
                 ))}
-                {completedTasks.map(task => (
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    description={task.description}
-                    category={task.category}
-                    priority={task.priority}
-                    completed={task.completed}
-                    sourceType={task.sourceType}
-                    onToggle={handleToggle}
-                    onDelete={handleDelete}
-                  />
+                {completedTasks.map((task, i) => (
+                  <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${(pendingTasks.length + i) * 50}ms` }}>
+                    <TaskItem
+                      id={task.id}
+                      title={task.title}
+                      description={task.description}
+                      category={task.category}
+                      priority={task.priority}
+                      completed={task.completed}
+                      sourceType={task.sourceType}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                    />
+                  </div>
                 ))}
               </div>
             )}

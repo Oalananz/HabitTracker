@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface TaskItemProps {
   id: string;
   title: string;
@@ -11,6 +13,7 @@ interface TaskItemProps {
   onToggle: (id: string, completed: boolean) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  style?: React.CSSProperties;
 }
 
 export default function TaskItem({
@@ -24,7 +27,10 @@ export default function TaskItem({
   onToggle,
   onDelete,
   onEdit,
+  style,
 }: TaskItemProps) {
+  const [justCompleted, setJustCompleted] = useState(false);
+
   const ribbonColor = completed
     ? 'bg-primary'
     : priority === 'critical'
@@ -36,23 +42,34 @@ export default function TaskItem({
   const priorityLabel = priority === 'critical' ? 'HIGH PRIO' : priority === 'low' ? 'LOW PRIO' : 'MED PRIO';
   const priorityColor = priority === 'critical' ? 'text-tertiary' : priority === 'low' ? 'text-on-surface-variant' : 'text-secondary';
 
+  const handleToggle = () => {
+    if (!completed) {
+      setJustCompleted(true);
+      setTimeout(() => setJustCompleted(false), 600);
+    }
+    onToggle(id, completed);
+  };
+
   return (
     <div
-      className={`group relative bg-surface-container-low rounded-md p-4 flex gap-4 items-start transition-colors ${
-        completed ? 'opacity-50' : 'hover:bg-surface-container-high'
+      className={`group relative bg-surface-container-low rounded-md p-4 flex gap-4 items-start transition-all duration-200 ${
+        completed
+          ? 'opacity-50'
+          : 'hover:bg-surface-container-high hover:translate-y-[-1px] hover:shadow-lg hover:shadow-black/20'
       }`}
+      style={style}
     >
       {/* Status Ribbon */}
-      <div className={`absolute left-0 top-0 bottom-0 w-[2px] ${ribbonColor} rounded-l-md`} />
+      <div className={`absolute left-0 top-0 bottom-0 w-[2px] ${ribbonColor} rounded-l-md transition-colors duration-300`} />
 
       {/* Checkbox */}
       <button
-        onClick={() => onToggle(id, completed)}
-        className={`mt-0.5 flex-shrink-0 w-5 h-5 border-2 rounded-[2px] flex items-center justify-center transition-colors ${
+        onClick={handleToggle}
+        className={`mt-0.5 flex-shrink-0 w-5 h-5 border-2 rounded-[2px] flex items-center justify-center transition-all duration-200 ${
           completed
             ? 'border-primary bg-primary/20'
-            : 'border-outline-variant hover:border-primary cursor-pointer'
-        }`}
+            : 'border-outline-variant hover:border-primary hover:bg-primary/5 cursor-pointer'
+        } ${justCompleted ? 'animate-check-pop' : ''}`}
         id={`task-toggle-${id}`}
       >
         {completed && (
@@ -66,7 +83,7 @@ export default function TaskItem({
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2">
           <h3
-            className={`font-headline font-semibold text-base truncate ${
+            className={`font-headline font-semibold text-base truncate transition-all duration-300 ${
               completed ? 'line-through text-on-surface-variant' : 'text-on-surface'
             }`}
           >
@@ -74,7 +91,7 @@ export default function TaskItem({
           </h3>
           <div className="flex gap-1.5 flex-shrink-0">
             {!completed && (
-              <span className={`px-2 py-0.5 bg-surface-container-lowest ${priorityColor} font-label text-[10px] uppercase rounded-[2px] border border-outline-variant/15`}>
+              <span className={`px-2 py-0.5 bg-surface-container-lowest ${priorityColor} font-label text-[10px] uppercase rounded-[2px] border border-outline-variant/15 transition-colors`}>
                 {priorityLabel}
               </span>
             )}
@@ -90,12 +107,12 @@ export default function TaskItem({
         )}
       </div>
 
-      {/* Actions (visible on hover) */}
-      <div className="hidden group-hover:flex gap-1 items-center flex-shrink-0">
+      {/* Actions — visible on hover (desktop) or always visible (mobile) */}
+      <div className="flex md:hidden md:group-hover:flex gap-1 items-center flex-shrink-0">
         {onEdit && (
           <button
             onClick={() => onEdit(id)}
-            className="text-on-surface-variant hover:text-primary transition-colors p-1"
+            className="text-on-surface-variant hover:text-primary transition-colors p-1 btn-ripple"
             id={`task-edit-${id}`}
           >
             <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -104,7 +121,7 @@ export default function TaskItem({
         {sourceType === 'manual' && onDelete && (
           <button
             onClick={() => onDelete(id)}
-            className="text-on-surface-variant hover:text-error transition-colors p-1"
+            className="text-on-surface-variant hover:text-error transition-colors p-1 btn-ripple"
             id={`task-delete-${id}`}
           >
             <span className="material-symbols-outlined text-[16px]">delete</span>
