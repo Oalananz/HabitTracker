@@ -95,37 +95,16 @@ export async function updateGoal(
 }
 
 export async function incrementGoalProgress(goalId: string, userId: string, amount: number = 1) {
-  const { data: current, error: fetchError } = await supabase
-    .from('goals')
-    .select('current_count, target_count')
-    .eq('id', goalId)
-    .eq('user_id', userId)
-    .single();
-
-  if (fetchError || !current) throw new Error('Goal not found');
-
-  const newCount = (current.current_count || 0) + amount;
-  const isComplete = newCount >= (current.target_count || 1);
-
-  const updateData: Database['public']['Tables']['goals']['Update'] = {
-    current_count: newCount,
-  };
-
-  if (isComplete) {
-    updateData.completed = true;
-    updateData.completed_at = new Date().toISOString();
-  }
-
   const { data: goal, error } = await supabase
-    .from('goals')
-    .update(updateData)
-    .eq('id', goalId)
-    .eq('user_id', userId)
-    .select()
-    .single();
+    .rpc('increment_goal_progress', {
+      p_goal_id: goalId,
+      p_user_id: userId,
+      p_amount: amount,
+    } as any);
 
   if (error) throw new Error(error.message);
-  return mapGoal(goal);
+  if (!goal) throw new Error('Goal not found');
+  return mapGoal(goal as GoalRow);
 }
 
 export async function toggleGoalComplete(goalId: string, userId: string) {

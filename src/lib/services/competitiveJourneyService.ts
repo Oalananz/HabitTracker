@@ -784,19 +784,11 @@ export async function recordJourneyFailure(journeyId: string, userId: string) {
   const rules = asStructuredRules(journey.rules_json);
   const resetStreak = rules.resetStreakOnFailure ?? true;
 
-  const participantUpdate: Database['public']['Tables']['journey_participants']['Update'] = {
-    total_failures: participant.total_failures + 1,
-  };
-
-  if (resetStreak) {
-    participantUpdate.current_streak = 0;
-    participantUpdate.last_failure_at = now.toISOString();
-  }
-
   const { error: participantUpdateError } = await supabase
-    .from('journey_participants')
-    .update(participantUpdate)
-    .eq('id', participant.id);
+    .rpc('increment_journey_failure', {
+      p_participant_id: participant.id,
+      p_reset_streak: resetStreak,
+    } as any);
 
   if (participantUpdateError) throw new Error(participantUpdateError.message);
 

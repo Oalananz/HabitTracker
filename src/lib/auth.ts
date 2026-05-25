@@ -64,18 +64,18 @@ export async function getCurrentUser() {
 
   const { data: newProfile } = await supabase
     .from('users')
-    .insert({
+    .upsert({
       id: user.id,
       email: user.email!,
       username,
-    })
+    }, { onConflict: 'id' })
     .select('id, email, username, status_message, created_at')
     .single();
 
   // Also create initial recovery state
   await supabase
     .from('recovery_states')
-    .insert({ user_id: user.id, start_time: new Date().toISOString() })
+    .upsert({ user_id: user.id, start_time: new Date().toISOString() }, { onConflict: 'user_id' })
     .select()
     .maybeSingle();
 
