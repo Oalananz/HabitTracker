@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import {
-  getTasksForDate,
   getOrGenerateTasksForDate,
   completeTask,
   uncompleteTask,
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
     console.error('POST /api/tasks error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   } finally {

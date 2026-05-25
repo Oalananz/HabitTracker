@@ -21,15 +21,7 @@ export async function POST(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const message = (error as Error).message || 'Internal server error';
-    const status =
-      message.includes('not found')
-        ? 404
-        : message.includes('invite') || message.includes('Private')
-          ? 403
-          : 400;
-
-    return NextResponse.json({ error: message }, { status });
+    console.error('POST /api/journeys/[id]/join error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 400 });
   }
 }

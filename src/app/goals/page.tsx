@@ -305,12 +305,12 @@ export default function GoalsPage() {
                     </div>
 
                     {/* Right: Meta */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="text-right">
-                        <span className={`font-label text-[10px] uppercase tracking-widest block ${getStatusColor(goal)}`}>
+                    <div className="flex items-start gap-3 flex-shrink-0">
+                      <div className="text-right flex flex-col items-end gap-1 min-w-[88px] leading-tight">
+                        <span className={`font-label text-[10px] uppercase tracking-widest ${getStatusColor(goal)} whitespace-nowrap`}>
                           {getStatusLabel(goal)}
                         </span>
-                        <span className="font-mono text-[10px] text-outline block mt-0.5">
+                        <span className="font-mono text-[10px] text-outline whitespace-nowrap">
                           {goal.goalType.toUpperCase()}
                         </span>
                       </div>

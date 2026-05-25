@@ -345,7 +345,7 @@ export default function CompetitiveMode() {
             <span className="bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">COMPETITIVE RECOVERY</span>
           </h2>
           <p className="font-body text-sm md:text-base text-on-surface-variant max-w-2xl mt-3 leading-relaxed">
-            Assemble your team, define strict rules, and fight together. Shared journeys feature transparent failures, live live rankings, automated consequences, and social accountability loops.
+            Assemble your team, define strict rules, and fight together. Shared journeys feature transparent failures, live rankings, automated consequences, and social accountability loops.
           </p>
         </div>
         <button

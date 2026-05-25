@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import PlanCard from '@/components/planner/PlanCard';
 import PlanForm from '@/components/planner/PlanForm';
@@ -36,30 +36,35 @@ export default function PrayerPlannerPage() {
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [showTimeEditor, setShowTimeEditor] = useState(false);
   const [editTimes, setEditTimes] = useState<Record<string, string>>({});
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'fetching' | 'success' | 'denied' | 'error'>('idle');
   const { setManualPrayerTimes } = useStore();
+  const geoResolvedRef = useRef(false);
 
-  // Auto-fetch real prayer times using browser geolocation
+  // Auto-fetch real prayer times using browser geolocation (once)
   useEffect(() => {
+    if (!plannerDate) return;
     fetchPlans(plannerDate);
+
+    if (geoResolvedRef.current) {
+      fetchPrayerTimes(plannerDate);
+      return;
+    }
 
     // Try geolocation → real prayer times, fallback to defaults
     if (navigator.geolocation) {
-      setLocationStatus('fetching');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setLocationStatus('success');
+          geoResolvedRef.current = true;
           fetchPrayerTimesFromLocation(plannerDate, pos.coords.latitude, pos.coords.longitude);
         },
         () => {
+          geoResolvedRef.current = true;
           // Geolocation denied or unavailable — use stored/defaults
-          setLocationStatus('denied');
           fetchPrayerTimes(plannerDate);
         },
         { timeout: 8000, maximumAge: 300_000 } // cache position for 5 min
       );
     } else {
-      setLocationStatus('error');
+      geoResolvedRef.current = true;
       fetchPrayerTimes(plannerDate);
     }
   }, [plannerDate, fetchPlans, fetchPrayerTimes, fetchPrayerTimesFromLocation]);
@@ -94,20 +99,31 @@ export default function PrayerPlannerPage() {
     if (!isToday) return null;
 
     const prayers = [
-      { name: 'isha', time: prayerTimes.isha },
-      { name: 'maghrib', time: prayerTimes.maghrib },
-      { name: 'asr', time: prayerTimes.asr },
-      { name: 'dhuhr', time: prayerTimes.dhuhr },
       { name: 'fajr', time: prayerTimes.fajr },
+      { name: 'dhuhr', time: prayerTimes.dhuhr },
+      { name: 'asr', time: prayerTimes.asr },
+      { name: 'maghrib', time: prayerTimes.maghrib },
+      { name: 'isha', time: prayerTimes.isha },
     ];
-    for (const p of prayers) {
-      if (now >= p.time) return p.name;
+
+    // Find current prayer by checking between each prayer's start and the next's start
+    let current = null;
+    for (let i = 0; i < prayers.length; i++) {
+      const nextPrayer = prayers[i + 1];
+      if (now >= prayers[i].time && (!nextPrayer || now < nextPrayer.time)) {
+        current = prayers[i].name;
+        break;
+      }
     }
-    return null;
+    // If now >= isha time, current is isha
+    if (!current && now >= prayers[prayers.length - 1].time) {
+      current = prayers[prayers.length - 1].name;
+    }
+    return current;
   }, [prayerTimes, plannerDate]);
 
   // Next prayer
-  const nextPrayer = useMemo(() => {
+  const nextPrayer = (() => {
     if (!prayerTimes) return null;
     const now = dayjs().format('HH:mm');
     const isToday = plannerDate === dayjs().format('YYYY-MM-DD');
@@ -117,7 +133,7 @@ export default function PrayerPlannerPage() {
       if (now < prayerTimes[name]) return { name, time: prayerTimes[name] };
     }
     return null;
-  }, [prayerTimes, plannerDate]);
+  })();
 
   const handleCreate = async (prayerBlock: string, data: Parameters<typeof createPlan>[0]) => {
     await createPlan({ ...data, prayerBlock, startDate: plannerDate });
@@ -158,6 +174,10 @@ export default function PrayerPlannerPage() {
   // Completion stats
   const totalPlans = plans.length;
   const completedPlans = plans.filter(p => p.status === 'completed').length;
+
+  if (!plannerDate) {
+    return null;
+  }
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -216,7 +236,7 @@ export default function PrayerPlannerPage() {
           <div className="text-right">
             <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">SOURCE</div>
             <div className="font-mono text-[10px] flex items-center gap-1 justify-end">
-              {isPrayerTimesLoading || locationStatus === 'fetching' ? (
+              {isPrayerTimesLoading ? (
                 <><span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" /><span className="text-tertiary">Locating...</span></>
               ) : prayerTimes?.source === 'api' ? (
                 <><span className="w-1.5 h-1.5 rounded-full bg-primary" /><span className="text-primary">GPS</span></>

@@ -34,8 +34,6 @@ export interface PrayerTimes {
   createdAt: string;
 }
 
-const PRAYER_NAMES = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
-
 // =====================================================
 // Mappers
 // =====================================================

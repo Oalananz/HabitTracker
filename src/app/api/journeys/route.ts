@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     console.error('GET /api/journeys error:', error);
-    return NextResponse.json({ error: (error as Error).message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     const t1 = performance.now();
     console.log(`[GET /api/journeys] took ${(t1 - t0).toFixed(2)}ms`);
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    return NextResponse.json({ error: (error as Error).message || 'Internal server error' }, { status: 500 });
+    console.error('POST /api/journeys error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import TerminalWindow from '@/components/ui/TerminalWindow';
 
 interface HabitFormProps {
   onSubmit: (data: {
@@ -54,20 +55,7 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
   };
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant/15 rounded-md overflow-hidden animate-fade-in">
-      {/* Terminal Header */}
-      <div className="bg-surface-container-low px-4 py-2.5 flex items-center gap-2 border-b border-outline-variant/15">
-        <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-error/60"></div>
-          <div className="w-2.5 h-2.5 rounded-full bg-tertiary/60"></div>
-          <div className="w-2.5 h-2.5 rounded-full bg-primary/60"></div>
-        </div>
-        <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest">
-          init_protocol.sh
-        </span>
-      </div>
-
-      <div className="p-6">
+    <TerminalWindow title="init_protocol.sh" className="animate-fade-in" bodyClassName="p-6">
         <h3 className="font-headline text-lg font-bold text-primary mb-6 flex items-center gap-2">
           <span className="material-symbols-outlined text-[20px]">add_box</span>
           {initialData ? 'Edit Protocol' : 'Define New Protocol'}
@@ -230,7 +218,6 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
             <span className="text-primary animate-blink">_</span>
           </div>
         </div>
-      </div>
-    </div>
+    </TerminalWindow>
   );
 }

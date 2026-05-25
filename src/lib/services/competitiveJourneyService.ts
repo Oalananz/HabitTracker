@@ -344,7 +344,8 @@ export async function inviteUser(journeyId: string, ownerId: string, input: Invi
       .maybeSingle();
 
     if (usernameError) throw new Error(usernameError.message);
-    inviteeUserId = userByUsername?.id || null;
+    if (!userByUsername) throw new Error(`User "${username}" not found`);
+    inviteeUserId = userByUsername.id;
   }
 
   if (!inviteeUserId && email) {
@@ -355,7 +356,8 @@ export async function inviteUser(journeyId: string, ownerId: string, input: Invi
       .maybeSingle();
 
     if (emailError) throw new Error(emailError.message);
-    inviteeUserId = userByEmail?.id || null;
+    if (!userByEmail) throw new Error(`No user found with email "${email}"`);
+    inviteeUserId = userByEmail.id;
   }
 
   const token = randomUUID().replaceAll('-', '');

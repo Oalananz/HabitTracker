@@ -24,9 +24,9 @@ export async function GET(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const status = (error as Error).message.includes('not found') ? 404 : 500;
-    return NextResponse.json({ error: (error as Error).message || 'Internal server error' }, { status });
+    console.error('GET /api/journeys/[id] error:', error);
+    const status = (error as Error).message.includes('not found') || (error as Error).message.includes('access') ? 404 : 500;
+    return NextResponse.json({ error: status === 404 ? 'Not found' : 'Internal server error' }, { status });
   } finally {
     const t1 = performance.now();
     console.log(`[GET /api/journeys/[id]] took ${(t1 - t0).toFixed(2)}ms`);
@@ -51,8 +51,12 @@ export async function POST(
         return NextResponse.json({ invite });
       }
       case 'addConsequence': {
+        const failureThreshold = body.failureThreshold !== undefined ? Number(body.failureThreshold) : NaN;
+        if (isNaN(failureThreshold)) {
+          return NextResponse.json({ error: 'failureThreshold is required and must be a number' }, { status: 400 });
+        }
         const consequence = await addJourneyConsequence(id, userId, {
-          failureThreshold: Number(body.failureThreshold),
+          failureThreshold,
           description: body.description,
           consequenceType: body.consequenceType,
           symbol: body.symbol,
@@ -78,16 +82,8 @@ export async function POST(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const message = (error as Error).message || 'Internal server error';
-    const status =
-      message.includes('not found')
-        ? 404
-        : message.includes('must') || message.includes('Only') || message.includes('required')
-          ? 400
-          : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    console.error('POST /api/journeys/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -105,16 +101,8 @@ export async function DELETE(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const message = (error as Error).message || 'Internal server error';
-    const status =
-      message.includes('not found')
-        ? 404
-        : message.includes('must') || message.includes('Only') || message.includes('required')
-          ? 400
-          : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    console.error('DELETE /api/journeys/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -140,15 +128,7 @@ export async function PUT(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const message = (error as Error).message || 'Internal server error';
-    const status =
-      message.includes('not found')
-        ? 404
-        : message.includes('must') || message.includes('Only') || message.includes('required')
-          ? 400
-          : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    console.error('PUT /api/journeys/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -6,10 +6,20 @@ import { useStore } from '@/store/useStore';
 import Sidebar from '@/components/layout/Sidebar';
 import Logo from '@/components/ui/Logo';
 import ToastContainer from '@/components/ui/Toast';
+import dayjs from 'dayjs';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, isAuthLoading, authInitialized, checkAuth } = useStore();
+  const {
+    user,
+    isAuthLoading,
+    authInitialized,
+    checkAuth,
+    selectedDate,
+    setSelectedDate,
+    plannerDate,
+    setPlannerDate,
+  } = useStore();
 
   useEffect(() => {
     if (!authInitialized) {
@@ -22,6 +32,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       router.replace('/login');
     }
   }, [user, authInitialized, isAuthLoading, router]);
+
+  useEffect(() => {
+    const today = dayjs().format('YYYY-MM-DD');
+    if (!selectedDate) setSelectedDate(today);
+    if (!plannerDate) setPlannerDate(today);
+  }, [plannerDate, selectedDate, setPlannerDate, setSelectedDate]);
 
   if (!authInitialized && isAuthLoading) {
     return (

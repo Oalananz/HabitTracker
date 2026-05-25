@@ -451,7 +451,7 @@ export default function PlannerPage() {
                       {/* Plans list */}
                       <div className="flex flex-col gap-1 p-2 flex-1">
                         {dayPlans.length === 0 ? (
-                          <span className="font-mono text-[9px] text-outline text-center mt-6">—</span>
+                          <span className="font-mono text-[9px] text-outline/70 text-center mt-6">+</span>
                         ) : (
                           dayPlans.map(plan => (
                             <PlanCard

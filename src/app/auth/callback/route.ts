@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
+const ALLOWED_REDIRECT_PATHS = new Set([
+  '/today', '/dashboard', '/recovery', '/calendar', '/habits',
+  '/settings', '/planner', '/prayer-planner', '/goals', '/',
+]);
+
+function isValidRedirectPath(path: string): boolean {
+  const cleaned = path.split('?')[0].split('#')[0];
+  return cleaned.startsWith('/') && !cleaned.startsWith('//') && ALLOWED_REDIRECT_PATHS.has(cleaned);
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/today';
+  const nextParam = searchParams.get('next') ?? '/today';
+  const next = isValidRedirectPath(nextParam) ? nextParam : '/today';
 
   if (code) {
     const supabase = await createClient();

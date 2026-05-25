@@ -1,24 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 
 export default function SettingsPage() {
   const { user, logout } = useStore();
-  const [username, setUsername] = useState('');
-  const [statusMsg, setStatusMsg] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setUsername(user.username);
-      setStatusMsg(user.statusMessage || '');
-    }
-  }, [user]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const username = user?.username || '';
+  const statusMsg = user?.statusMessage || '';
 
   const handleLogout = async () => {
     await logout();
     window.location.href = '/login';
   };
+
+  const handleSaveProfile = useCallback(async () => {
+    const usernameInput = document.getElementById('settings-username') as HTMLInputElement;
+    const statusInput = document.getElementById('settings-status') as HTMLInputElement;
+    if (!usernameInput) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: usernameInput.value.trim(),
+          statusMessage: statusInput?.value?.trim() || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      const data = await res.json();
+      useStore.getState().setUser(data.user);
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const handleClearAllData = useCallback(async () => {
+    setShowClearConfirm(false);
+    try {
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clearAll' }),
+      });
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   return (
     <div className="space-y-8 animate-page-enter">
@@ -58,8 +91,7 @@ export default function SettingsPage() {
                 <span className="text-primary font-mono text-sm">&gt;</span>
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  defaultValue={username}
                   className="w-full bg-transparent text-on-surface text-sm font-body border-none p-0 focus:ring-0"
                   id="settings-username"
                 />
@@ -72,14 +104,21 @@ export default function SettingsPage() {
                 <span className="text-primary font-mono text-sm">&gt;</span>
                 <input
                   type="text"
-                  value={statusMsg}
-                  onChange={(e) => setStatusMsg(e.target.value)}
-                  className="w-full bg-transparent text-on-surface text-sm font-body border-none p-0 focus:ring-0"
+                  defaultValue={statusMsg}
+                  className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0"
                   placeholder="Compiling habits..."
                   id="settings-status"
                 />
               </div>
             </div>
+
+            <button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="w-full px-4 py-2 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {saving ? 'SAVING...' : 'SAVE PROFILE'}
+            </button>
           </div>
 
           {/* Notifications */}
@@ -131,7 +170,10 @@ export default function SettingsPage() {
                 <p className="font-body text-xs text-on-surface-variant mb-3">
                   Warning: Executing this command will irreversibly wipe all habit history, streaks, and system configurations. This action cannot be undone.
                 </p>
-                <button className="w-full px-4 py-2.5 border border-error/30 rounded-sm font-headline font-bold text-xs uppercase tracking-wider text-error hover:bg-error/10 transition-colors">
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-full px-4 py-2.5 border border-error/30 rounded-sm font-headline font-bold text-xs uppercase tracking-wider text-error hover:bg-error/10 transition-colors"
+                >
                   EXECUTE SUDO RM -RF /HABITS
                 </button>
               </div>
@@ -153,6 +195,42 @@ export default function SettingsPage() {
             TERMINATE SESSION
           </button>
         </div>
+
+        {showClearConfirm && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[120] animate-fade-in"
+            onClick={() => setShowClearConfirm(false)}
+          >
+            <div
+              className="bg-surface-container border border-error/30 rounded-md p-6 max-w-sm w-full mx-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-error text-[20px]">warning</span>
+                <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
+                  Confirm Clear
+                </h3>
+              </div>
+              <p className="font-body text-sm text-on-surface-variant mb-5">
+                This will permanently delete all habit history, streaks, and system configurations. This action cannot be undone.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 text-xs font-label uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearAllData}
+                  className="px-4 py-2 bg-error text-on-error text-xs font-label uppercase font-bold rounded-sm hover:bg-error/90 transition-colors"
+                >
+                  Confirm Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
   );
 }

@@ -123,6 +123,16 @@ export default function CalendarPage() {
   };
 
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const incidentLogs = (() => {
+    if (!selectedDay) return [] as typeof failures;
+    const seen = new Set<string>();
+    return failures.filter(f => dayjs(f.timestamp).format('YYYY-MM-DD') === selectedDay)
+      .filter(f => {
+        if (seen.has(f.id)) return false;
+        seen.add(f.id);
+        return true;
+      });
+  })();
 
   return (
     <div className="space-y-8 animate-page-enter">
@@ -307,17 +317,17 @@ export default function CalendarPage() {
                   )}
 
                   {/* Failure incidents for selected day */}
-                  {failures.filter(f => dayjs(f.timestamp).format('YYYY-MM-DD') === selectedDay).length > 0 && (
+                  {incidentLogs.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-outline-variant/10">
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="material-symbols-outlined text-[14px] text-error">error</span>
                         <span className="font-label text-[10px] uppercase tracking-widest text-error">INCIDENT_REPORTS</span>
                       </div>
-                      {failures.filter(f => dayjs(f.timestamp).format('YYYY-MM-DD') === selectedDay).map(f => (
+                      {incidentLogs.map(f => (
                         <div key={f.id} className="bg-error-container/10 border border-error/20 rounded-sm p-3 mt-2">
                           <div className="font-label text-xs text-error uppercase">TRIGGER_EVENT</div>
                           <div className="font-mono text-[10px] text-on-surface-variant mt-1">
-                            {dayjs(f.timestamp).format('HH:mm_A')}
+                            {dayjs(f.timestamp).format('HH:mm_A')} — {f.note || 'Failure logged'}
                           </div>
                         </div>
                       ))}

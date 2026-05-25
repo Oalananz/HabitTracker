@@ -95,7 +95,6 @@ export async function updateGoal(
 }
 
 export async function incrementGoalProgress(goalId: string, userId: string, amount: number = 1) {
-  // First get current
   const { data: current, error: fetchError } = await supabase
     .from('goals')
     .select('current_count, target_count')
@@ -130,14 +129,14 @@ export async function incrementGoalProgress(goalId: string, userId: string, amou
 }
 
 export async function toggleGoalComplete(goalId: string, userId: string) {
-  const { data: current } = await supabase
+  const { data: current, error: fetchError } = await supabase
     .from('goals')
     .select('completed')
     .eq('id', goalId)
     .eq('user_id', userId)
     .single();
 
-  if (!current) throw new Error('Goal not found');
+  if (fetchError || !current) throw new Error('Goal not found');
 
   const { data: goal, error } = await supabase
     .from('goals')
@@ -178,23 +177,26 @@ export async function getGoalsSummary(userId: string) {
   const totalCompleted = all.filter(g => g.completed).length;
 
   // Weekly goals completed this week
+  const today = dayjs().startOf('day');
   const startOfWeek = dayjs().startOf('week');
   const weeklyCompleted = all.filter(
     g => g.goal_type === 'weekly' && g.completed && dayjs(g.completed_at).isAfter(startOfWeek)
   ).length;
 
   // Dated goals due soon (within 7 days)
-  const dueSoon = all.filter(
-    g => g.goal_type === 'dated' && !g.completed && g.target_date &&
-      dayjs(g.target_date).diff(dayjs(), 'day') <= 7 &&
-      dayjs(g.target_date).diff(dayjs(), 'day') >= 0
-  ).length;
+  const dueSoon = all.filter((g) => {
+    if (g.goal_type !== 'dated' || g.completed || !g.target_date) return false;
+    const targetDate = dayjs(g.target_date).startOf('day');
+    const diff = targetDate.diff(today, 'day');
+    return diff <= 7 && diff >= 0;
+  }).length;
 
   // Overdue
-  const overdue = all.filter(
-    g => g.goal_type === 'dated' && !g.completed && g.target_date &&
-      dayjs(g.target_date).isBefore(dayjs(), 'day')
-  ).length;
+  const overdue = all.filter((g) => {
+    if (g.goal_type !== 'dated' || g.completed || !g.target_date) return false;
+    const targetDate = dayjs(g.target_date).startOf('day');
+    return targetDate.isBefore(today, 'day');
+  }).length;
 
   return {
     totalActive,

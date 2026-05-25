@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
 import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
@@ -19,6 +19,12 @@ export default function DashboardPage() {
     fetchJourneys();
     fetchGoalsSummary();
   }, [fetchMetrics, fetchJourneys, fetchGoalsSummary]);
+
+  const [now, setNow] = useState(() => dayjs());
+  useEffect(() => {
+    const id = setInterval(() => setNow(dayjs()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="space-y-8 animate-page-enter">
@@ -56,7 +62,6 @@ export default function DashboardPage() {
                 label="CURRENT STREAK"
                 value={metrics.currentStreak}
                 unit="DAYS"
-                subtitle="+3% vs prev. cycle"
                 icon="local_fire_department"
                 variant="primary"
               />
@@ -143,9 +148,7 @@ export default function DashboardPage() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {journeys.map((j) => {
-                    const days = Math.floor(
-                      (Date.now() - new Date(j.startTime).getTime()) / (1000 * 60 * 60 * 24)
-                    );
+                    const days = now.diff(dayjs(j.startTime), 'day');
                     return (
                       <div
                         key={j.id}

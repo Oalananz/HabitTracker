@@ -12,6 +12,7 @@ export async function GET() {
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.error('GET /api/failures error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.error('POST /api/failures error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

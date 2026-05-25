@@ -74,7 +74,7 @@ export function SkeletonChart() {
           <SkeletonBase
             key={i}
             className="flex-1 rounded-t-sm"
-            style={{ height: `${30 + Math.random() * 70}%` }}
+            style={{ height: `${30 + ((i * 37) % 70)}%` }}
           />
         ))}
       </div>

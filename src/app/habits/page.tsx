@@ -113,7 +113,7 @@ export default function HabitsPage() {
                             </span>
                             <span className="flex items-center gap-1 text-primary font-label">
                               <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
-                              STREAK: {streakCount}
+                              TASKS: {streakCount}
                             </span>
                           </div>
                         </div>

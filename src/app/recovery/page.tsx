@@ -34,20 +34,28 @@ export default function RecoveryPage() {
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
-    await createJourney({
-      title: newTitle.trim(),
-      description: newDesc.trim() || undefined,
-      startTime: new Date(newStartTime).toISOString(),
-    });
-    setNewTitle('');
-    setNewDesc('');
-    setNewStartTime(dayjs().format('YYYY-MM-DDTHH:mm'));
-    setShowCreate(false);
+    try {
+      await createJourney({
+        title: newTitle.trim(),
+        description: newDesc.trim() || undefined,
+        startTime: new Date(newStartTime).toISOString(),
+      });
+      setNewTitle('');
+      setNewDesc('');
+      setNewStartTime(dayjs().format('YYYY-MM-DDTHH:mm'));
+      setShowCreate(false);
+    } catch {
+      // silent fail
+    }
   };
 
   const handleFail = async (journeyId: string) => {
     setConfirmFail(null);
-    await recordJourneyFailure(journeyId);
+    try {
+      await recordJourneyFailure(journeyId);
+    } catch {
+      // silent fail
+    }
   };
 
   const getMilestones = (startTime: string) => {
@@ -223,7 +231,7 @@ export default function RecoveryPage() {
                   {isExpanded && (
                     <div className="border-t border-outline-variant/10 animate-fade-in">
                       {/* Timer */}
-                      <TimerDisplay startTime={journey.startTime} />
+                      <TimerDisplay startTime={journey.startTime} now={clockNow} />
 
                       {/* Milestones */}
                       <div className="px-5 pb-4">

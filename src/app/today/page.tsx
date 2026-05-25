@@ -5,12 +5,13 @@ import { useStore } from '@/store/useStore';
 import SectionHeader from '@/components/ui/SectionHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
+import TerminalWindow from '@/components/ui/TerminalWindow';
 import { useToast } from '@/store/useToast';
 import dayjs from 'dayjs';
 
 export default function TodayPage() {
   const {
-    tasks, taskSummary, isTasksLoading, fetchTasks,
+    tasks, isTasksLoading, fetchTasks,
     completeTask, uncompleteTask, createTask, deleteTask,
     selectedDate, setSelectedDate, metrics, fetchMetrics,
   } = useStore();
@@ -67,7 +68,8 @@ export default function TodayPage() {
       setNewDesc('');
       setShowAddForm(false);
     } catch (err) {
-      console.error(err);
+      const message = err instanceof Error ? err.message : 'Failed to create task';
+      addToast(message, 'error');
     }
   };
 
@@ -80,9 +82,9 @@ export default function TodayPage() {
     }
   };
 
-  const nonHabitTasks = tasks.filter(t => t.sourceType !== 'habit');
+  const visibleTasks = tasks;
 
-  const filteredTasks = nonHabitTasks.filter(t => {
+  const filteredTasks = visibleTasks.filter(t => {
     if (filterStatus === 'pending' && t.completed) return false;
     if (filterStatus === 'completed' && !t.completed) return false;
     if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
@@ -92,11 +94,11 @@ export default function TodayPage() {
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
 
-  const uniqueCategories = Array.from(new Set(nonHabitTasks.map(t => t.category || 'General')));
+  const uniqueCategories = Array.from(new Set(visibleTasks.map(t => t.category || 'General')));
 
-  const activePendingCount = nonHabitTasks.filter(t => !t.completed).length;
-  const activeCompletedCount = nonHabitTasks.filter(t => t.completed).length;
-  const activeTotalCount = nonHabitTasks.length;
+  const activePendingCount = visibleTasks.filter(t => !t.completed).length;
+  const activeCompletedCount = visibleTasks.filter(t => t.completed).length;
+  const activeTotalCount = visibleTasks.length;
 
   return (
     <div className="space-y-8 animate-page-enter">
@@ -118,7 +120,7 @@ export default function TodayPage() {
               rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
             />
 
-            {nonHabitTasks.length > 0 && (
+            {visibleTasks.length > 0 && (
               <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2">
                 <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">&gt; FILTER</span>
                 <select
@@ -156,7 +158,7 @@ export default function TodayPage() {
                   </div>
                 ))}
               </div>
-            ) : nonHabitTasks.length === 0 ? (
+            ) : visibleTasks.length === 0 ? (
               <EmptyState title="No tasks for today" description="Create a manual task to get started." icon="task_alt" />
             ) : filteredTasks.length === 0 ? (
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
@@ -271,31 +273,27 @@ export default function TodayPage() {
             </div>
 
             {/* Terminal Log */}
-            <div className="flex-1 bg-surface-container-lowest rounded-md border border-outline-variant/15 flex flex-col min-h-[280px]">
-              <div className="bg-surface-container-low px-4 py-2 border-b border-outline-variant/15 flex justify-between items-center rounded-t-md">
-                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">&gt; logs/activity</span>
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-outline-variant"></div>
-                  <div className="w-2 h-2 rounded-full bg-outline-variant"></div>
-                  <div className="w-2 h-2 rounded-full bg-outline-variant"></div>
-                </div>
-              </div>
-              <div className="p-4 font-mono text-xs text-on-surface-variant flex flex-col gap-2 overflow-y-auto flex-1">
+            <TerminalWindow
+              title="logs/activity"
+              className="flex-1 min-h-[280px]"
+              bodyClassName="p-4 font-mono text-xs text-on-surface-variant flex flex-col gap-2 overflow-y-auto flex-1"
+              dots={['bg-outline-variant', 'bg-outline-variant', 'bg-outline-variant']}
+            >
                 <div className="flex gap-2">
-                  <span className="text-outline">[{dayjs().format('HH:mm')}]</span>
+                  <span className="text-outline">[{dayjs().format('MMM-DD HH:mm').toUpperCase()}]</span>
                   <span className="text-secondary">SYSTEM:</span>
                   <span>Daily initialization complete.</span>
                 </div>
-                {nonHabitTasks.length > 0 && (
+                {visibleTasks.length > 0 && (
                   <div className="flex gap-2">
-                    <span className="text-outline">[{dayjs().format('HH:mm')}]</span>
+                    <span className="text-outline">[{dayjs().format('MMM-DD HH:mm').toUpperCase()}]</span>
                     <span className="text-primary">TASKS:</span>
                     <span>{activeTotalCount} loaded, {activeCompletedCount} complete.</span>
                   </div>
                 )}
                 {completedTasks.slice(0, 3).map(t => (
                   <div key={t.id} className="flex gap-2">
-                    <span className="text-outline">[{dayjs(t.completedAt).format('HH:mm')}]</span>
+                    <span className="text-outline">[{t.completedAt ? dayjs(t.completedAt).format('MMM-DD HH:mm').toUpperCase() : '--'}]</span>
                     <span className="text-surface-tint">DONE:</span>
                     <span>&apos;{t.title}&apos; marked complete.</span>
                   </div>
@@ -303,8 +301,7 @@ export default function TodayPage() {
                 <div className="flex gap-2 mt-4 opacity-50">
                   <span className="text-primary animate-blink">_</span>
                 </div>
-              </div>
-            </div>
+            </TerminalWindow>
           </div>
         </div>
       </div>

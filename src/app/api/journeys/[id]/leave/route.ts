@@ -15,9 +15,9 @@ export async function POST(
     if ((error as Error).message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    console.error('POST /api/journeys/[id]/leave error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 400 }
     );
   }

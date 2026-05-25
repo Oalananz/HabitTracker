@@ -171,20 +171,33 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
     }
 
     if (toInsert.length > 0) {
-      // Insert missing tasks and return them
-      const { data: inserted } = await supabase
-        .from('task_instances')
-        .insert(toInsert)
-        .select('*');
+      try {
+        const { data: inserted, error: insertError } = await supabase
+          .from('task_instances')
+          .upsert(toInsert, { onConflict: 'user_id,habit_id,date' })
+          .select('*');
 
-      // Merge inserted tasks with existing, re-sort
-      const merged = [...allExisting, ...(inserted || [])];
-      merged.sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        if (a.priority !== b.priority) return (b.priority || '').localeCompare(a.priority || '');
-        return (a.created_at || '').localeCompare(b.created_at || '');
-      });
-      return merged.map(mapTask);
+        if (insertError) throw insertError;
+
+        const merged = [...allExisting, ...(inserted || [])];
+        merged.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          if (a.priority !== b.priority) return (b.priority || '').localeCompare(a.priority || '');
+          return (a.created_at || '').localeCompare(b.created_at || '');
+        });
+        return merged.map(mapTask);
+      } catch {
+        const { data: fallbackTasks } = await supabase
+          .from('task_instances')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('date', dateStr)
+          .order('completed', { ascending: true })
+          .order('priority', { ascending: false })
+          .order('created_at', { ascending: true });
+
+        return (fallbackTasks || []).map(mapTask);
+      }
     }
   }
 

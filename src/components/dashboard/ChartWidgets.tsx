@@ -36,6 +36,8 @@ export default function ChartWidgets({ weeklyTrend }: ChartWidgetsProps) {
               tick={{ fontSize: 10, fill: '#889486', fontFamily: 'Space Grotesk' }}
               tickLine={false}
               axisLine={{ stroke: '#3e4a3e', strokeWidth: 0.5 }}
+              interval={0}
+              minTickGap={0}
             />
             <YAxis
               tick={{ fontSize: 10, fill: '#889486', fontFamily: 'Space Grotesk' }}
@@ -53,7 +55,10 @@ export default function ChartWidgets({ weeklyTrend }: ChartWidgetsProps) {
                 fontFamily: 'Space Grotesk',
                 color: '#dfe2eb',
               }}
-              formatter={(value: any) => [`${value}%`, 'Rate']}
+              formatter={(value) => {
+                const normalized = Array.isArray(value) ? value[0] : value;
+                return [`${normalized ?? 0}%`, 'Rate'];
+              }}
               labelStyle={{ color: '#bdcaba' }}
             />
             <Area

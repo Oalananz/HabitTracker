@@ -43,14 +43,19 @@ export default function ContributionHeatmap({ data }: ContributionHeatmapProps) 
   if (currentWeek.length > 0) weeks.push(currentWeek);
 
   const months: { label: string; col: number }[] = [];
-  let lastMonth = '';
+  let lastMonthKey = '';
+  const monthCounts = new Map<string, number>();
   weeks.forEach((week, i) => {
     const validDay = week.find((d) => d.date);
     if (validDay) {
-      const month = dayjs(validDay.date).format('MMM');
-      if (month !== lastMonth) {
-        months.push({ label: month.toUpperCase(), col: i });
-        lastMonth = month;
+      const monthKey = dayjs(validDay.date).format('YYYY-MM');
+      const monthName = dayjs(validDay.date).format('MMM').toUpperCase();
+      if (monthKey !== lastMonthKey) {
+        const seen = monthCounts.get(monthName) || 0;
+        monthCounts.set(monthName, seen + 1);
+        const label = seen > 0 ? `${monthName} '${dayjs(validDay.date).format('YY')}` : monthName;
+        months.push({ label, col: i });
+        lastMonthKey = monthKey;
       }
     }
   });

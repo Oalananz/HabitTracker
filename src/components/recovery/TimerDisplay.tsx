@@ -1,39 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 interface TimerDisplayProps {
   startTime: string;
+  now: number;
 }
 
-export default function TimerDisplay({ startTime }: TimerDisplayProps) {
-  const [elapsed, setElapsed] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  const calculateElapsed = useCallback(() => {
-    const start = dayjs(startTime);
-    const now = dayjs();
-    const diffMs = now.diff(start);
-
-    if (diffMs < 0) {
-      setElapsed({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      return;
-    }
-
-    const totalSeconds = Math.floor(diffMs / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    setElapsed({ days, hours, minutes, seconds });
-  }, [startTime]);
-
-  useEffect(() => {
-    calculateElapsed();
-    const interval = setInterval(calculateElapsed, 1000);
-    return () => clearInterval(interval);
-  }, [calculateElapsed]);
+export default function TimerDisplay({ startTime, now }: TimerDisplayProps) {
+  const start = dayjs(startTime);
+  const current = dayjs(now);
+  const diffMs = Math.max(0, current.diff(start));
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const elapsed = {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
 
   // Target: 90 days
   const targetDays = 90;

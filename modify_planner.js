@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 
 const path = 'src/app/planner/page.tsx';
@@ -6,14 +7,14 @@ let content = fs.readFileSync(path, 'utf8');
 // Replace standard imports with calendar imports
 content = content.replace(
   "import dayjs from 'dayjs';",
-  "import dayjs from 'dayjs';\nimport { Calendar, momentLocalizer, Views } from 'react-big-calendar';\nimport moment from 'moment';\nimport 'react-big-calendar/lib/css/react-big-calendar.css';"
+  "import dayjs from 'dayjs';\nimport { Calendar, dayjsLocalizer, Views } from 'react-big-calendar';\nimport 'react-big-calendar/lib/css/react-big-calendar.css';"
 );
 
 // Add localizer
 const viewModeRegex = "type ViewMode = 'daily' | 'weekly' | 'monthly' | 'overview';";
 content = content.replace(
   viewModeRegex,
-  "type ViewMode = 'daily' | 'weekly' | 'monthly' | 'overview';\n\nconst localizer = momentLocalizer(moment);"
+  "type ViewMode = 'daily' | 'weekly' | 'monthly' | 'overview';\n\nconst localizer = dayjsLocalizer(dayjs);"
 );
 
 // Build events from filteredPlans

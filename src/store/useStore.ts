@@ -460,11 +460,12 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateTask: async (taskId, data) => {
-    await fetch('/api/tasks', {
+    const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', taskId, ...data }),
     });
+    if (!res.ok) throw new Error('Failed to update task');
     const { selectedDate, fetchTasks } = get();
     await fetchTasks(selectedDate);
   },
@@ -532,7 +533,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   toggleHabit: async (habitId, isActive) => {
-    await fetch('/api/habits', {
+    const res = await fetch('/api/habits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -540,15 +541,17 @@ export const useStore = create<AppState>((set, get) => ({
         habitId,
       }),
     });
+    if (!res.ok) throw new Error('Failed to toggle habit');
     await get().fetchHabits();
   },
 
   deleteHabit: async (habitId) => {
-    await fetch('/api/habits', {
+    const res = await fetch('/api/habits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', habitId }),
     });
+    if (!res.ok) throw new Error('Failed to delete habit');
     await get().fetchHabits();
   },
 
@@ -589,38 +592,67 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateJourney: async (journeyId, data) => {
-    await fetch('/api/recovery', {
+    const res = await fetch('/api/recovery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'updateJourney', journeyId, ...data }),
     });
+    if (!res.ok) throw new Error('Failed to update journey');
     await get().fetchJourneys();
   },
 
   deleteJourney: async (journeyId) => {
-    await fetch('/api/recovery', {
+    const res = await fetch('/api/recovery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'deleteJourney', journeyId }),
     });
+    if (!res.ok) throw new Error('Failed to delete journey');
     await get().fetchJourneys();
   },
 
   recordJourneyFailure: async (journeyId, note) => {
-    await fetch('/api/recovery', {
+    const prevJourneys = get().journeys;
+    const prevFailures = get().failures;
+    const timestamp = new Date().toISOString();
+    const optimisticFailure: FailureLog = {
+      id: `optimistic-${timestamp}`,
+      journeyId,
+      timestamp,
+      note: note || null,
+      createdAt: timestamp,
+    };
+
+    set({
+      journeys: prevJourneys.map((j) =>
+        j.id === journeyId ? { ...j, failureCount: j.failureCount + 1 } : j
+      ),
+      failures: [optimisticFailure, ...prevFailures],
+    });
+
+    const res = await fetch('/api/recovery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'fail', journeyId, note }),
     });
+
+    if (!res.ok) {
+      set({ journeys: prevJourneys, failures: prevFailures });
+      const err = await res.json().catch(() => ({ error: 'Failed to record failure' }));
+      throw new Error(err.error || 'Failed to record failure');
+    }
+
     await get().fetchJourneys();
+    await get().fetchFailures();
   },
 
   resetJourney: async (journeyId, clearLogs) => {
-    await fetch('/api/recovery', {
+    const res = await fetch('/api/recovery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reset', journeyId, clearLogs }),
     });
+    if (!res.ok) throw new Error('Failed to reset journey');
     await get().fetchJourneys();
   },
 
@@ -692,38 +724,42 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateGoal: async (goalId, data) => {
-    await fetch('/api/goals', {
+    const res = await fetch('/api/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', goalId, ...data }),
     });
+    if (!res.ok) throw new Error('Failed to update goal');
     await get().fetchGoals();
   },
 
   toggleGoalComplete: async (goalId) => {
-    await fetch('/api/goals', {
+    const res = await fetch('/api/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'toggle', goalId }),
     });
+    if (!res.ok) throw new Error('Failed to toggle goal');
     await get().fetchGoals();
   },
 
   incrementGoal: async (goalId, amount = 1) => {
-    await fetch('/api/goals', {
+    const res = await fetch('/api/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'increment', goalId, amount }),
     });
+    if (!res.ok) throw new Error('Failed to increment goal');
     await get().fetchGoals();
   },
 
   deleteGoal: async (goalId) => {
-    await fetch('/api/goals', {
+    const res = await fetch('/api/goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', goalId }),
     });
+    if (!res.ok) throw new Error('Failed to delete goal');
     await get().fetchGoals();
   },
 
@@ -748,7 +784,7 @@ export const useStore = create<AppState>((set, get) => ({
   prayerTimes: null,
   isPlansLoading: false,
   isPrayerTimesLoading: false,
-  plannerDate: new Date().toISOString().split('T')[0],
+  plannerDate: '',
   setPlannerDate: (date) => set({ plannerDate: date }),
 
   fetchPlans: async (date) => {
@@ -925,7 +961,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // UI
-  selectedDate: new Date().toISOString().split('T')[0],
+  selectedDate: '',
   setSelectedDate: (date) => set({ selectedDate: date }),
   sidebarOpen: false,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

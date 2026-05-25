@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface LogoProps {
   className?: string;
@@ -25,10 +26,13 @@ export default function Logo({ className = '', size = 'md', layout = 'vertical' 
     <div className={`flex ${layout === 'vertical' ? 'flex-col items-center gap-4' : 'flex-row items-center gap-3'} ${className}`}>
       {/* Icon */}
       <div className={`relative ${iconSizes[size]}`}>
-        <img
+        <Image
           src="/logo.png"
           alt="HabitTerminal Logo"
-          className="w-full h-full object-contain"
+          fill
+          sizes="(max-width: 768px) 96px, 128px"
+          className="object-contain"
+          priority
         />
       </div>
 

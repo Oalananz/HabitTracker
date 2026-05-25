@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
@@ -20,6 +21,19 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, sidebarOpen, setSidebarOpen } = useStore();
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    const updateStatus = () => setIsOnline(navigator.onLine);
+    updateStatus();
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    return () => {
+      window.removeEventListener('online', updateStatus);
+      window.removeEventListener('offline', updateStatus);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -42,7 +56,7 @@ export default function Sidebar() {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-on-surface-variant hover:text-primary transition-colors"
         >
-          <span className="material-symbols-outlined">menu</span>
+          <span className="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
         <Logo size="sm" />
         <div className="w-8" />
@@ -60,9 +74,9 @@ export default function Sidebar() {
             &gt; {user?.username || 'system/user'}
           </div>
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'}`} />
             <span className="text-xs text-on-surface-variant font-body">
-              Status: Online
+              Status: {isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>
@@ -84,6 +98,7 @@ export default function Sidebar() {
               >
                 <span
                   className="material-symbols-outlined text-[20px] transition-all duration-200"
+                  aria-hidden="true"
                   style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
                   {item.icon}
@@ -111,7 +126,7 @@ export default function Sidebar() {
             onClick={handleLogout}
             className="flex items-center gap-3 w-full text-on-surface-variant/60 hover:text-error pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="material-symbols-outlined text-[20px]" aria-hidden="true">logout</span>
             Logout
           </button>
         </div>

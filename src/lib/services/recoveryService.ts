@@ -67,13 +67,16 @@ export async function createJourney(
   userId: string,
   data: { title: string; description?: string; startTime: string }
 ) {
+  const startDate = new Date(data.startTime);
+  if (isNaN(startDate.getTime())) throw new Error('Invalid start time');
+
   const { data: journey, error } = await supabase
     .from('recovery_journeys')
     .insert({
       user_id: userId,
       title: data.title,
       description: data.description || null,
-      start_time: new Date(data.startTime).toISOString(),
+      start_time: startDate.toISOString(),
     })
     .select()
     .single();
@@ -90,7 +93,11 @@ export async function updateJourney(
   const updateData: Database['public']['Tables']['recovery_journeys']['Update'] = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
-  if (data.startTime !== undefined) updateData.start_time = new Date(data.startTime).toISOString();
+  if (data.startTime !== undefined) {
+    const startDate = new Date(data.startTime);
+    if (isNaN(startDate.getTime())) throw new Error('Invalid start time');
+    updateData.start_time = startDate.toISOString();
+  }
 
   const { data: journey, error } = await supabase
     .from('recovery_journeys')
@@ -223,13 +230,7 @@ export async function getRecoveryState(userId: string) {
     .eq('user_id', userId);
 
   if (!state) {
-    return {
-      id: '',
-      userId,
-      startTime: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      failureCount: failureCount || 0,
-    };
+    return null;
   }
 
   return {

@@ -12,7 +12,7 @@ export async function calculateMetrics(userId: string) {
   ] = await Promise.all([
     supabase
       .from('task_instances')
-      .select('date, completed')
+      .select('date, completed, source_type')
       .eq('user_id', userId)
       .gte('date', now.subtract(365, 'day').format('YYYY-MM-DD'))
       .order('date', { ascending: true }),
@@ -30,6 +30,8 @@ export async function calculateMetrics(userId: string) {
 
   if (error) throw new Error(error.message);
   const tasks = allTasks || [];
+  const habitTasks = tasks.filter((t) => t.source_type === 'habit');
+  const streakTasks = habitTasks.length > 0 ? habitTasks : tasks;
 
   // Total completed
   const totalCompleted = tasks.filter((t) => t.completed).length;
@@ -57,7 +59,7 @@ export async function calculateMetrics(userId: string) {
 
   // Calculate streaks (days where ALL tasks were completed)
   const tasksByDate = new Map<string, { total: number; completed: number }>();
-  tasks.forEach((task) => {
+  streakTasks.forEach((task) => {
     const dateKey = dayjs(task.date).format('YYYY-MM-DD');
     const entry = tasksByDate.get(dateKey) || { total: 0, completed: 0 };
     entry.total++;
@@ -92,16 +94,23 @@ export async function calculateMetrics(userId: string) {
     }
   }
 
-  // Longest streak
+  // Longest streak (fill gaps with empty days so gaps break streaks)
   let longestStreak = 0;
   let tempStreak = 0;
-  for (let i = 0; i < sortedDates.length; i++) {
-    const entry = tasksByDate.get(sortedDates[i])!;
-    if (entry.total > 0 && entry.total === entry.completed) {
-      tempStreak++;
-      longestStreak = Math.max(longestStreak, tempStreak);
-    } else {
-      tempStreak = 0;
+  if (sortedDates.length > 0) {
+    const earliestDate = dayjs(sortedDates[0]);
+    const latestDate = dayjs(sortedDates[sortedDates.length - 1]);
+    let cursor = earliestDate;
+    while (cursor.isBefore(latestDate) || cursor.isSame(latestDate, 'day')) {
+      const key = cursor.format('YYYY-MM-DD');
+      const entry = tasksByDate.get(key);
+      if (entry && entry.total > 0 && entry.total === entry.completed) {
+        tempStreak++;
+        longestStreak = Math.max(longestStreak, tempStreak);
+      } else {
+        tempStreak = 0;
+      }
+      cursor = cursor.add(1, 'day');
     }
   }
 

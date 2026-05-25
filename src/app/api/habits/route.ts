@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
     console.error('POST /api/habits error:', error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

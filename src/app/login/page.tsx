@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { createClient } from '@/utils/supabase/client';
 import Logo from '@/components/ui/Logo';
+import TerminalWindow from '@/components/ui/TerminalWindow';
 
 function LoginContent() {
   const router = useRouter();
@@ -18,12 +19,9 @@ function LoginContent() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'auth-callback-failed') {
-      setError('Authentication failed. Please try again.');
-    }
-  }, [searchParams]);
+  const authCallbackError = searchParams.get('error') === 'auth-callback-failed'
+    ? 'Authentication failed. Please try again.'
+    : '';
 
   const handleGoogleLogin = async () => {
     try {
@@ -68,21 +66,11 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md animate-fade-in">
-        {/* Terminal Window Header */}
-        <div className="bg-surface-container-low rounded-t-md px-4 py-3 flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-error/60"></div>
-            <div className="w-3 h-3 rounded-full bg-tertiary/60"></div>
-            <div className="w-3 h-3 rounded-full bg-primary/60"></div>
-          </div>
-          <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest">
-            {isRegister ? 'init_protocol.sh' : 'auth_gateway.sh'}
-          </span>
-        </div>
-
-        {/* Terminal Body */}
-        <div className="bg-surface-container-lowest border border-outline-variant/15 border-t-0 rounded-b-md p-8">
+      <TerminalWindow
+        title={isRegister ? 'init_protocol.sh' : 'auth_gateway.sh'}
+        className="w-full max-w-md animate-fade-in"
+        bodyClassName="p-8"
+      >
           {/* Logo */}
           <div className="text-center mb-8 flex flex-col items-center">
             <Logo size="lg" />
@@ -98,11 +86,11 @@ function LoginContent() {
               <span className="text-secondary">STATUS:</span>{' '}
               Awaiting credentials...
             </div>
-            {error && (
+            {(error || authCallbackError) && (
               <div className="text-error animate-fade-in">
                 <span className="text-outline">[err]</span>{' '}
                 <span className="text-error">DENIED:</span>{' '}
-                {error}
+                {error || authCallbackError}
               </div>
             )}
             {message && (
@@ -238,8 +226,7 @@ function LoginContent() {
               </span>
             </div>
           </div>
-        </div>
-      </div>
+      </TerminalWindow>
     </div>
   );
 }

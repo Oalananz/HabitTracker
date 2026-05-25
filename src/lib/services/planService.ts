@@ -418,9 +418,10 @@ export async function getPlansSummary(userId: string) {
   const weekPlans = expandPlanRows(plans, weekStart, weekEnd);
   const monthPlans = expandPlanRows(plans, monthStart, monthEnd);
 
-  const overdue = plans.filter(p => {
-    const end = getPlanBounds(p).end;
-    return end < today && p.status !== 'completed' && p.status !== 'cancelled';
+  const overdue = plans.filter((p) => {
+    if (!p.end_date) return false;
+    const targetDate = getPlanBounds(p).end;
+    return targetDate < today && p.status !== 'completed' && p.status !== 'cancelled';
   });
 
   const upcoming = plans.filter(p => {
