@@ -7,6 +7,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Logo from '@/components/ui/Logo';
 import ToastContainer from '@/components/ui/Toast';
 import dayjs from 'dayjs';
+import { networkStatus } from '@/lib/offline/networkStatus';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,13 +20,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setSelectedDate,
     plannerDate,
     setPlannerDate,
+    setOffline,
+    initOfflineData,
+    refreshPendingCount,
   } = useStore();
 
   useEffect(() => {
     if (!authInitialized) {
       checkAuth();
     }
+    // Register Service Worker for PWA offline capability
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+        .catch((err) => console.error('Service Worker registration failed:', err));
+    }
   }, [authInitialized, checkAuth]);
+
+  // Initialize offline data cache after auth
+  useEffect(() => {
+    if (user) {
+      initOfflineData();
+      refreshPendingCount();
+    }
+  }, [user, initOfflineData, refreshPendingCount]);
+
+  // Track network status
+  useEffect(() => {
+    const unsub = networkStatus.subscribe((online) => {
+      setOffline(!online);
+    });
+    setOffline(!networkStatus.isOnline);
+    return unsub;
+  }, [setOffline]);
 
   useEffect(() => {
     if (authInitialized && !isAuthLoading && !user) {

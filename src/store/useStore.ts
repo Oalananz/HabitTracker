@@ -1,5 +1,23 @@
 import { create } from 'zustand';
 import { createClient } from '@/utils/supabase/client';
+import {
+  networkStatus, persistSession, getPersistedSession, clearPersistedSession,
+  clearAllLocalData, pullAllDataFromServer, markInitialDataLoaded, hasInitialData,
+  getPendingSyncCount,
+  getLocalTasks, cacheTasksFromServer, localCreateTask, localUpdateTask,
+  localCompleteTask, localUncompleteTask, localDeleteTask,
+  getLocalHabits, cacheHabitsFromServer, localCreateHabit, localUpdateHabit,
+  localToggleHabit, localDeleteHabit,
+  getLocalGoals, cacheGoalsFromServer, localCreateGoal, localUpdateGoal,
+  localToggleGoalComplete, localIncrementGoal, localDeleteGoal,
+  getLocalJourneys, getLocalRecoveryState, getLocalFailures,
+  cacheJourneysFromServer, cacheFailuresFromServer,
+  localCreateJourney, localUpdateJourney, localDeleteJourney,
+  localRecordJourneyFailure, localResetJourney,
+  getLocalPlans, getLocalPlansByRange, cachePlansFromServer,
+  localCreatePlan, localUpdatePlan, localDeletePlan, localAssignPlanToPrayerBlock,
+  getLocalPrayerTimes, cachePrayerTimesFromServer,
+} from '@/lib/offline';
 
 let authCheckPromise: Promise<void> | null = null;
 
@@ -258,6 +276,13 @@ interface AppState {
   fetchPrayerTimesFromLocation: (date: string, latitude: number, longitude: number) => Promise<void>;
   setManualPrayerTimes: (date: string, times: { fajr?: string; dhuhr?: string; asr?: string; maghrib?: string; isha?: string }) => Promise<void>;
 
+  // Offline / Sync
+  isOffline: boolean;
+  pendingSyncCount: number;
+  setOffline: (offline: boolean) => void;
+  refreshPendingCount: () => Promise<void>;
+  initOfflineData: () => Promise<void>;
+
   // UI
   selectedDate: string;
   setSelectedDate: (date: string) => void;
@@ -274,10 +299,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   login: async (email, password) => {
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     await get().checkAuth({ force: true, background: true });
   },
@@ -285,11 +307,7 @@ export const useStore = create<AppState>((set, get) => ({
   register: async (email, username, password) => {
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username },
-      },
+      email, password, options: { data: { username } },
     });
     if (error) throw new Error(error.message);
     if (data.session) {
@@ -302,7 +320,9 @@ export const useStore = create<AppState>((set, get) => ({
   logout: async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    set({ user: null, isAuthLoading: false, authInitialized: true });
+    await clearPersistedSession();
+    await clearAllLocalData();
+    set({ user: null, isAuthLoading: false, authInitialized: true, pendingSyncCount: 0 });
   },
 
   checkAuth: async (options) => {
@@ -310,34 +330,36 @@ export const useStore = create<AppState>((set, get) => ({
     const background = options?.background ?? false;
     const { authInitialized } = get();
 
-    if (authCheckPromise) {
-      return authCheckPromise;
-    }
-
-    if (authInitialized && !force) {
-      return;
-    }
-
-    if (!background) {
-      set({ isAuthLoading: true });
-    }
+    if (authCheckPromise) return authCheckPromise;
+    if (authInitialized && !force) return;
+    if (!background) set({ isAuthLoading: true });
 
     authCheckPromise = (async () => {
       try {
-        const res = await fetch('/api/auth/me');
-        if (!res.ok) throw new Error('Not authenticated');
-        const data = await res.json();
-        set({ user: data.user || null, isAuthLoading: false, authInitialized: true });
+        if (networkStatus.isOnline) {
+          const res = await fetch('/api/auth/me');
+          if (!res.ok) throw new Error('Not authenticated');
+          const data = await res.json();
+          const user = data.user || null;
+          if (user) await persistSession(user);
+          set({ user, isAuthLoading: false, authInitialized: true });
+        } else {
+          // Offline: use persisted session
+          const cached = await getPersistedSession();
+          set({ user: cached || null, isAuthLoading: false, authInitialized: true, isOffline: true });
+        }
       } catch {
-        set({ user: null, isAuthLoading: false, authInitialized: true });
+        // Network failed — try local session
+        const cached = await getPersistedSession();
+        if (cached) {
+          set({ user: cached, isAuthLoading: false, authInitialized: true, isOffline: true });
+        } else {
+          set({ user: null, isAuthLoading: false, authInitialized: true });
+        }
       }
     })();
 
-    try {
-      await authCheckPromise;
-    } finally {
-      authCheckPromise = null;
-    }
+    try { await authCheckPromise; } finally { authCheckPromise = null; }
   },
 
   // Tasks
@@ -346,20 +368,34 @@ export const useStore = create<AppState>((set, get) => ({
   isTasksLoading: false,
 
   fetchTasks: async (date) => {
-    const hasCachedDateData = get().taskSummary?.date === date;
-    if (!hasCachedDateData) {
+    // 1. Instant local read
+    const localTasks = await getLocalTasks(date);
+    if (localTasks.length) {
+      const completed = localTasks.filter((t) => t.completed).length;
+      set({
+        tasks: localTasks as unknown as Task[],
+        taskSummary: { total: localTasks.length, completed, pending: localTasks.length - completed, date },
+        isTasksLoading: false,
+      });
+    } else {
       set({ isTasksLoading: true });
     }
-    try {
-      // Server now auto-generates missing habit tasks in the GET handler
-      const res = await fetch(`/api/tasks?date=${date}`);
-      const data = await res.json();
-      if (res.ok) {
-        set({ tasks: data.tasks, taskSummary: data.summary, isTasksLoading: false });
-      } else {
+
+    // 2. Background server fetch (if online)
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch(`/api/tasks?date=${date}`);
+        const data = await res.json();
+        if (res.ok) {
+          await cacheTasksFromServer(data.tasks);
+          set({ tasks: data.tasks, taskSummary: data.summary, isTasksLoading: false });
+        } else {
+          set({ isTasksLoading: false });
+        }
+      } catch {
         set({ isTasksLoading: false });
       }
-    } catch {
+    } else {
       set({ isTasksLoading: false });
     }
   },
@@ -368,35 +404,20 @@ export const useStore = create<AppState>((set, get) => ({
     const prevTasks = get().tasks;
     const prevSummary = get().taskSummary;
     const current = prevTasks.find((t) => t.id === taskId);
-
     if (current && !current.completed) {
       set({
-        tasks: prevTasks.map((t) =>
-          t.id === taskId
-            ? { ...t, completed: true, completedAt: new Date().toISOString() }
-            : t
-        ),
+        tasks: prevTasks.map((t) => t.id === taskId ? { ...t, completed: true, completedAt: new Date().toISOString() } : t),
         taskSummary: applySummaryDelta(prevSummary, 0, 1),
       });
     }
+    await localCompleteTask(taskId);
+    get().refreshPendingCount();
 
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'complete', taskId }),
-    });
-
-    if (!res.ok) {
-      set({ tasks: prevTasks, taskSummary: prevSummary });
-      const err = await res.json().catch(() => ({ error: 'Failed to complete task' }));
-      throw new Error(err.error || 'Failed to complete task');
-    }
-
-    const data = await res.json();
-    if (data?.task) {
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...data.task } : t)),
-      }));
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'complete', taskId }) });
+        if (res.ok) { const data = await res.json(); if (data?.task) set((s) => ({ tasks: s.tasks.map((t) => t.id === taskId ? { ...t, ...data.task } : t) })); }
+      } catch { /* queued for sync */ }
     }
   },
 
@@ -404,68 +425,52 @@ export const useStore = create<AppState>((set, get) => ({
     const prevTasks = get().tasks;
     const prevSummary = get().taskSummary;
     const current = prevTasks.find((t) => t.id === taskId);
-
     if (current && current.completed) {
       set({
-        tasks: prevTasks.map((t) =>
-          t.id === taskId
-            ? { ...t, completed: false, completedAt: null }
-            : t
-        ),
+        tasks: prevTasks.map((t) => t.id === taskId ? { ...t, completed: false, completedAt: null } : t),
         taskSummary: applySummaryDelta(prevSummary, 0, -1),
       });
     }
+    await localUncompleteTask(taskId);
+    get().refreshPendingCount();
 
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'uncomplete', taskId }),
-    });
-
-    if (!res.ok) {
-      set({ tasks: prevTasks, taskSummary: prevSummary });
-      const err = await res.json().catch(() => ({ error: 'Failed to uncomplete task' }));
-      throw new Error(err.error || 'Failed to uncomplete task');
-    }
-
-    const data = await res.json();
-    if (data?.task) {
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...data.task } : t)),
-      }));
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'uncomplete', taskId }) });
+        if (res.ok) { const data = await res.json(); if (data?.task) set((s) => ({ tasks: s.tasks.map((t) => t.id === taskId ? { ...t, ...data.task } : t) })); }
+      } catch { /* queued for sync */ }
     }
   },
 
   createTask: async (data) => {
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
-
-    const payload = await res.json();
-    const createdTask = payload?.task;
+    // Local-first create
+    const created = await localCreateTask(data);
     const { selectedDate } = get();
-
-    if (createdTask && createdTask.date === selectedDate) {
+    if (created.date === selectedDate) {
       set((state) => ({
-        tasks: [createdTask, ...state.tasks],
-        taskSummary: applySummaryDelta(state.taskSummary, 1, createdTask.completed ? 1 : 0),
+        tasks: [created as unknown as Task, ...state.tasks],
+        taskSummary: applySummaryDelta(state.taskSummary, 1, 0),
       }));
+    }
+    get().refreshPendingCount();
+
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...data }) });
+        if (res.ok) { const payload = await res.json(); if (payload?.task) set((s) => ({ tasks: s.tasks.map((t) => t.id === created.id ? { ...t, ...payload.task } : t) })); }
+      } catch { /* queued for sync */ }
     }
   },
 
   updateTask: async (taskId, data) => {
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', taskId, ...data }),
-    });
-    if (!res.ok) throw new Error('Failed to update task');
+    await localUpdateTask(taskId, data);
+    get().refreshPendingCount();
+
+    if (networkStatus.isOnline) {
+      try {
+        await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', taskId, ...data }) });
+      } catch { /* queued for sync */ }
+    }
     const { selectedDate, fetchTasks } = get();
     await fetchTasks(selectedDate);
   },
@@ -474,24 +479,16 @@ export const useStore = create<AppState>((set, get) => ({
     const prevTasks = get().tasks;
     const prevSummary = get().taskSummary;
     const toDelete = prevTasks.find((t) => t.id === taskId);
-
     if (toDelete) {
-      set({
-        tasks: prevTasks.filter((t) => t.id !== taskId),
-        taskSummary: applySummaryDelta(prevSummary, -1, toDelete.completed ? -1 : 0),
-      });
+      set({ tasks: prevTasks.filter((t) => t.id !== taskId), taskSummary: applySummaryDelta(prevSummary, -1, toDelete.completed ? -1 : 0) });
     }
+    await localDeleteTask(taskId);
+    get().refreshPendingCount();
 
-    const res = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', taskId }),
-    });
-
-    if (!res.ok) {
-      set({ tasks: prevTasks, taskSummary: prevSummary });
-      const err = await res.json();
-      throw new Error(err.error);
+    if (networkStatus.isOnline) {
+      try {
+        await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', taskId }) });
+      } catch { /* queued for sync */ }
     }
   },
 
@@ -501,58 +498,46 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchHabits: async () => {
     set({ isHabitsLoading: true });
-    try {
-      const res = await fetch('/api/habits');
-      const data = await res.json();
-      if (res.ok) set({ habits: data.habits, isHabitsLoading: false });
-    } catch {
-      set({ isHabitsLoading: false });
+    const localHabits = await getLocalHabits();
+    if (localHabits.length) set({ habits: localHabits as unknown as Habit[], isHabitsLoading: false });
+
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch('/api/habits');
+        const data = await res.json();
+        if (res.ok) { await cacheHabitsFromServer(data.habits); set({ habits: data.habits, isHabitsLoading: false }); }
+      } catch { /* use local */ }
     }
+    set({ isHabitsLoading: false });
   },
 
   createHabit: async (data) => {
-    const res = await fetch('/api/habits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
+    const created = await localCreateHabit(data);
+    set((s) => ({ habits: [created as unknown as Habit, ...s.habits] }));
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/habits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...data }) }); } catch {} }
     await get().fetchHabits();
   },
 
   updateHabit: async (habitId, data) => {
-    await fetch('/api/habits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', habitId, ...data }),
-    });
+    await localUpdateHabit(habitId, data);
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/habits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', habitId, ...data }) }); } catch {} }
     await get().fetchHabits();
   },
 
   toggleHabit: async (habitId, isActive) => {
-    const res = await fetch('/api/habits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: isActive ? 'deactivate' : 'activate',
-        habitId,
-      }),
-    });
-    if (!res.ok) throw new Error('Failed to toggle habit');
+    await localToggleHabit(habitId, isActive);
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/habits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: isActive ? 'deactivate' : 'activate', habitId }) }); } catch {} }
     await get().fetchHabits();
   },
 
   deleteHabit: async (habitId) => {
-    const res = await fetch('/api/habits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', habitId }),
-    });
-    if (!res.ok) throw new Error('Failed to delete habit');
-    await get().fetchHabits();
+    await localDeleteHabit(habitId);
+    set((s) => ({ habits: s.habits.filter((h) => h.id !== habitId) }));
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/habits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', habitId }) }); } catch {} }
   },
 
   // Recovery Journeys
@@ -563,125 +548,55 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchJourneys: async () => {
     set({ isRecoveryLoading: true });
-    try {
-      const res = await fetch('/api/recovery');
-      const data = await res.json();
-      if (res.ok) {
-        set({
-          journeys: data.journeys || [],
-          recovery: data.recovery || null,
-          isRecoveryLoading: false,
-        });
-      }
-    } catch {
-      set({ isRecoveryLoading: false });
+    const local = await getLocalJourneys();
+    const localRec = await getLocalRecoveryState();
+    if (local.length) set({ journeys: local as unknown as RecoveryJourney[], recovery: (localRec as unknown as RecoveryState) || null, isRecoveryLoading: false });
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch('/api/recovery'); const data = await res.json();
+        if (res.ok) { await cacheJourneysFromServer(data.journeys || [], data.recovery || null); set({ journeys: data.journeys || [], recovery: data.recovery || null, isRecoveryLoading: false }); }
+      } catch {}
     }
+    set({ isRecoveryLoading: false });
   },
-
   createJourney: async (data) => {
-    const res = await fetch('/api/recovery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'createJourney', ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
+    const created = await localCreateJourney(data);
+    set((s) => ({ journeys: [created as unknown as RecoveryJourney, ...s.journeys] }));
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'createJourney', ...data }) }); } catch {} }
     await get().fetchJourneys();
   },
-
   updateJourney: async (journeyId, data) => {
-    const res = await fetch('/api/recovery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'updateJourney', journeyId, ...data }),
-    });
-    if (!res.ok) throw new Error('Failed to update journey');
+    await localUpdateJourney(journeyId, data); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'updateJourney', journeyId, ...data }) }); } catch {} }
     await get().fetchJourneys();
   },
-
   deleteJourney: async (journeyId) => {
-    const res = await fetch('/api/recovery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'deleteJourney', journeyId }),
-    });
-    if (!res.ok) throw new Error('Failed to delete journey');
-    await get().fetchJourneys();
+    await localDeleteJourney(journeyId); set((s) => ({ journeys: s.journeys.filter((j) => j.id !== journeyId) })); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'deleteJourney', journeyId }) }); } catch {} }
   },
-
   recordJourneyFailure: async (journeyId, note) => {
     const prevJourneys = get().journeys;
-    const prevFailures = get().failures;
-    const timestamp = new Date().toISOString();
-    const optimisticFailure: FailureLog = {
-      id: `optimistic-${timestamp}`,
-      journeyId,
-      timestamp,
-      note: note || null,
-      createdAt: timestamp,
-    };
-
-    set({
-      journeys: prevJourneys.map((j) =>
-        j.id === journeyId ? { ...j, failureCount: j.failureCount + 1 } : j
-      ),
-      failures: [optimisticFailure, ...prevFailures],
-    });
-
-    const res = await fetch('/api/recovery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'fail', journeyId, note }),
-    });
-
-    if (!res.ok) {
-      set({ journeys: prevJourneys, failures: prevFailures });
-      const err = await res.json().catch(() => ({ error: 'Failed to record failure' }));
-      throw new Error(err.error || 'Failed to record failure');
-    }
-
-    await get().fetchJourneys();
-    await get().fetchFailures();
+    set({ journeys: prevJourneys.map((j) => j.id === journeyId ? { ...j, failureCount: j.failureCount + 1 } : j) });
+    const failure = await localRecordJourneyFailure(journeyId, note);
+    set((s) => ({ failures: [failure as unknown as FailureLog, ...s.failures] }));
+    get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'fail', journeyId, note }) }); await get().fetchJourneys(); await get().fetchFailures(); } catch {} }
   },
-
   resetJourney: async (journeyId, clearLogs) => {
-    const res = await fetch('/api/recovery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reset', journeyId, clearLogs }),
-    });
-    if (!res.ok) throw new Error('Failed to reset journey');
+    await localResetJourney(journeyId, clearLogs); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reset', journeyId, clearLogs }) }); } catch {} }
     await get().fetchJourneys();
   },
-
-  // Legacy recovery compat
-  fetchRecovery: async () => {
-    await get().fetchJourneys();
-  },
-
+  fetchRecovery: async () => { await get().fetchJourneys(); },
   fetchFailures: async () => {
-    try {
-      const res = await fetch('/api/failures');
-      const data = await res.json();
-      if (res.ok) set({ failures: data.failures });
-    } catch {
-      // silently fail
-    }
+    const local = await getLocalFailures();
+    if (local.length) set({ failures: local as unknown as FailureLog[] });
+    if (networkStatus.isOnline) { try { const res = await fetch('/api/failures'); const data = await res.json(); if (res.ok) { await cacheFailuresFromServer(data.failures); set({ failures: data.failures }); } } catch {} }
   },
-
-  recordFailure: async () => {
-    // Legacy - no-op, use recordJourneyFailure
-  },
-
-  resetRecovery: async () => {
-    // Legacy - no-op, use resetJourney
-  },
-
-  setStartTime: async () => {
-    // Legacy - no-op, use updateJourney
-  },
+  recordFailure: async () => {},
+  resetRecovery: async () => {},
+  setStartTime: async () => {},
 
   // Goals
   goals: [],
@@ -690,92 +605,50 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchGoals: async (type) => {
     set({ isGoalsLoading: true });
-    try {
-      const url = type ? `/api/goals?type=${type}` : '/api/goals';
-      const res = await fetch(url);
-      const data = await res.json();
-      if (res.ok) set({ goals: data.goals, isGoalsLoading: false });
-    } catch {
-      set({ isGoalsLoading: false });
+    const local = await getLocalGoals(type);
+    if (local.length) set({ goals: local as unknown as Goal[], isGoalsLoading: false });
+    if (networkStatus.isOnline) {
+      try { const url = type ? `/api/goals?type=${type}` : '/api/goals'; const res = await fetch(url); const data = await res.json(); if (res.ok) { await cacheGoalsFromServer(data.goals); set({ goals: data.goals, isGoalsLoading: false }); } } catch {}
     }
+    set({ isGoalsLoading: false });
   },
-
   fetchGoalsSummary: async () => {
-    try {
-      const res = await fetch('/api/goals?summary=true');
-      const data = await res.json();
-      if (res.ok) set({ goalsSummary: data.summary });
-    } catch {
-      // silently fail
-    }
+    if (!networkStatus.isOnline) return;
+    try { const res = await fetch('/api/goals?summary=true'); const data = await res.json(); if (res.ok) set({ goalsSummary: data.summary }); } catch {}
   },
-
   createGoal: async (data) => {
-    const res = await fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
+    const created = await localCreateGoal(data);
+    set((s) => ({ goals: [created as unknown as Goal, ...s.goals] })); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...data }) }); } catch {} }
     await get().fetchGoals();
   },
-
   updateGoal: async (goalId, data) => {
-    const res = await fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', goalId, ...data }),
-    });
-    if (!res.ok) throw new Error('Failed to update goal');
+    await localUpdateGoal(goalId, data); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', goalId, ...data }) }); } catch {} }
     await get().fetchGoals();
   },
-
   toggleGoalComplete: async (goalId) => {
-    const res = await fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'toggle', goalId }),
-    });
-    if (!res.ok) throw new Error('Failed to toggle goal');
+    await localToggleGoalComplete(goalId); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'toggle', goalId }) }); } catch {} }
     await get().fetchGoals();
   },
-
   incrementGoal: async (goalId, amount = 1) => {
-    const res = await fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'increment', goalId, amount }),
-    });
-    if (!res.ok) throw new Error('Failed to increment goal');
+    await localIncrementGoal(goalId, amount); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'increment', goalId, amount }) }); } catch {} }
     await get().fetchGoals();
   },
-
   deleteGoal: async (goalId) => {
-    const res = await fetch('/api/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', goalId }),
-    });
-    if (!res.ok) throw new Error('Failed to delete goal');
-    await get().fetchGoals();
+    await localDeleteGoal(goalId); set((s) => ({ goals: s.goals.filter((g) => g.id !== goalId) })); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', goalId }) }); } catch {} }
   },
 
   // Dashboard
   metrics: null,
   isMetricsLoading: false,
-
   fetchMetrics: async () => {
+    if (!networkStatus.isOnline) return;
     set({ isMetricsLoading: true });
-    try {
-      const res = await fetch('/api/dashboard');
-      const data = await res.json();
-      if (res.ok) set({ metrics: data.metrics, isMetricsLoading: false });
-    } catch {
-      set({ isMetricsLoading: false });
-    }
+    try { const res = await fetch('/api/dashboard'); const data = await res.json(); if (res.ok) set({ metrics: data.metrics, isMetricsLoading: false }); } catch { set({ isMetricsLoading: false }); }
   },
 
   // Planner
@@ -789,175 +662,94 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchPlans: async (date) => {
     set({ isPlansLoading: true });
-    try {
-      const res = await fetch(`/api/plans?date=${date}`);
-      const data = await res.json();
-      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
-      else set({ isPlansLoading: false });
-    } catch {
-      set({ isPlansLoading: false });
-    }
+    const local = await getLocalPlans(date);
+    if (local.length) set({ plans: local as unknown as Plan[], isPlansLoading: false });
+    if (networkStatus.isOnline) { try { const res = await fetch(`/api/plans?date=${date}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
+    set({ isPlansLoading: false });
   },
-
   fetchPlansByRange: async (startDate, endDate) => {
     set({ isPlansLoading: true });
-    try {
-      const res = await fetch(`/api/plans?startDate=${startDate}&endDate=${endDate}`);
-      const data = await res.json();
-      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
-      else set({ isPlansLoading: false });
-    } catch {
-      set({ isPlansLoading: false });
-    }
+    const local = await getLocalPlansByRange(startDate, endDate);
+    if (local.length) set({ plans: local as unknown as Plan[], isPlansLoading: false });
+    if (networkStatus.isOnline) { try { const res = await fetch(`/api/plans?startDate=${startDate}&endDate=${endDate}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
+    set({ isPlansLoading: false });
   },
-
   fetchWeeklyPlans: async (weekOf) => {
     set({ isPlansLoading: true });
-    try {
-      const param = weekOf ? `?week=${weekOf}` : `?week=${new Date().toISOString().split('T')[0]}`;
-      const res = await fetch(`/api/plans${param}`);
-      const data = await res.json();
-      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
-      else set({ isPlansLoading: false });
-    } catch {
-      set({ isPlansLoading: false });
-    }
+    if (networkStatus.isOnline) { try { const p = weekOf ? `?week=${weekOf}` : `?week=${new Date().toISOString().split('T')[0]}`; const res = await fetch(`/api/plans${p}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
+    set({ isPlansLoading: false });
   },
-
   fetchMonthlyPlans: async (month) => {
     set({ isPlansLoading: true });
-    try {
-      const param = month ? `?month=${month}` : `?month=${new Date().toISOString().substring(0, 7)}`;
-      const res = await fetch(`/api/plans${param}`);
-      const data = await res.json();
-      if (res.ok) set({ plans: data.plans, isPlansLoading: false });
-      else set({ isPlansLoading: false });
-    } catch {
-      set({ isPlansLoading: false });
-    }
+    if (networkStatus.isOnline) { try { const p = month ? `?month=${month}` : `?month=${new Date().toISOString().substring(0, 7)}`; const res = await fetch(`/api/plans${p}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
+    set({ isPlansLoading: false });
   },
-
   fetchPlansSummary: async () => {
-    try {
-      const res = await fetch('/api/plans?summary=true');
-      const data = await res.json();
-      if (res.ok) set({ plansSummary: data.summary });
-    } catch {
-      // silently fail
-    }
+    if (!networkStatus.isOnline) return;
+    try { const res = await fetch('/api/plans?summary=true'); const data = await res.json(); if (res.ok) set({ plansSummary: data.summary }); } catch {}
   },
-
   createPlan: async (data) => {
-    const res = await fetch('/api/plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
-    const payload = await res.json();
-    if (payload?.plan) {
-      set((state) => ({ plans: [payload.plan, ...state.plans] }));
-    }
+    const userId = get().user?.id || '';
+    const created = await localCreatePlan(data, userId);
+    set((s) => ({ plans: [created as unknown as Plan, ...s.plans] })); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { const res = await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...data }) }); if (res.ok) { const payload = await res.json(); if (payload?.plan) set((s) => ({ plans: s.plans.map((p) => p.id === created.id ? { ...p, ...payload.plan } : p) })); } } catch {} }
   },
-
   updatePlan: async (planId, data) => {
-    const res = await fetch('/api/plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', planId, ...data }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
-    const payload = await res.json();
-    if (payload?.plan) {
-      set((state) => ({
-        plans: state.plans.map((p) => (p.id === planId ? { ...p, ...payload.plan } : p)),
-      }));
-    }
+    await localUpdatePlan(planId, data as Record<string, unknown>); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { const res = await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', planId, ...data }) }); if (res.ok) { const payload = await res.json(); if (payload?.plan) set((s) => ({ plans: s.plans.map((p) => p.id === planId ? { ...p, ...payload.plan } : p) })); } } catch {} }
   },
-
   deletePlan: async (planId) => {
-    const prevPlans = get().plans;
-    set({ plans: prevPlans.filter((p) => p.id !== planId) });
-
-    const res = await fetch('/api/plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', planId }),
-    });
-    if (!res.ok) {
-      set({ plans: prevPlans });
-      const err = await res.json();
-      throw new Error(err.error);
-    }
+    set((s) => ({ plans: s.plans.filter((p) => p.id !== planId) }));
+    await localDeletePlan(planId); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', planId }) }); } catch {} }
   },
-
   assignPlanToPrayerBlock: async (planId, prayerBlock) => {
-    const res = await fetch('/api/plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'assignPrayer', planId, prayerBlock }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
-    const payload = await res.json();
-    if (payload?.plan) {
-      set((state) => ({
-        plans: state.plans.map((p) => (p.id === planId ? { ...p, ...payload.plan } : p)),
-      }));
-    }
+    await localAssignPlanToPrayerBlock(planId, prayerBlock); get().refreshPendingCount();
+    if (networkStatus.isOnline) { try { const res = await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'assignPrayer', planId, prayerBlock }) }); if (res.ok) { const payload = await res.json(); if (payload?.plan) set((s) => ({ plans: s.plans.map((p) => p.id === planId ? { ...p, ...payload.plan } : p) })); } } catch {} }
   },
 
   fetchPrayerTimes: async (date) => {
     set({ isPrayerTimesLoading: true });
-    try {
-      const res = await fetch(`/api/prayer-times?date=${date}`);
-      const data = await res.json();
-      if (res.ok) set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false });
-      else set({ isPrayerTimesLoading: false });
-    } catch {
-      set({ isPrayerTimesLoading: false });
+    const local = await getLocalPrayerTimes(date);
+    if (local) set({ prayerTimes: local as unknown as PrayerTimesData, isPrayerTimesLoading: false });
+    if (networkStatus.isOnline) {
+      try { const res = await fetch(`/api/prayer-times?date=${date}`); const data = await res.json(); if (res.ok) { await cachePrayerTimesFromServer(data.prayerTimes); set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false }); } } catch {}
     }
+    set({ isPrayerTimesLoading: false });
   },
 
   fetchPrayerTimesFromLocation: async (date, latitude, longitude) => {
+    if (!networkStatus.isOnline) return;
     set({ isPrayerTimesLoading: true });
     try {
-      const res = await fetch('/api/prayer-times', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'fetchFromLocation', date, latitude, longitude }),
-      });
+      const res = await fetch('/api/prayer-times', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'fetchFromLocation', date, latitude, longitude }) });
       const data = await res.json();
-      if (res.ok && data?.prayerTimes) {
-        set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false });
-      } else {
-        set({ isPrayerTimesLoading: false });
-      }
-    } catch {
-      set({ isPrayerTimesLoading: false });
-    }
+      if (res.ok && data?.prayerTimes) { await cachePrayerTimesFromServer(data.prayerTimes); set({ prayerTimes: data.prayerTimes, isPrayerTimesLoading: false }); }
+      else set({ isPrayerTimesLoading: false });
+    } catch { set({ isPrayerTimesLoading: false }); }
   },
 
   setManualPrayerTimes: async (date, times) => {
-    const res = await fetch('/api/prayer-times', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'setManual', date, ...times }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error);
-    }
+    if (!networkStatus.isOnline) return;
+    const res = await fetch('/api/prayer-times', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'setManual', date, ...times }) });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
     const data = await res.json();
-    if (data?.prayerTimes) set({ prayerTimes: data.prayerTimes });
+    if (data?.prayerTimes) { await cachePrayerTimesFromServer(data.prayerTimes); set({ prayerTimes: data.prayerTimes }); }
+  },
+
+  // Offline / Sync
+  isOffline: false,
+  pendingSyncCount: 0,
+  setOffline: (offline) => set({ isOffline: offline }),
+  refreshPendingCount: async () => {
+    try { const count = await getPendingSyncCount(); set({ pendingSyncCount: count }); } catch {}
+  },
+  initOfflineData: async () => {
+    const loaded = await hasInitialData();
+    if (!loaded && networkStatus.isOnline) {
+      const success = await pullAllDataFromServer();
+      if (success) await markInitialDataLoaded();
+    }
   },
 
   // UI
