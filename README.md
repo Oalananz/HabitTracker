@@ -119,7 +119,3 @@ supabase/               # SQL schema, auth, and migrations
 - **Accent (success):** `#6cdd81` · **Info:** `#a2c9ff` · **Warning:** `#fabc45` · **Error:** `#ffb4ab`
 - **Type:** Space Grotesk (headlines), Inter (body), JetBrains Mono (code)
 - **Corners:** 2–4px max for a sharp, hard-tech feel
-
-## License
-
-MIT
