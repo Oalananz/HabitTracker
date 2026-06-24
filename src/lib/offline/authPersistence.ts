@@ -1,9 +1,6 @@
 /**
  * Auth Persistence — stores and retrieves authentication
- * session data locally for offline access.
- *
- * On native (Capacitor), uses @capacitor/preferences (Keychain on iOS).
- * On web, falls back to localStorage.
+ * session data locally for offline access using localStorage.
  */
 
 interface StoredSession {
@@ -22,35 +19,7 @@ const SESSION_MAX_AGE_DAYS = 30;
 
 // ─── Storage abstraction ────────────────────────────────────────────
 
-async function isCapacitorAvailable(): Promise<boolean> {
-  try {
-    const { Capacitor } = await import('@capacitor/core');
-    return Capacitor.isNativePlatform();
-  } catch {
-    return false;
-  }
-}
-
-async function nativeSet(key: string, value: string): Promise<void> {
-  const { Preferences } = await import('@capacitor/preferences');
-  await Preferences.set({ key, value });
-}
-
-async function nativeGet(key: string): Promise<string | null> {
-  const { Preferences } = await import('@capacitor/preferences');
-  const { value } = await Preferences.get({ key });
-  return value;
-}
-
-async function nativeRemove(key: string): Promise<void> {
-  const { Preferences } = await import('@capacitor/preferences');
-  await Preferences.remove({ key });
-}
-
 async function storageSet(key: string, value: string): Promise<void> {
-  if (await isCapacitorAvailable()) {
-    return nativeSet(key, value);
-  }
   try {
     localStorage.setItem(key, value);
   } catch {
@@ -59,9 +28,6 @@ async function storageSet(key: string, value: string): Promise<void> {
 }
 
 async function storageGet(key: string): Promise<string | null> {
-  if (await isCapacitorAvailable()) {
-    return nativeGet(key);
-  }
   try {
     return localStorage.getItem(key);
   } catch {
@@ -70,9 +36,6 @@ async function storageGet(key: string): Promise<string | null> {
 }
 
 async function storageRemove(key: string): Promise<void> {
-  if (await isCapacitorAvailable()) {
-    return nativeRemove(key);
-  }
   try {
     localStorage.removeItem(key);
   } catch {

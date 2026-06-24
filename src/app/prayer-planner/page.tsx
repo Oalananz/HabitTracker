@@ -275,7 +275,7 @@ export default function PrayerPlannerPage() {
             <span className="text-primary font-headline">&gt;</span>
             <span className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">PRAYER_TIMES_CONFIG</span>
           </div>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {PRAYER_ORDER.map(prayer => (
               <div key={prayer}>
                 <label className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">

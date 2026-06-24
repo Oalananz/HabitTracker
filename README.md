@@ -1,205 +1,124 @@
-# HabitTerminal — Habit Tracker + Recovery Journey
+<div align="center">
+  <img src="public/logo.png" alt="HabitTerminal" width="96" />
 
-A production-grade, full-stack habit tracking and recovery monitoring web application with a **GitHub + Terminal** inspired aesthetic ("Editorial Terminalism").
+  # HabitTerminal
+
+  **A habit tracker and recovery companion with a GitHub-meets-terminal aesthetic.**
+
+  Build daily routines, track recovery streaks, plan your week, and stay accountable — online or off.
+
+  <sub>Next.js 16 · TypeScript · Supabase · Tailwind CSS v4 · Offline-first PWA</sub>
+</div>
+
+---
+
+## Overview
+
+HabitTerminal is a full-stack, responsive web app for building habits and sustaining recovery journeys, styled around an "Editorial Terminalism" design language — sharp corners, monospace accents, and a deep-obsidian dark theme. It works on desktop and mobile browsers, installs as a PWA, and keeps working when you go offline thanks to a local cache and background sync.
+
+## Features
+
+- **🔄 Today's Tasks** — Auto-generated daily tasks from recurring habits, with one-off tasks, retroactive catch-up for missed days, and idempotent generation (no duplicates).
+- **📋 Habit Management** — Recurring habits with custom repeat rules (Daily / Weekdays / Weekends / Custom), priority levels, and activation toggles that only affect future generation.
+- **🛡️ Recovery Journey** — Live timer (days/hours/minutes), "I Failed" logging with timestamps, milestone tracking (7 / 30 / 90 days), and resets — always derived from the database.
+- **🤝 Competitive Journeys** — Shared recovery journeys you can join, leave, and compare against other participants.
+- **🎯 Goals** — Track progress toward measurable goals with safe, concurrent increments.
+- **🗓️ Planner & Prayer Planner** — Daily / weekly / monthly planning views, plus a dedicated prayer-time planner.
+- **📊 Dashboard & Analytics** — GitHub-style contribution heatmap, streak calculations, completion rates, and trend charts.
+- **📅 Calendar / History** — Month view with completion indicators and per-day failure reports.
+- **🔐 Authentication** — Supabase Auth (email + Google OAuth) with secure server-side sessions.
+- **📡 Offline-first PWA** — Local IndexedDB cache (Dexie), a sync queue, and a service worker so the app stays usable without a connection.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | Next.js 16 (App Router) + TypeScript |
-| **Styling** | Tailwind CSS v4 (Dark Mode) |
-| **State** | Zustand |
-| **Charts** | Recharts |
-| **Dates** | dayjs |
-| **Database** | PostgreSQL |
-| **ORM** | Prisma |
-| **Auth** | JWT (jose) + bcryptjs + httpOnly cookies |
+| Framework | Next.js 16 (App Router) + TypeScript |
+| Styling | Tailwind CSS v4 (dark mode) |
+| State | Zustand |
+| Charts | Recharts |
+| Dates | dayjs |
+| Backend / DB / Auth | Supabase (PostgreSQL + Auth) |
+| Offline storage | Dexie (IndexedDB) + service worker |
 
-## Features
-
-### 🔄 Daily Task System
-- Automatic task generation from recurring habits
-- Retroactive generation for missed days
-- Idempotent generation (no duplicates)
-- Manual one-off tasks
-- Complete/uncomplete per-day instances
-- Past tasks preserved when habits are edited
-
-### 📋 Habit Management
-- Create recurring habits with custom repeat rules
-- Daily, Weekdays, Weekends, or Custom day patterns
-- Activate/deactivate habits (stops future generation only)
-- Priority levels: Low, Nominal, Critical
-- Categories for organization
-
-### 🛡️ Recovery Journey
-- Live-updating timer showing days, hours, minutes since start
-- "I Failed" button with confirmation
-- Failure event logging with timestamps
-- Milestone tracking (7, 30, 90 days)
-- Reset with optional log clearing
-- Timer always derived from database
-
-### 📊 Dashboard & Analytics
-- GitHub-style contribution heatmap (365 days)
-- Current and longest streak calculations
-- Completion rate (daily/weekly/monthly)
-- Weekly performance trend charts
-- Recovery analytics
-
-### 📅 Calendar / History
-- Month view with task completion indicators
-- Select any date to view tasks and failures
-- Failure incident reports per day
-
-### 🔐 Authentication
-- Registration & Login
-- JWT-based sessions (httpOnly cookies)
-- Secure password hashing (bcrypt)
-
-## Project Structure
-
-```
-habit-tracker/
-├── prisma/
-│   ├── schema.prisma          # Database models
-│   └── seed.ts                # Sample data seeder
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth/          # Login, Register, Logout, Me
-│   │   │   ├── tasks/         # Task CRUD + generation
-│   │   │   ├── habits/        # Habit CRUD
-│   │   │   ├── recovery/      # Recovery state + failures
-│   │   │   ├── failures/      # Failure log management
-│   │   │   └── dashboard/     # Analytics metrics
-│   │   ├── today/             # Today's tasks page
-│   │   ├── dashboard/         # Analytics dashboard
-│   │   ├── recovery/          # Recovery journey page
-│   │   ├── calendar/          # Calendar history page
-│   │   ├── habits/            # Habit management page
-│   │   ├── settings/          # System configuration
-│   │   ├── login/             # Auth page
-│   │   ├── layout.tsx         # Root layout
-│   │   ├── page.tsx           # Root redirect
-│   │   └── globals.css        # Design system CSS
-│   ├── components/
-│   │   ├── layout/            # Sidebar, AppShell
-│   │   ├── ui/                # StatCard, TaskItem, SectionHeader, EmptyState
-│   │   ├── habits/            # HabitForm
-│   │   ├── recovery/          # TimerDisplay, FailureLogList
-│   │   └── dashboard/         # ContributionHeatmap, ChartWidgets
-│   ├── lib/
-│   │   ├── prisma.ts          # Prisma client singleton
-│   │   ├── auth.ts            # JWT auth utilities
-│   │   └── services/          # Business logic services
-│   └── store/
-│       └── useStore.ts        # Zustand state management
-├── .env                       # Environment variables
-├── .env.example               # Template env
-├── package.json
-└── README.md
-```
-
-## Setup Instructions
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+
-- npm
 
-### 1. Install Dependencies
+- Node.js 18+
+- A [Supabase](https://supabase.com) project (free tier is fine)
+
+### 1. Install
 
 ```bash
-cd habit-tracker
 npm install
 ```
 
-### 2. PostgreSQL Setup
+### 2. Configure environment
 
-Make sure PostgreSQL is running. Create a database:
-
-```sql
-CREATE DATABASE habit_tracker;
-```
-
-### 3. Configure Environment
-
-Copy `.env.example` to `.env` and update the values:
+Copy the example file and fill in your Supabase credentials (found under **Settings → API** in the Supabase dashboard):
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Edit `.env`:
-```
-DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/habit_tracker?schema=public"
-JWT_SECRET="your-secure-random-secret-key"
-```
+### 3. Set up the database
 
-### 4. Run Prisma Migration
+In the Supabase **SQL Editor**, run the migrations in order:
 
-```bash
-npx prisma migrate dev --name init
-```
+1. `supabase/migration.sql` — core schema (users, habits, tasks, recovery)
+2. `supabase/auth_integration.sql` — auth profile triggers
+3. `supabase/migration_v2_journeys_goals.sql` — journeys & goals
+4. The files in `supabase/migrations/` — additional planner / prayer / competitive features
+5. `supabase-migration.sql` — RPCs (`increment_goal_progress`, `increment_journey_failure`)
 
-### 5. Seed Sample Data (Optional)
-
-```bash
-npm run db:seed
-```
-
-This creates a demo user with 60 days of task history.
-
-**Demo Login:**
-- Email: `demo@sovereign.sys`
-- Password: `demo1234`
-
-### 6. Start Development Server
+### 4. Run the dev server
 
 ```bash
 npm run dev
 ```
 
-Visit **http://localhost:3000**
+Visit **http://localhost:3000**.
 
-### 7. Prisma Studio (Optional)
+## Scripts
 
-```bash
-npm run db:studio
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the development server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | Run ESLint |
+
+## Project Structure
+
 ```
-
-## API Reference
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/register` | POST | Register new user |
-| `/api/auth/login` | POST | Login |
-| `/api/auth/logout` | POST | Logout |
-| `/api/auth/me` | GET | Get current user |
-| `/api/tasks` | GET | Get tasks for date |
-| `/api/tasks` | POST | Task actions (create/complete/delete/generate) |
-| `/api/habits` | GET | Get all habits |
-| `/api/habits` | POST | Habit actions (create/update/activate/delete) |
-| `/api/recovery` | GET | Get recovery state |
-| `/api/recovery` | POST | Recovery actions (fail/reset/setStartTime) |
-| `/api/failures` | GET | Get failure logs |
-| `/api/failures` | POST | Delete failure log |
-| `/api/dashboard` | GET | Get analytics metrics |
+src/
+├── app/                # App Router pages + API routes
+│   ├── api/            # Route handlers (tasks, habits, recovery, goals, journeys, …)
+│   ├── today/  dashboard/  planner/  prayer-planner/
+│   ├── recovery/  goals/  calendar/  habits/  settings/  login/
+│   ├── layout.tsx      # Root layout (PWA manifest, fonts)
+│   └── globals.css     # Design-system tokens
+├── components/         # UI, layout, habits, recovery, dashboard, planner
+├── lib/
+│   ├── supabase.ts     # Server Supabase client
+│   ├── auth.ts         # Auth helpers
+│   ├── services/       # Business logic
+│   └── offline/        # Dexie cache + sync queue + network status
+├── utils/supabase/     # Browser / server / middleware clients
+├── store/useStore.ts   # Zustand store
+└── middleware.ts       # Session refresh
+supabase/               # SQL schema, auth, and migrations
+```
 
 ## Design System
 
-**Theme:** Editorial Terminalism — "The Sovereign Console"
+**Editorial Terminalism — "The Sovereign Console"**
 
-- **Background:** `#10141a` (deep obsidian)
-- **Surface layers:** Tonal depth via background color shifts
-- **Accent (Success):** `#6cdd81` (primary green)
-- **Info:** `#a2c9ff` (secondary blue)
-- **Warning:** `#fabc45` (tertiary gold)
-- **Error:** `#ffb4ab`
-- **Typography:** Space Grotesk (headlines), Inter (body), JetBrains Mono (code)
-- **Corners:** 2-4px maximum (sharp, "hard-tech" feel)
-- **No borders for structure** — depth through tonal shifts
+- **Background:** `#10141a` (deep obsidian), depth via tonal shifts rather than borders
+- **Accent (success):** `#6cdd81` · **Info:** `#a2c9ff` · **Warning:** `#fabc45` · **Error:** `#ffb4ab`
+- **Type:** Space Grotesk (headlines), Inter (body), JetBrains Mono (code)
+- **Corners:** 2–4px max for a sharp, hard-tech feel
 
 ## License
 
