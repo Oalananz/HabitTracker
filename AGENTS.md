@@ -1,25 +1,20 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Contributor & agent notes
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## This is NOT the Next.js you know
 
-## Remaining infra steps (needs Supabase SQL editor)
+This project uses Next.js 16, which has breaking changes — APIs, conventions, and
+file structure may differ from older versions (and from most training data). Read the
+relevant guide in `node_modules/next/dist/docs/` before writing code, and heed any
+deprecation notices.
 
-Already fixed in code — just needs these SQL commands run in Supabase:
+## Backend
 
-1. **Run `supabase-migration.sql`** — creates RPCs (`increment_goal_progress`, `increment_journey_failure`) and drops `password` column from `public.users`.
-
-## Code changes already applied
-
-### Auth profile race condition — `src/lib/auth.ts`
-- `insert` → `upsert` with `onConflict: 'id'` for both `users` and `recovery_states`.
-
-### Race condition in `goalService.ts`
-- Replaced read-then-write with `supabase.rpc('increment_goal_progress', ...)`.
-
-### Race condition in `competitiveJourneyService.ts`
-- Replaced read-then-write participant update with `supabase.rpc('increment_journey_failure', ...)`.
+Supabase (PostgreSQL + Auth) is the backend. The schema and RPCs live in `supabase/`
+and `supabase-migration.sql` — run the migrations in the order described in the README
+before starting the app. Concurrent counters (goal progress, journey failures) go
+through Postgres RPCs rather than read-then-write, so prefer extending those when adding
+similar increment logic.
 
 ## Build
-- `next build` passes cleanly (26 routes).
+
+`npm run build` should pass cleanly before opening a PR.
