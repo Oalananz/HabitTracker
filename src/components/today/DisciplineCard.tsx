@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import type { DayRecord, DayRecordUpdate } from '@/lib/services/dayRecordService';
@@ -168,6 +168,32 @@ export default function DisciplineCard({ dayRecord, date }: DisciplineCardProps)
   };
 
   const cleanCount = journeys.filter(j => !failedToday(j.id)).length;
+  const allClean = journeys.length > 0 && cleanCount === journeys.length;
+
+  // Keep the day-record discipline columns (which feed the daily score,
+  // streaks, and achievements) in sync with the journey-based layer:
+  // a fully-clean day credits the discipline points, any failure removes them.
+  useEffect(() => {
+    const needsSync =
+      dayRecord.noReels !== allClean ||
+      dayRecord.noMasturbation !== allClean ||
+      dayRecord.noMusic !== allClean ||
+      dayRecord.lowSugar !== allClean ||
+      dayRecord.noYapping !== allClean;
+    if (needsSync) {
+      void updateDayRecord(date, {
+        noReels: allClean,
+        noMasturbation: allClean,
+        noMusic: allClean,
+        lowSugar: allClean,
+        noYapping: allClean,
+      });
+    }
+  }, [
+    allClean, date, updateDayRecord,
+    dayRecord.noReels, dayRecord.noMasturbation, dayRecord.noMusic,
+    dayRecord.lowSugar, dayRecord.noYapping,
+  ]);
 
   // ── SLEEP LAYER ────────────────────────────────────────────────────────────
 
