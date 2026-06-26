@@ -16,12 +16,13 @@ const navItems = [
   { href: '/goals', label: 'Goals', icon: 'flag' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
   { href: '/habits', label: 'Habits', icon: 'cached' },
+  { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
   { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout, sidebarOpen, setSidebarOpen, pendingSyncCount, refreshPendingCount } = useStore();
+  const { user, logout, sidebarOpen, setSidebarOpen, pendingSyncCount, refreshPendingCount, newAchievementCount } = useStore();
   const [isOnline, setIsOnline] = useState(true);
   const [isBacking, setIsBacking] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -150,6 +151,12 @@ export default function Sidebar() {
                   {item.icon}
                 </span>
                 {item.label}
+                {/* Achievement badge */}
+                {item.href === '/achievements' && newAchievementCount > 0 && (
+                  <span className="ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center animate-pulse">
+                    {newAchievementCount}
+                  </span>
+                )}
               </Link>
             );
           })}

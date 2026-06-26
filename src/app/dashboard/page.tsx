@@ -5,6 +5,9 @@ import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
 import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
 import ChartWidgets from '@/components/dashboard/ChartWidgets';
+import StreakMatrix from '@/components/dashboard/StreakMatrix';
+import SevenDayReport from '@/components/dashboard/SevenDayReport';
+import Link from 'next/link';
 import dayjs from 'dayjs';
 
 export default function DashboardPage() {
@@ -12,13 +15,17 @@ export default function DashboardPage() {
     metrics, isMetricsLoading, fetchMetrics,
     journeys, fetchJourneys,
     goalsSummary, fetchGoalsSummary,
+    userStats, fetchUserStats,
+    achievements, fetchAchievements,
   } = useStore();
 
   useEffect(() => {
     fetchMetrics();
     fetchJourneys();
     fetchGoalsSummary();
-  }, [fetchMetrics, fetchJourneys, fetchGoalsSummary]);
+    void fetchUserStats();
+    void fetchAchievements();
+  }, [fetchMetrics, fetchJourneys, fetchGoalsSummary, fetchUserStats, fetchAchievements]);
 
   const [now, setNow] = useState(() => dayjs());
   useEffect(() => {
@@ -202,6 +209,46 @@ export default function DashboardPage() {
                       <span className="font-headline text-lg font-bold text-secondary">{metrics.weeklyRate}%</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── New v2 Widgets ────────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <StreakMatrix userStats={userStats} />
+              <SevenDayReport
+                days={(metrics.heatmapData || []).map(d => ({
+                  date: d.date,
+                  score: (d as { score?: number }).score ?? 0,
+                }))}
+              />
+            </div>
+
+            {/* Achievements Preview */}
+            {achievements.filter(a => a.unlocked).length > 0 && (
+              <div className="bg-surface-container-lowest border border-outline-variant/15 rounded-md p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    &gt; RECENT_ACHIEVEMENTS
+                  </div>
+                  <Link href="/achievements" className="font-mono text-[10px] text-primary hover:underline uppercase tracking-wider">
+                    VIEW ALL →
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {achievements
+                    .filter(a => a.unlocked)
+                    .sort((a, b) => new Date(b.unlockedAt || '').getTime() - new Date(a.unlockedAt || '').getTime())
+                    .slice(0, 3)
+                    .map(a => (
+                      <div key={a.key} className="bg-surface-container-low border border-outline-variant/15 rounded-sm p-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
+                        <div className="min-w-0">
+                          <div className="font-headline text-xs font-bold text-on-surface truncate uppercase">{a.name}</div>
+                          <div className="font-mono text-[9px] text-on-surface-variant">{a.rarity}</div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}

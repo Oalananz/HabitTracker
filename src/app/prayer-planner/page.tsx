@@ -30,7 +30,11 @@ export default function PrayerPlannerPage() {
     fetchPlans, createPlan, updatePlan, deletePlan,
     prayerTimes, isPrayerTimesLoading, fetchPrayerTimes, fetchPrayerTimesFromLocation,
     plannerDate, setPlannerDate,
+    dayRecord, fetchDayRecord, updateDayRecord,
   } = useStore();
+
+  const today = dayjs().format('YYYY-MM-DD');
+  const isToday = plannerDate === today;
 
   const [showFormFor, setShowFormFor] = useState<string | null>(null);
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
@@ -43,6 +47,9 @@ export default function PrayerPlannerPage() {
   useEffect(() => {
     if (!plannerDate) return;
     fetchPlans(plannerDate);
+
+    // Fetch day record for prayer sync
+    if (plannerDate) void fetchDayRecord(plannerDate);
 
     if (geoResolvedRef.current) {
       fetchPrayerTimes(plannerDate);
@@ -67,7 +74,7 @@ export default function PrayerPlannerPage() {
       geoResolvedRef.current = true;
       fetchPrayerTimes(plannerDate);
     }
-  }, [plannerDate, fetchPlans, fetchPrayerTimes, fetchPrayerTimesFromLocation]);
+  }, [plannerDate, fetchPlans, fetchPrayerTimes, fetchPrayerTimesFromLocation, fetchDayRecord]);
 
   // Group plans by prayer block
   const plansByPrayer = useMemo(() => {
@@ -169,6 +176,14 @@ export default function PrayerPlannerPage() {
     fetchPrayerTimes(plannerDate);
   };
 
+  // Prayer performed toggle (syncs with day_record)
+  const handlePrayerPerformed = async (prayer: string, checked: boolean) => {
+    await updateDayRecord(plannerDate, { [prayer]: checked } as Record<string, boolean>);
+  };
+
+  const allPrayersPerformed = dayRecord &&
+    dayRecord.fajr && dayRecord.dhuhr && dayRecord.asr && dayRecord.maghrib && dayRecord.isha;
+
   const editPlanData = editingPlan ? plans.find(p => p.id === editingPlan) : null;
 
   // Completion stats
@@ -178,6 +193,12 @@ export default function PrayerPlannerPage() {
   if (!plannerDate) {
     return null;
   }
+
+  // Map prayer name to day_record field
+  type DayRecordKey = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+  const prayerToField: Record<string, DayRecordKey> = {
+    fajr: 'fajr', dhuhr: 'dhuhr', asr: 'asr', maghrib: 'maghrib', isha: 'isha',
+  };
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -190,6 +211,14 @@ export default function PrayerPlannerPage() {
           Structure your day around the five daily prayers.
         </p>
       </header>
+
+      {/* All Prayers Complete Banner */}
+      {isToday && allPrayersPerformed && (
+        <div className="border border-primary/40 bg-primary/5 rounded-sm px-4 py-3 flex items-center gap-2 animate-fade-in">
+          <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>mosque</span>
+          <span className="font-mono text-xs text-primary uppercase tracking-widest font-bold">ALL PRAYERS COMPLETE ✓ — WORSHIP LAYER SECURED</span>
+        </div>
+      )}
 
       {/* Top Bar: Date + Stats */}
       <div className="flex flex-wrap gap-4 items-center justify-between bg-surface-container-low p-4 rounded-md border border-outline-variant/15">
@@ -368,6 +397,23 @@ export default function PrayerPlannerPage() {
                     <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">
                       {completed}/{prayerPlans.length} done
                     </span>
+                    {/* Prayer Performed toggle (syncs with day_record) */}
+                    {dayRecord && prayerToField[prayer] !== undefined && (
+                      <button
+                        onClick={() => handlePrayerPerformed(prayer, !Boolean(dayRecord[prayerToField[prayer]]))}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-sm border font-mono text-[9px] uppercase tracking-wider transition-all ${
+                          dayRecord[prayerToField[prayer]]
+                            ? 'border-primary/40 bg-primary/10 text-primary'
+                            : 'border-outline-variant/20 bg-transparent text-on-surface-variant hover:border-primary/30'
+                        }`}
+                        title="Mark prayer as performed"
+                      >
+                        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: dayRecord[prayerToField[prayer]] ? "'FILL' 1" : "'FILL' 0" }}>
+                          mosque
+                        </span>
+                        {dayRecord[prayerToField[prayer]] ? 'PERFORMED ✓' : 'MARK DONE'}
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowFormFor(showFormFor === prayer ? null : prayer)}
                       className="text-on-surface-variant hover:text-primary transition-colors"

@@ -12,7 +12,10 @@ export default function RecoveryPage() {
     journeys, isRecoveryLoading, failures,
     fetchJourneys, fetchFailures, createJourney, deleteJourney,
     recordJourneyFailure, resetJourney,
+    dayRecord, fetchDayRecord,
   } = useStore();
+
+  const today = dayjs().format('YYYY-MM-DD');
 
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -25,7 +28,8 @@ export default function RecoveryPage() {
   useEffect(() => {
     fetchJourneys();
     fetchFailures();
-  }, [fetchJourneys, fetchFailures]);
+    void fetchDayRecord(dayjs().format('YYYY-MM-DD'));
+  }, [fetchJourneys, fetchFailures, fetchDayRecord]);
 
   useEffect(() => {
     const id = setInterval(() => setClockNow(Date.now()), 60_000);
@@ -203,6 +207,35 @@ export default function RecoveryPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
+                      {/* Today status tag */}
+                      {(() => {
+                        const todayFailure = failures.some(f =>
+                          dayjs(f.timestamp).format('YYYY-MM-DD') === today &&
+                          f.journeyId === journey.id
+                        );
+                        const noMasClean = dayRecord?.noMasturbation ?? false;
+                        if (todayFailure) {
+                          return (
+                            <span className="hidden sm:flex items-center gap-1 font-mono text-[9px] text-error uppercase px-2 py-0.5 bg-error/10 rounded-[2px]">
+                              <span className="material-symbols-outlined text-[12px]">cancel</span>
+                              FAILURE LOGGED
+                            </span>
+                          );
+                        }
+                        if (noMasClean || !todayFailure) {
+                          return (
+                            <span className="hidden sm:flex items-center gap-1 font-mono text-[9px] text-primary uppercase px-2 py-0.5 bg-primary/10 rounded-[2px]">
+                              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                              TODAY CLEAN ✓
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="hidden sm:flex items-center gap-1 font-mono text-[9px] text-outline uppercase px-2 py-0.5 rounded-[2px]">
+                            NOT LOGGED
+                          </span>
+                        );
+                      })()}
                       {/* Mini milestones */}
                       <div className="hidden sm:flex items-center gap-1.5">
                         {milestones.map((m) => (

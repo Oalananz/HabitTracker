@@ -5,7 +5,11 @@ import { useStore } from '@/store/useStore';
 import SectionHeader from '@/components/ui/SectionHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
-import TerminalWindow from '@/components/ui/TerminalWindow';
+import DayStatusBanner from '@/components/today/DayStatusBanner';
+import DisciplineCard from '@/components/today/DisciplineCard';
+import ScoreDisplay from '@/components/today/ScoreDisplay';
+import ActivityLog from '@/components/today/ActivityLog';
+import AchievementToast from '@/components/achievements/AchievementToast';
 import { useToast } from '@/store/useToast';
 import dayjs from 'dayjs';
 
@@ -13,7 +17,12 @@ export default function TodayPage() {
   const {
     tasks, isTasksLoading, fetchTasks,
     completeTask, uncompleteTask, createTask, deleteTask,
-    selectedDate, setSelectedDate, metrics, fetchMetrics,
+    selectedDate, setSelectedDate,
+    dayRecord, fetchDayRecord, isDayRecordLoading,
+    userStats, fetchUserStats,
+    fetchAchievements,
+    activityLog, addActivityLog,
+    journeys, fetchJourneys,
   } = useStore();
 
   const { addToast } = useToast();
@@ -23,22 +32,21 @@ export default function TodayPage() {
   const [newDesc, setNewDesc] = useState('');
   const [newCategory, setNewCategory] = useState('General');
   const [newPriority, setNewPriority] = useState('nominal');
-
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
+  const today = dayjs().format('YYYY-MM-DD');
+
   useEffect(() => {
-    const today = dayjs().format('YYYY-MM-DD');
     setSelectedDate(today);
-
     void fetchTasks(today);
-
-    const metricsTimer = setTimeout(() => {
-      void fetchMetrics();
-    }, 250);
-
-    return () => clearTimeout(metricsTimer);
-  }, [fetchTasks, setSelectedDate, fetchMetrics]);
+    void fetchDayRecord(today);
+    void fetchUserStats();
+    void fetchAchievements();
+    void fetchJourneys();
+    addActivityLog('SYSTEM', 'Daily initialization complete.');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggle = async (id: string, completed: boolean) => {
     try {
@@ -46,6 +54,8 @@ export default function TodayPage() {
         await uncompleteTask(id);
       } else {
         await completeTask(id);
+        const task = tasks.find(t => t.id === id);
+        if (task) addActivityLog('DONE', `'${task.title}' marked complete.`);
         addToast('Task completed!', 'success', 2000);
       }
     } catch {
@@ -64,6 +74,7 @@ export default function TodayPage() {
         priority: newPriority,
         date: selectedDate,
       });
+      addActivityLog('TASKS', `Task '${newTaskTitle.trim()}' created.`);
       setNewTaskTitle('');
       setNewDesc('');
       setShowAddForm(false);
@@ -82,9 +93,7 @@ export default function TodayPage() {
     }
   };
 
-  const visibleTasks = tasks;
-
-  const filteredTasks = visibleTasks.filter(t => {
+  const filteredTasks = tasks.filter(t => {
     if (filterStatus === 'pending' && t.completed) return false;
     if (filterStatus === 'completed' && !t.completed) return false;
     if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
@@ -93,35 +102,67 @@ export default function TodayPage() {
 
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
+  const uniqueCategories = Array.from(new Set(tasks.map(t => t.category || 'General')));
+  const activePendingCount = tasks.filter(t => !t.completed).length;
+  const activeCompletedCount = tasks.filter(t => t.completed).length;
+  const activeTotalCount = tasks.length;
 
-  const uniqueCategories = Array.from(new Set(visibleTasks.map(t => t.category || 'General')));
-
-  const activePendingCount = visibleTasks.filter(t => !t.completed).length;
-  const activeCompletedCount = visibleTasks.filter(t => t.completed).length;
-  const activeTotalCount = visibleTasks.length;
+  // Build log from activityLog + task completions
+  const logEntries = activityLog.slice().reverse().slice(0, 50);
 
   return (
-    <div className="space-y-8 animate-page-enter">
-        {/* Header */}
-        <header>
-          <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-            <span className="text-primary">&gt;</span> system/tasks --date=today
-          </h1>
-          <p className="font-body text-on-surface-variant">
-            System initialized. Awaiting user input.
-          </p>
-        </header>
+    <div className="space-y-6 animate-page-enter">
+      {/* Achievement Toast (global) */}
+      <AchievementToast />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Task Area */}
-          <div className="lg:col-span-2 space-y-6">
+      {/* Header */}
+      <header>
+        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
+          <span className="text-primary">&gt;</span> system/tasks --date=today
+        </h1>
+        <p className="font-body text-on-surface-variant">
+          System initialized. Awaiting user input.
+        </p>
+      </header>
+
+      {/* Day Status Banner */}
+      {dayRecord && (
+        <DayStatusBanner score={dayRecord.dailyScore} />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ── Left: Tasks + Discipline ────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* DISCIPLINE CARD */}
+          <div>
+            <SectionHeader title="DISCIPLINE_CARD" />
+            {isDayRecordLoading && !dayRecord ? (
+              <div className="bg-surface-container-low rounded-md p-8 flex items-center justify-center">
+                <span className="animate-blink text-primary font-mono text-sm">▊</span>
+                <span className="font-mono text-sm text-on-surface-variant ml-2">Loading day record...</span>
+              </div>
+            ) : dayRecord ? (
+              <DisciplineCard
+                dayRecord={dayRecord}
+                date={today}
+                journeys={journeys.map(j => ({ id: j.id, title: j.title, startTime: j.startTime }))}
+              />
+            ) : (
+              <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
+                <span className="font-mono text-sm text-outline">Discipline card offline. Reconnect to sync.</span>
+              </div>
+            )}
+          </div>
+
+          {/* TASK LIST */}
+          <div>
             <SectionHeader
               title="ACTIVE_ROUTINES"
               rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
             />
 
-            {visibleTasks.length > 0 && (
-              <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2">
+            {tasks.length > 0 && (
+              <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2 mb-4">
                 <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">&gt; FILTER</span>
                 <select
                   value={filterStatus}
@@ -158,7 +199,7 @@ export default function TodayPage() {
                   </div>
                 ))}
               </div>
-            ) : visibleTasks.length === 0 ? (
+            ) : tasks.length === 0 ? (
               <EmptyState title="No tasks for today" description="Create a manual task to get started." icon="task_alt" />
             ) : filteredTasks.length === 0 ? (
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
@@ -199,7 +240,7 @@ export default function TodayPage() {
 
             {/* Quick Add */}
             {!showAddForm ? (
-              <div className="bg-surface-container-lowest rounded-md p-3 flex items-center gap-3 border border-outline-variant/15 focus-within:border-primary/50 transition-colors">
+              <div className="mt-4 bg-surface-container-lowest rounded-md p-3 flex items-center gap-3 border border-outline-variant/15 focus-within:border-primary/50 transition-colors">
                 <span className="text-primary font-headline text-lg">&gt;</span>
                 <input
                   type="text"
@@ -223,7 +264,7 @@ export default function TodayPage() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleQuickAdd} className="bg-surface-container-lowest rounded-md p-4 border border-outline-variant/15 space-y-3 animate-fade-in">
+              <form onSubmit={handleQuickAdd} className="mt-4 bg-surface-container-lowest rounded-md p-4 border border-outline-variant/15 space-y-3 animate-fade-in">
                 <div className="flex items-center gap-2">
                   <span className="text-primary font-headline">&gt;</span>
                   <input
@@ -259,51 +300,28 @@ export default function TodayPage() {
               </form>
             )}
           </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="flex flex-col gap-6">
-            {/* Streak Card */}
-            <div className="bg-surface-container-lowest p-6 rounded-md border border-outline-variant/15 relative overflow-hidden">
-              <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
-              <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; CURRENT_STREAK</span>
-              <div className="font-headline text-5xl font-black text-primary tracking-tighter mt-2" style={{ letterSpacing: '-0.02em' }}>
-                {metrics?.currentStreak ?? 0}
-              </div>
-              <span className="font-body text-sm text-on-surface-variant mt-1 block">Days operational without failure.</span>
+        {/* ── Right: Score + Log ──────────────────────────────────── */}
+        <div className="flex flex-col gap-6">
+          {/* Score Display */}
+          <ScoreDisplay dayRecord={dayRecord} userStats={userStats} />
+
+          {/* Stats quick card */}
+          <div className="bg-surface-container-lowest p-4 rounded-md border border-outline-variant/15 relative overflow-hidden">
+            <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
+            <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; TASK_STATUS</span>
+            <div className="flex items-end gap-2 mt-2">
+              <span className="font-headline text-4xl font-black text-primary tracking-tighter">{activeCompletedCount}</span>
+              <span className="text-on-surface-variant font-headline text-xl mb-0.5">/ {activeTotalCount}</span>
             </div>
-
-            {/* Terminal Log */}
-            <TerminalWindow
-              title="logs/activity"
-              className="flex-1 min-h-[280px]"
-              bodyClassName="p-4 font-mono text-xs text-on-surface-variant flex flex-col gap-2 overflow-y-auto flex-1"
-              dots={['bg-outline-variant', 'bg-outline-variant', 'bg-outline-variant']}
-            >
-                <div className="flex gap-2">
-                  <span className="text-outline">[{dayjs().format('MMM-DD HH:mm').toUpperCase()}]</span>
-                  <span className="text-secondary">SYSTEM:</span>
-                  <span>Daily initialization complete.</span>
-                </div>
-                {visibleTasks.length > 0 && (
-                  <div className="flex gap-2">
-                    <span className="text-outline">[{dayjs().format('MMM-DD HH:mm').toUpperCase()}]</span>
-                    <span className="text-primary">TASKS:</span>
-                    <span>{activeTotalCount} loaded, {activeCompletedCount} complete.</span>
-                  </div>
-                )}
-                {completedTasks.slice(0, 3).map(t => (
-                  <div key={t.id} className="flex gap-2">
-                    <span className="text-outline">[{t.completedAt ? dayjs(t.completedAt).format('MMM-DD HH:mm').toUpperCase() : '--'}]</span>
-                    <span className="text-surface-tint">DONE:</span>
-                    <span>&apos;{t.title}&apos; marked complete.</span>
-                  </div>
-                ))}
-                <div className="flex gap-2 mt-4 opacity-50">
-                  <span className="text-primary animate-blink">_</span>
-                </div>
-            </TerminalWindow>
+            <span className="font-body text-sm text-on-surface-variant block mt-1">Tasks completed today.</span>
           </div>
+
+          {/* Activity Log */}
+          <ActivityLog entries={logEntries} />
         </div>
       </div>
+    </div>
   );
 }

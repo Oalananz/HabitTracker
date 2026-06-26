@@ -18,6 +18,7 @@ import {
   localCreatePlan, localUpdatePlan, localDeletePlan, localAssignPlanToPrayerBlock,
   getLocalPrayerTimes, cachePrayerTimesFromServer,
 } from '@/lib/offline';
+import type { DayRecord, DayRecordUpdate } from '@/lib/services/dayRecordService';
 
 let authCheckPromise: Promise<void> | null = null;
 
@@ -173,7 +174,7 @@ interface DashboardMetrics {
   totalTasks: number;
   completionRate: number;
   weeklyRate: number;
-  heatmapData: { date: string; count: number; total: number }[];
+  heatmapData: { date: string; count: number; total: number; score?: number }[];
   weeklyTrend: { week: string; rate: number; completed: number; total: number }[];
   recovery: {
     currentDays: number;
@@ -181,6 +182,48 @@ interface DashboardMetrics {
     failuresByMonth: Record<string, number>;
     startTime: string | null;
   };
+}
+
+interface UserStats {
+  userId: string;
+  totalScore: number;
+  totalFocusHours: number;
+  focusStreak: number;
+  prayerStreak: number;
+  noReelsStreak: number;
+  noMasturbationStreak: number;
+  fullDisciplineStreak: number;
+  bestFocusStreak: number;
+  bestPrayerStreak: number;
+  bestNoReelsStreak: number;
+  bestFullDisciplineStreak: number;
+  updatedAt: string;
+}
+
+interface UserPreferences {
+  userId: string;
+  focusGoalHours: number;
+  sleepGoalHours: number;
+  achievementAlerts: boolean;
+  disciplineReminder: string | null;
+}
+
+interface Achievement {
+  key: string;
+  name: string;
+  desc: string;
+  cat: string;
+  rarity: string;
+  condition: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  progress: { current: number; target: number } | null;
+}
+
+interface ActivityLogEntry {
+  timestamp: string;
+  category: string;
+  message: string;
 }
 
 interface TaskSummary {
@@ -275,6 +318,34 @@ interface AppState {
   fetchPrayerTimes: (date: string) => Promise<void>;
   fetchPrayerTimesFromLocation: (date: string, latitude: number, longitude: number) => Promise<void>;
   setManualPrayerTimes: (date: string, times: { fajr?: string; dhuhr?: string; asr?: string; maghrib?: string; isha?: string }) => Promise<void>;
+
+  // Day Record
+  dayRecord: DayRecord | null;
+  isDayRecordLoading: boolean;
+  fetchDayRecord: (date: string) => Promise<void>;
+  updateDayRecord: (date: string, fields: DayRecordUpdate) => Promise<string[]>;
+
+  // User Stats
+  userStats: UserStats | null;
+  fetchUserStats: () => Promise<void>;
+
+  // Achievements
+  achievements: Achievement[];
+  newlyUnlockedAchievements: Achievement[];
+  newAchievementCount: number;
+  isAchievementsLoading: boolean;
+  fetchAchievements: () => Promise<void>;
+  clearNewAchievements: () => void;
+  markAchievementsSeen: () => void;
+
+  // User Preferences
+  userPreferences: UserPreferences | null;
+  fetchUserPreferences: () => Promise<void>;
+  saveUserPreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
+
+  // Activity Log
+  activityLog: ActivityLogEntry[];
+  addActivityLog: (category: string, message: string) => void;
 
   // Offline / Sync
   isOffline: boolean;
@@ -735,6 +806,202 @@ export const useStore = create<AppState>((set, get) => ({
     if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
     const data = await res.json();
     if (data?.prayerTimes) { await cachePrayerTimesFromServer(data.prayerTimes); set({ prayerTimes: data.prayerTimes }); }
+  },
+
+  // Day Record
+  dayRecord: null,
+  isDayRecordLoading: false,
+
+  fetchDayRecord: async (date) => {
+    set({ isDayRecordLoading: true });
+    try {
+      const res = await fetch(`/api/day-record?date=${date}`);
+      const data = await res.json();
+      if (res.ok && data.record) {
+        const r = data.record;
+        const mapped: DayRecord = {
+          id: r.id, userId: r.user_id, date: r.date,
+          focusHours: Number(r.focus_hours ?? 0), focusGoal: Number(r.focus_goal ?? 6),
+          noReels: Boolean(r.no_reels), noMasturbation: Boolean(r.no_masturbation),
+          lowSugar: Boolean(r.low_sugar), noMusic: Boolean(r.no_music), noYapping: Boolean(r.no_yapping),
+          fajr: Boolean(r.fajr), dhuhr: Boolean(r.dhuhr), asr: Boolean(r.asr),
+          maghrib: Boolean(r.maghrib), isha: Boolean(r.isha),
+          quran: Boolean(r.quran), dhikrMorning: Boolean(r.dhikr_morning),
+          dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
+          sunnahPrayer: Boolean(r.sunnah_prayer),
+          sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
+          dailyScore: Number(r.daily_score ?? 0),
+          notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
+        };
+        set({ dayRecord: mapped });
+      }
+    } catch {/* use cached */}
+    set({ isDayRecordLoading: false });
+  },
+
+  updateDayRecord: async (date, fields) => {
+    // Optimistic update
+    const prev = get().dayRecord;
+    if (prev) {
+      const optimistic = { ...prev, ...fields };
+      // Compute optimistic score
+      let score = 0;
+      if (optimistic.focusHours >= optimistic.focusGoal) score += 2;
+      if (optimistic.fajr && optimistic.dhuhr && optimistic.asr && optimistic.maghrib && optimistic.isha) score += 2;
+      if (optimistic.quran && (optimistic.dhikrMorning || optimistic.dhikrEvening)) score += 2;
+      if (optimistic.noReels) score += 1;
+      if (optimistic.noMasturbation) score += 1;
+      if (optimistic.noMusic) score += 1;
+      if (optimistic.sleepHours >= optimistic.sleepGoal) score += 1;
+      optimistic.dailyScore = Math.min(score, 10);
+      set({ dayRecord: optimistic });
+    }
+
+    if (!networkStatus.isOnline) return [];
+    try {
+      const body: Record<string, unknown> = { date };
+      for (const [k, v] of Object.entries(fields)) { body[k] = v; }
+      const res = await fetch('/api/day-record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.record) {
+          const r = data.record;
+          const updated: DayRecord = {
+            id: r.id, userId: r.user_id, date: r.date,
+            focusHours: Number(r.focus_hours ?? 0), focusGoal: Number(r.focus_goal ?? 6),
+            noReels: Boolean(r.no_reels), noMasturbation: Boolean(r.no_masturbation),
+            lowSugar: Boolean(r.low_sugar), noMusic: Boolean(r.no_music), noYapping: Boolean(r.no_yapping),
+            fajr: Boolean(r.fajr), dhuhr: Boolean(r.dhuhr), asr: Boolean(r.asr),
+            maghrib: Boolean(r.maghrib), isha: Boolean(r.isha),
+            quran: Boolean(r.quran), dhikrMorning: Boolean(r.dhikr_morning),
+            dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
+            sunnahPrayer: Boolean(r.sunnah_prayer),
+            sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
+            dailyScore: Number(r.daily_score ?? 0),
+            notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
+          };
+          set({ dayRecord: updated });
+        }
+        const newKeys: string[] = data.newAchievements || [];
+        if (newKeys.length > 0) {
+          const allDefs = get().achievements;
+          const newOnes = newKeys.map(k => allDefs.find(a => a.key === k)).filter(Boolean) as Achievement[];
+          set(s => ({
+            newlyUnlockedAchievements: [...s.newlyUnlockedAchievements, ...newOnes],
+            newAchievementCount: s.newAchievementCount + newKeys.length,
+          }));
+          void get().fetchAchievements();
+        }
+        return newKeys;
+      }
+    } catch {/* keep optimistic */}
+    return [];
+  },
+
+  // User Stats
+  userStats: null,
+  fetchUserStats: async () => {
+    if (!networkStatus.isOnline) return;
+    try {
+      const res = await fetch('/api/user-stats');
+      const data = await res.json();
+      if (res.ok && data.stats) {
+        const s = data.stats;
+        set({
+          userStats: {
+            userId: s.user_id,
+            totalScore: s.total_score || 0,
+            totalFocusHours: s.total_focus_hours || 0,
+            focusStreak: s.focus_streak || 0,
+            prayerStreak: s.prayer_streak || 0,
+            noReelsStreak: s.no_reels_streak || 0,
+            noMasturbationStreak: s.no_masturbation_streak || 0,
+            fullDisciplineStreak: s.full_discipline_streak || 0,
+            bestFocusStreak: s.best_focus_streak || 0,
+            bestPrayerStreak: s.best_prayer_streak || 0,
+            bestNoReelsStreak: s.best_no_reels_streak || 0,
+            bestFullDisciplineStreak: s.best_full_discipline_streak || 0,
+            updatedAt: s.updated_at,
+          },
+        });
+      }
+    } catch {}
+  },
+
+  // Achievements
+  achievements: [],
+  newlyUnlockedAchievements: [],
+  newAchievementCount: 0,
+  isAchievementsLoading: false,
+
+  fetchAchievements: async () => {
+    if (!networkStatus.isOnline) return;
+    set({ isAchievementsLoading: true });
+    try {
+      const res = await fetch('/api/achievements');
+      const data = await res.json();
+      if (res.ok) set({ achievements: data.achievements || [] });
+    } catch {}
+    set({ isAchievementsLoading: false });
+  },
+
+  clearNewAchievements: () => set({ newlyUnlockedAchievements: [] }),
+  markAchievementsSeen: () => set({ newAchievementCount: 0 }),
+
+  // User Preferences
+  userPreferences: null,
+  fetchUserPreferences: async () => {
+    if (!networkStatus.isOnline) return;
+    try {
+      const res = await fetch('/api/user-preferences');
+      const data = await res.json();
+      if (res.ok && data.preferences) {
+        const p = data.preferences;
+        set({
+          userPreferences: {
+            userId: p.user_id,
+            focusGoalHours: p.focus_goal_hours ?? 6,
+            sleepGoalHours: p.sleep_goal_hours ?? 7,
+            achievementAlerts: p.achievement_alerts ?? true,
+            disciplineReminder: p.discipline_reminder || null,
+          },
+        });
+      }
+    } catch {}
+  },
+
+  saveUserPreferences: async (prefs) => {
+    if (!networkStatus.isOnline) return;
+    const body: Record<string, unknown> = {};
+    if (prefs.focusGoalHours !== undefined) body.focus_goal_hours = prefs.focusGoalHours;
+    if (prefs.sleepGoalHours !== undefined) body.sleep_goal_hours = prefs.sleepGoalHours;
+    if (prefs.achievementAlerts !== undefined) body.achievement_alerts = prefs.achievementAlerts;
+    if (prefs.disciplineReminder !== undefined) body.discipline_reminder = prefs.disciplineReminder;
+    try {
+      const res = await fetch('/api/user-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        set(s => ({ userPreferences: s.userPreferences ? { ...s.userPreferences, ...prefs } : null }));
+      }
+    } catch {}
+  },
+
+  // Activity Log
+  activityLog: [],
+  addActivityLog: (category, message) => {
+    const entry: ActivityLogEntry = {
+      timestamp: new Date().toISOString(),
+      category,
+      message,
+    };
+    set(s => ({ activityLog: [entry, ...s.activityLog].slice(0, 100) }));
   },
 
   // Offline / Sync
