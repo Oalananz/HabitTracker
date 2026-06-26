@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 export default function TodayPage() {
   const {
     tasks, isTasksLoading, fetchTasks,
-    completeTask, uncompleteTask, createTask, deleteTask,
+    completeTask, uncompleteTask, createTask, deleteTask, updateTask,
     selectedDate, setSelectedDate,
     dayRecord, fetchDayRecord, isDayRecordLoading,
     userStats, fetchUserStats,
@@ -87,9 +87,23 @@ export default function TodayPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteTask(id);
+      addActivityLog('TASKS', 'Task deleted.');
       addToast('Task deleted', 'info', 2000);
     } catch {
       addToast('Failed to delete task', 'error');
+    }
+  };
+
+  const handleEdit = async (
+    id: string,
+    data: { title: string; description?: string; category?: string; priority?: string }
+  ) => {
+    try {
+      await updateTask(id, data);
+      addActivityLog('TASKS', `Task '${data.title}' updated.`);
+      addToast('Task updated', 'success', 2000);
+    } catch {
+      addToast('Failed to update task', 'error');
     }
   };
 
@@ -217,6 +231,7 @@ export default function TodayPage() {
                       sourceType={task.sourceType}
                       onToggle={handleToggle}
                       onDelete={handleDelete}
+                      onEdit={handleEdit}
                     />
                   </div>
                 ))}
@@ -232,6 +247,7 @@ export default function TodayPage() {
                       sourceType={task.sourceType}
                       onToggle={handleToggle}
                       onDelete={handleDelete}
+                      onEdit={handleEdit}
                     />
                   </div>
                 ))}
