@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import type { DayRecord, DayRecordUpdate } from '@/lib/services/dayRecordService';
 import dayjs from 'dayjs';
@@ -8,7 +9,6 @@ import dayjs from 'dayjs';
 interface DisciplineCardProps {
   dayRecord: DayRecord;
   date: string;
-  journeys: { id: string; title: string; startTime: string }[];
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -71,8 +71,11 @@ function ToggleRow({ label, checked, onChange, streak, streakBroken, disabled }:
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export default function DisciplineCard({ dayRecord, date, journeys }: DisciplineCardProps) {
-  const { updateDayRecord, addActivityLog, userStats } = useStore();
+export default function DisciplineCard({ dayRecord, date }: DisciplineCardProps) {
+  const {
+    updateDayRecord, addActivityLog, userStats,
+    journeys, failures, recordJourneyFailure, deleteFailure,
+  } = useStore();
   const [customFocus, setCustomFocus] = useState('');
   const [showCustomFocus, setShowCustomFocus] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -132,25 +135,39 @@ export default function DisciplineCard({ dayRecord, date, journeys }: Discipline
     await update({ [field]: checked } as DayRecordUpdate, 'WORSHIP', `${label} ${checked ? 'completed ✓' : 'unchecked'}`);
   };
 
-  // ── DISCIPLINE LAYER ───────────────────────────────────────────────────────
+  // ── DISCIPLINE LAYER (driven by Recovery journeys) ──────────────────────────
 
-  const handleDiscipline = async (field: keyof DayRecord, label: string, checked: boolean) => {
-    await update({ [field]: checked } as DayRecordUpdate, 'DISCIPLINE', `${label} ${checked ? 'confirmed ✓' : 'unchecked'}`);
+  const failedToday = (journeyId: string) =>
+    failures.some(f => f.journeyId === journeyId && dayjs(f.timestamp).format('YYYY-MM-DD') === date);
+
+  const todaysFailures = (journeyId: string) =>
+    failures.filter(f => f.journeyId === journeyId && dayjs(f.timestamp).format('YYYY-MM-DD') === date);
+
+  const handleJourneyToggle = async (journeyId: string, title: string, willBeClean: boolean) => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+    try {
+      if (!willBeClean) {
+        if (typeof window !== 'undefined' && !window.confirm(`Log a failure for "${title}" today?`)) return;
+        await recordJourneyFailure(journeyId);
+        addActivityLog('DISCIPLINE', `${title} — failure logged ✗`);
+      } else {
+        for (const f of todaysFailures(journeyId)) await deleteFailure(f.id);
+        addActivityLog('DISCIPLINE', `${title} — marked clean ✓`);
+      }
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleCleanDay = async () => {
-    const allOn = dayRecord.noReels && dayRecord.noMasturbation && dayRecord.lowSugar && dayRecord.noMusic;
-    const val = !allOn;
-    await update(
-      { noReels: val, noMasturbation: val, lowSugar: val, noMusic: val },
-      'DISCIPLINE',
-      val ? 'CLEAN DAY confirmed — all discipline active ✓' : 'Clean day undone',
-    );
+  const handleAllClean = async () => {
+    const todays = failures.filter(f => f.journeyId && dayjs(f.timestamp).format('YYYY-MM-DD') === date);
+    if (todays.length === 0) return;
+    for (const f of todays) await deleteFailure(f.id);
+    addActivityLog('DISCIPLINE', 'All journeys marked clean ✓');
   };
 
-  const handleNoReels = async (checked: boolean) => {
-    await update({ noReels: checked }, 'DISCIPLINE', `NO_REELS ${checked ? 'confirmed ✓' : 'unchecked'}`);
-  };
+  const cleanCount = journeys.filter(j => !failedToday(j.id)).length;
 
   // ── SLEEP LAYER ────────────────────────────────────────────────────────────
 
@@ -160,13 +177,6 @@ export default function DisciplineCard({ dayRecord, date, journeys }: Discipline
   };
 
   const allPrayersDone = dayRecord.fajr && dayRecord.dhuhr && dayRecord.asr && dayRecord.maghrib && dayRecord.isha;
-
-  // ── Journey name lookup ────────────────────────────────────────────────────
-  const getJourneyDays = (title: string) => {
-    const j = journeys.find(x => x.title.toLowerCase().includes(title.toLowerCase()));
-    if (!j) return null;
-    return dayjs().diff(dayjs(j.startTime), 'day');
-  };
 
   return (
     <div className="space-y-4">
@@ -316,75 +326,65 @@ export default function DisciplineCard({ dayRecord, date, journeys }: Discipline
         </div>
       </div>
 
-      {/* ── DISCIPLINE LAYER ─────────────────────────────────────── */}
+      {/* ── DISCIPLINE LAYER (sourced from Recovery journeys) ────── */}
       <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-4 space-y-3">
-        <h3 className="font-headline text-xs font-bold uppercase tracking-wider text-on-surface">
-          <span className="text-primary">&gt;</span> DISCIPLINE_LAYER
-        </h3>
-
-        <div className="space-y-1.5">
-          <ToggleRow
-            label="NO_REELS"
-            checked={dayRecord.noReels}
-            onChange={handleNoReels}
-            disabled={isUpdating}
-            streak={getJourneyDays('Reels')}
-          />
-          <ToggleRow
-            label="NO_MASTURBATION"
-            checked={dayRecord.noMasturbation}
-            onChange={checked => handleDiscipline('noMasturbation', 'NO_MASTURBATION', checked)}
-            disabled={isUpdating}
-            streak={userStats?.noMasturbationStreak ?? null}
-          />
-          <ToggleRow
-            label="LOW_SUGAR"
-            checked={dayRecord.lowSugar}
-            onChange={checked => handleDiscipline('lowSugar', 'LOW_SUGAR', checked)}
-            disabled={isUpdating}
-            streak={getJourneyDays('Sugar')}
-          />
-          <ToggleRow
-            label="NO_MUSIC"
-            checked={dayRecord.noMusic}
-            onChange={checked => handleDiscipline('noMusic', 'NO_MUSIC', checked)}
-            disabled={isUpdating}
-            streak={getJourneyDays('Music')}
-          />
-          <ToggleRow
-            label="NO_YAPPING"
-            checked={dayRecord.noYapping}
-            onChange={checked => handleDiscipline('noYapping', 'NO_YAPPING', checked)}
-            disabled={isUpdating}
-            streak={getJourneyDays('Yapping')}
-          />
-        </div>
-
-        {/* Quick action buttons */}
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => handleNoReels(true)}
-            disabled={isUpdating || dayRecord.noReels}
-            className="px-3 py-1.5 border border-primary/30 bg-primary/5 text-primary font-mono text-[10px] uppercase rounded-sm hover:bg-primary/10 transition-all disabled:opacity-40"
+        <div className="flex items-center justify-between">
+          <h3 className="font-headline text-xs font-bold uppercase tracking-wider text-on-surface">
+            <span className="text-primary">&gt;</span> DISCIPLINE_LAYER
+          </h3>
+          <Link
+            href="/recovery"
+            className="font-mono text-[9px] text-on-surface-variant hover:text-primary uppercase tracking-wider flex items-center gap-1 transition-colors"
           >
-            ✓ NO REELS TODAY
-          </button>
-          <button
-            onClick={handleCleanDay}
-            disabled={isUpdating}
-            className={`px-3 py-1.5 border font-mono text-[10px] uppercase rounded-sm transition-all ${
-              dayRecord.noReels && dayRecord.noMasturbation && dayRecord.lowSugar && dayRecord.noMusic
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-outline-variant/30 text-on-surface-variant hover:border-primary/30 hover:text-primary'
-            }`}
-          >
-            ✓ CLEAN DAY
-          </button>
+            <span className="material-symbols-outlined text-[13px]">tune</span> manage
+          </Link>
         </div>
 
-        <div className="font-mono text-[10px] text-on-surface-variant">
-          💪 DISCIPLINE_STREAK: <span className="text-primary font-bold">{userStats?.fullDisciplineStreak ?? 0} days</span>
-        </div>
+        {journeys.length === 0 ? (
+          <Link
+            href="/recovery"
+            className="flex flex-col items-center text-center gap-1 py-5 border border-dashed border-outline-variant/25 rounded-sm hover:border-primary/40 hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[22px] text-outline">add_circle</span>
+            <span className="font-mono text-[10px] text-on-surface-variant">
+              No recovery journeys yet — add one in Recovery
+            </span>
+          </Link>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              {journeys.map(j => {
+                const failed = failedToday(j.id);
+                const cleanDays = Math.max(0, dayjs(date).endOf('day').diff(dayjs(j.startTime), 'day'));
+                return (
+                  <ToggleRow
+                    key={j.id}
+                    label={j.title}
+                    checked={!failed}
+                    onChange={checked => handleJourneyToggle(j.id, j.title, checked)}
+                    streak={!failed ? cleanDays : null}
+                    streakBroken={failed}
+                    disabled={isUpdating}
+                  />
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={handleAllClean}
+                disabled={isUpdating || cleanCount === journeys.length}
+                className="px-3 py-1.5 border border-primary/30 bg-primary/5 text-primary font-mono text-[10px] uppercase rounded-sm hover:bg-primary/10 transition-all disabled:opacity-40"
+              >
+                ✓ ALL CLEAN TODAY
+              </button>
+            </div>
+
+            <div className="font-mono text-[10px] text-on-surface-variant">
+              💪 CLEAN_TODAY: <span className="text-primary font-bold">{cleanCount}/{journeys.length}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── SLEEP LAYER ──────────────────────────────────────────── */}

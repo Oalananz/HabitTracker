@@ -274,6 +274,7 @@ interface AppState {
   updateJourney: (journeyId: string, data: { title?: string; description?: string; startTime?: string }) => Promise<void>;
   deleteJourney: (journeyId: string) => Promise<void>;
   recordJourneyFailure: (journeyId: string, note?: string) => Promise<void>;
+  deleteFailure: (failureId: string) => Promise<void>;
   resetJourney: (journeyId: string, clearLogs: boolean) => Promise<void>;
   fetchRecovery: () => Promise<void>;
   fetchFailures: () => Promise<void>;
@@ -653,6 +654,21 @@ export const useStore = create<AppState>((set, get) => ({
     set((s) => ({ failures: [failure as unknown as FailureLog, ...s.failures] }));
     get().refreshPendingCount();
     if (networkStatus.isOnline) { try { await fetch('/api/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'fail', journeyId, note }) }); await get().fetchJourneys(); await get().fetchFailures(); } catch {} }
+  },
+  deleteFailure: async (failureId) => {
+    // Optimistically remove from state, then sync with the server.
+    const removed = get().failures.find((f) => f.id === failureId);
+    set((s) => ({ failures: s.failures.filter((f) => f.id !== failureId) }));
+    if (removed?.journeyId) {
+      set((s) => ({ journeys: s.journeys.map((j) => j.id === removed.journeyId ? { ...j, failureCount: Math.max(0, j.failureCount - 1) } : j) }));
+    }
+    if (networkStatus.isOnline) {
+      try {
+        await fetch('/api/failures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: failureId }) });
+        await get().fetchJourneys();
+        await get().fetchFailures();
+      } catch {}
+    }
   },
   resetJourney: async (journeyId, clearLogs) => {
     await localResetJourney(journeyId, clearLogs); get().refreshPendingCount();

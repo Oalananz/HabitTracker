@@ -22,7 +22,7 @@ export default function TodayPage() {
     userStats, fetchUserStats,
     fetchAchievements,
     activityLog, addActivityLog,
-    journeys, fetchJourneys,
+    fetchJourneys, fetchFailures,
   } = useStore();
 
   const { addToast } = useToast();
@@ -44,6 +44,7 @@ export default function TodayPage() {
     void fetchUserStats();
     void fetchAchievements();
     void fetchJourneys();
+    void fetchFailures();
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -159,7 +160,6 @@ export default function TodayPage() {
               <DisciplineCard
                 dayRecord={dayRecord}
                 date={today}
-                journeys={journeys.map(j => ({ id: j.id, title: j.title, startTime: j.startTime }))}
               />
             ) : (
               <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
