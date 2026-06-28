@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     sleepHours: 'p_sleep_hours',
     focusGoal: 'p_focus_goal',
     sleepGoal: 'p_sleep_goal',
+    tasksDone: 'p_tasks_done',
   };
 
   for (const [camel, rpc] of Object.entries(fieldMap)) {

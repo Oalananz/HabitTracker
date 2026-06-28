@@ -846,6 +846,7 @@ export const useStore = create<AppState>((set, get) => ({
           dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
           sunnahPrayer: Boolean(r.sunnah_prayer),
           sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
+          tasksDone: Boolean(r.tasks_done),
           dailyScore: Number(r.daily_score ?? 0),
           notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
         };
@@ -860,15 +861,15 @@ export const useStore = create<AppState>((set, get) => ({
     const prev = get().dayRecord;
     if (prev) {
       const optimistic = { ...prev, ...fields };
-      // Compute optimistic score
+      // Compute optimistic score (mirror of recalculate_day_score, v5)
       let score = 0;
       if (optimistic.focusHours >= optimistic.focusGoal) score += 2;
       if (optimistic.fajr && optimistic.dhuhr && optimistic.asr && optimistic.maghrib && optimistic.isha) score += 2;
-      if (optimistic.quran && (optimistic.dhikrMorning || optimistic.dhikrEvening)) score += 2;
-      if (optimistic.noReels) score += 1;
-      if (optimistic.noMasturbation) score += 1;
-      if (optimistic.noMusic) score += 1;
+      if (optimistic.quran && (optimistic.dhikrMorning || optimistic.dhikrEvening)) score += 1;
+      if (optimistic.nightPrayer && optimistic.sunnahPrayer) score += 1;
+      if (optimistic.noReels && optimistic.noMasturbation && optimistic.noMusic) score += 2;
       if (optimistic.sleepHours >= optimistic.sleepGoal) score += 1;
+      if (optimistic.tasksDone) score += 1;
       optimistic.dailyScore = Math.min(score, 10);
       set({ dayRecord: optimistic });
     }
@@ -897,6 +898,7 @@ export const useStore = create<AppState>((set, get) => ({
             dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
             sunnahPrayer: Boolean(r.sunnah_prayer),
             sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
+            tasksDone: Boolean(r.tasks_done),
             dailyScore: Number(r.daily_score ?? 0),
             notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
           };

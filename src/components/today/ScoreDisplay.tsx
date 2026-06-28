@@ -23,15 +23,17 @@ function buildRows(r: DayRecord): ScoreRow[] {
   const focusMet = r.focusHours >= r.focusGoal;
   const allPrayers = r.fajr && r.dhuhr && r.asr && r.maghrib && r.isha;
   const quranDhikr = r.quran && (r.dhikrMorning || r.dhikrEvening);
+  const nightSunnah = r.nightPrayer && r.sunnahPrayer;
+  const discipline = r.noReels && r.noMasturbation && r.noMusic;
   const sleepMet = r.sleepHours >= r.sleepGoal;
   return [
-    { label: 'FOCUS_GOAL',   met: focusMet,            points: focusMet ? 2 : 0,           max: 2 },
-    { label: 'ALL_PRAYERS',  met: !!allPrayers,         points: allPrayers ? 2 : 0,         max: 2 },
-    { label: 'QURAN+DHIKR',  met: !!quranDhikr,         points: quranDhikr ? 2 : 0,         max: 2 },
-    { label: 'NO_REELS',     met: r.noReels,            points: r.noReels ? 1 : 0,          max: 1 },
-    { label: 'NO_MAS',       met: r.noMasturbation,     points: r.noMasturbation ? 1 : 0,   max: 1 },
-    { label: 'NO_MUSIC',     met: r.noMusic,            points: r.noMusic ? 1 : 0,          max: 1 },
-    { label: 'SLEEP_OK',     met: sleepMet,             points: sleepMet ? 1 : 0,           max: 1 },
+    { label: 'FOCUS_GOAL',    met: focusMet,        points: focusMet ? 2 : 0,      max: 2 },
+    { label: 'ALL_PRAYERS',   met: !!allPrayers,    points: allPrayers ? 2 : 0,    max: 2 },
+    { label: 'QURAN+DHIKR',   met: !!quranDhikr,    points: quranDhikr ? 1 : 0,    max: 1 },
+    { label: 'NIGHT+SUNNAH',  met: !!nightSunnah,   points: nightSunnah ? 1 : 0,   max: 1 },
+    { label: 'DISCIPLINE',    met: !!discipline,    points: discipline ? 2 : 0,    max: 2 },
+    { label: 'SLEEP_OK',      met: sleepMet,        points: sleepMet ? 1 : 0,      max: 1 },
+    { label: 'TASKS_DONE',    met: r.tasksDone,     points: r.tasksDone ? 1 : 0,   max: 1 },
   ];
 }
 

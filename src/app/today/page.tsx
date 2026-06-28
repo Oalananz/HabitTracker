@@ -7,6 +7,7 @@ import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
 import DayStatusBanner from '@/components/today/DayStatusBanner';
 import DisciplineCard from '@/components/today/DisciplineCard';
+import HabitsSection from '@/components/today/HabitsSection';
 import ScoreDisplay from '@/components/today/ScoreDisplay';
 import ActivityLog from '@/components/today/ActivityLog';
 import AchievementToast from '@/components/achievements/AchievementToast';
@@ -18,7 +19,7 @@ export default function TodayPage() {
     tasks, isTasksLoading, fetchTasks,
     completeTask, uncompleteTask, createTask, deleteTask, updateTask,
     selectedDate, setSelectedDate,
-    dayRecord, fetchDayRecord, isDayRecordLoading,
+    dayRecord, fetchDayRecord, isDayRecordLoading, updateDayRecord,
     userStats, fetchUserStats,
     fetchAchievements,
     activityLog, addActivityLog,
@@ -48,6 +49,16 @@ export default function TodayPage() {
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Keep the day-record tasks bonus in sync: all of today's tasks/habits
+  // complete credits the score's TASKS_DONE point.
+  useEffect(() => {
+    if (!dayRecord) return;
+    const allTasksDone = tasks.length > 0 && tasks.every(t => t.completed);
+    if (dayRecord.tasksDone !== allTasksDone) {
+      void updateDayRecord(today, { tasksDone: allTasksDone });
+    }
+  }, [tasks, dayRecord, updateDayRecord, today]);
 
   const handleToggle = async (id: string, completed: boolean) => {
     try {
@@ -338,6 +349,9 @@ export default function TodayPage() {
           <ActivityLog entries={logEntries} />
         </div>
       </div>
+
+      {/* ── Habits tracker (collapsible, last on page) ───────────── */}
+      <HabitsSection date={today} />
     </div>
   );
 }

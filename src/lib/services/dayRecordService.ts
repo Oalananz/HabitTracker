@@ -23,6 +23,7 @@ export interface DayRecord {
   sunnahPrayer: boolean;
   sleepHours: number;
   sleepGoal: number;
+  tasksDone: boolean;
   dailyScore: number;
   notes: string | null;
   createdAt: string;
@@ -55,6 +56,7 @@ function mapRow(row: Record<string, unknown>): DayRecord {
     sunnahPrayer: Boolean(row.sunnah_prayer),
     sleepHours: Number(row.sleep_hours ?? 0),
     sleepGoal: Number(row.sleep_goal ?? 7),
+    tasksDone: Boolean(row.tasks_done),
     dailyScore: Number(row.daily_score ?? 0),
     notes: (row.notes as string) || null,
     createdAt: row.created_at as string,
@@ -110,6 +112,7 @@ export async function upsertDayRecord(
   if (fields.sunnahPrayer !== undefined) params.p_sunnah_prayer = fields.sunnahPrayer;
   if (fields.sleepHours !== undefined) params.p_sleep_hours = fields.sleepHours;
   if (fields.sleepGoal !== undefined) params.p_sleep_goal = fields.sleepGoal;
+  if (fields.tasksDone !== undefined) params.p_tasks_done = fields.tasksDone;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc('upsert_day_record', params);

@@ -88,11 +88,11 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 |---|---|
 | Focus ≥ goal hours | +2 |
 | All 5 prayers done | +2 |
-| Quran + at least one Dhikr | +2 |
-| No Reels | +1 |
-| No Masturbation | +1 |
-| No Music | +1 |
+| Quran + at least one Dhikr | +1 |
+| Night prayer + 12 sunnah rakahs | +1 |
+| Discipline (all recovery journeys clean today) | +2 |
 | Sleep ≥ goal hours | +1 |
+| All of today's tasks/habits done | +1 |
 | **Max** | **10** |
 
 ---
@@ -142,6 +142,7 @@ In the Supabase **SQL Editor**, run the migrations **in order**:
 4. Files in `supabase/migrations/` — planner / prayer / competitive features
 5. `supabase-migration.sql` — RPCs (`increment_goal_progress`, `increment_journey_failure`)
 6. **`supabase/migration_v3_day_records_achievements.sql`** — v2.0 system (day records, achievements, user stats, preferences, scoring trigger, streak calculator)
+7. **`supabase/migration_v5_full_score.sql`** — comprehensive daily score (all worship extras + tasks/habits bonus, `tasks_done` column)
 
 ### 4. Run the dev server
 
