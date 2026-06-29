@@ -13,7 +13,6 @@ import {
 } from '@/lib/services/planService';
 
 export async function GET(request: NextRequest) {
-  const t0 = performance.now();
   try {
     const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
@@ -58,14 +57,10 @@ export async function GET(request: NextRequest) {
     }
     console.error('GET /api/plans error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    const t1 = performance.now();
-    console.log(`[GET /api/plans] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }
 
 export async function POST(request: NextRequest) {
-  const t0 = performance.now();
   try {
     const userId = await requireAuthId();
     const body = await request.json();
@@ -87,6 +82,7 @@ export async function POST(request: NextRequest) {
           endTime: body.endTime,
           dayOfWeek: body.dayOfWeek,
           prayerBlock: body.prayerBlock,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ plan });
       }
@@ -105,6 +101,7 @@ export async function POST(request: NextRequest) {
           endTime: body.endTime,
           dayOfWeek: body.dayOfWeek,
           prayerBlock: body.prayerBlock,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ plan });
       }
@@ -132,8 +129,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    const t1 = performance.now();
-    console.log(`[POST /api/plans] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }

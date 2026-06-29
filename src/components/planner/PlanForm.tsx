@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dayjs from 'dayjs';
+import { LIFE_AREAS } from '@/lib/lifeAreas';
 
 interface PlanFormProps {
   onSubmit: (data: {
@@ -18,6 +19,7 @@ interface PlanFormProps {
     endTime?: string;
     dayOfWeek?: string | null;
     prayerBlock?: string;
+    lifeArea?: string | null;
   }) => Promise<void>;
   onCancel: () => void;
   initialData?: {
@@ -34,6 +36,7 @@ interface PlanFormProps {
     endTime?: string | null;
     dayOfWeek?: string | null;
     prayerBlock?: string | null;
+    lifeArea?: string | null;
   };
   isEdit?: boolean;
 }
@@ -79,6 +82,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
   const [endTime,     setEndTime]     = useState(initialData?.endTime || '');
   const [selectedDays, setSelectedDays] = useState<string[]>(() => parseDaySelection(initialData?.dayOfWeek));
   const [prayerBlock, setPrayerBlock] = useState(initialData?.prayerBlock || '');
+  const [lifeArea, setLifeArea] = useState(initialData?.lifeArea || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(Boolean(initialData?.startTime || initialData?.endTime || initialData?.notes));
 
@@ -112,6 +116,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         endTime:     normalized.endTime || undefined,
         dayOfWeek:   planType === 'weekly' ? selectedDays.join(',') || undefined : isEdit ? null : undefined,
         prayerBlock: prayerBlock || undefined,
+        lifeArea:    lifeArea || null,
       });
     } catch (err) {
       console.error(err);
@@ -195,6 +200,13 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
             <select value={category} onChange={e => setCategory(e.target.value)} className={selectCls}>
               <option value="">None</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Life Area</label>
+            <select value={lifeArea} onChange={e => setLifeArea(e.target.value)} className={selectCls}>
+              <option value="">Unassigned</option>
+              {LIFE_AREAS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
             </select>
           </div>
           <div>

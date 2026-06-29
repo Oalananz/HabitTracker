@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import HabitForm from '@/components/habits/HabitForm';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
-import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
+import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
 
 const REPEAT_LABELS: Record<string, string> = {
   daily: 'Daily',
@@ -28,6 +28,13 @@ export default function HabitsPage() {
   useEffect(() => {
     fetchHabits();
   }, [fetchHabits]);
+
+  // Deep-link: /habits?area=health filters to that area
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const area = new URLSearchParams(window.location.search).get('area');
+    if (area && isLifeAreaId(area)) setFilterArea(area);
+  }, []);
 
   const handleCreate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] }; lifeArea?: string | null }) => {
     await createHabit(data);

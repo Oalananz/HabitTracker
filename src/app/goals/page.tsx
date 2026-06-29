@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import dayjs from 'dayjs';
-import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
+import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 
@@ -28,6 +28,17 @@ export default function GoalsPage() {
   useEffect(() => {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
   }, [fetchGoals, activeTab]);
+
+  // Deep-link: /goals?area=health preselects the area + opens the create form
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const area = new URLSearchParams(window.location.search).get('area');
+    if (area && isLifeAreaId(area)) {
+      setFilterArea(area);
+      setNewLifeArea(area);
+      setShowCreate(true);
+    }
+  }, []);
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;

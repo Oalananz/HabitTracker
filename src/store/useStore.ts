@@ -139,6 +139,7 @@ interface Plan {
   occurrenceDate: string;
   occurrenceKey: string;
   prayerBlock: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | null;
+  lifeArea?: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -283,9 +284,6 @@ interface AppState {
   resetJourney: (journeyId: string, clearLogs: boolean) => Promise<void>;
   fetchRecovery: () => Promise<void>;
   fetchFailures: () => Promise<void>;
-  recordFailure: () => Promise<void>;
-  resetRecovery: (clearLogs: boolean) => Promise<void>;
-  setStartTime: (startTime: string) => Promise<void>;
 
   // Goals
   goals: Goal[];
@@ -317,8 +315,8 @@ interface AppState {
   fetchWeeklyPlans: (weekOf?: string) => Promise<void>;
   fetchMonthlyPlans: (month?: string) => Promise<void>;
   fetchPlansSummary: () => Promise<void>;
-  createPlan: (data: { title: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate: string; startTime?: string; endDate?: string; endTime?: string; dayOfWeek?: string | null; prayerBlock?: string }) => Promise<void>;
-  updatePlan: (planId: string, data: { title?: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate?: string; startTime?: string | null; endDate?: string; endTime?: string | null; dayOfWeek?: string | null; prayerBlock?: string | null }) => Promise<void>;
+  createPlan: (data: { title: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate: string; startTime?: string; endDate?: string; endTime?: string; dayOfWeek?: string | null; prayerBlock?: string; lifeArea?: string | null }) => Promise<void>;
+  updatePlan: (planId: string, data: { title?: string; description?: string; planType?: string; status?: string; priority?: string; category?: string; notes?: string; startDate?: string; startTime?: string | null; endDate?: string; endTime?: string | null; dayOfWeek?: string | null; prayerBlock?: string | null; lifeArea?: string | null }) => Promise<void>;
   deletePlan: (planId: string) => Promise<void>;
   assignPlanToPrayerBlock: (planId: string, prayerBlock: string | null) => Promise<void>;
   fetchPrayerTimes: (date: string) => Promise<void>;
@@ -686,9 +684,6 @@ export const useStore = create<AppState>((set, get) => ({
     if (local.length) set({ failures: local as unknown as FailureLog[] });
     if (networkStatus.isOnline) { try { const res = await fetch('/api/failures'); const data = await res.json(); if (res.ok) { await cacheFailuresFromServer(data.failures); set({ failures: data.failures }); } } catch {} }
   },
-  recordFailure: async () => {},
-  resetRecovery: async () => {},
-  setStartTime: async () => {},
 
   // Goals
   goals: [],

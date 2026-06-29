@@ -333,6 +333,7 @@ export default function PlannerPage() {
             status: editPlanData.status,
             priority: editPlanData.priority,
             category: editPlanData.category || '',
+            lifeArea: editPlanData.lifeArea || null,
             notes: editPlanData.notes || '',
             startDate: editPlanData.startDate,
             startTime: editPlanData.startTime,

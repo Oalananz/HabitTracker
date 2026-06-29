@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const t0 = performance.now();
+export async function POST(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const body = await request.json();
@@ -115,8 +114,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    const t1 = performance.now();
-    console.log(`[POST /api/tasks] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }

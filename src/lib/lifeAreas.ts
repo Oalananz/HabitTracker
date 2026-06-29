@@ -117,25 +117,3 @@ export function lifeAreaColor(id: string | null | undefined): string {
 export function lifeAreaIcon(id: string | null | undefined): string {
   return getLifeArea(id)?.icon ?? 'category';
 }
-
-/** Generic shape: anything that may carry a life area + completion. */
-interface AreaItem {
-  lifeArea?: string | null;
-  completed?: boolean;
-}
-
-/** Filter a list of items down to one life area. */
-export function filterByArea<T extends AreaItem>(items: T[], areaId: LifeAreaId): T[] {
-  return items.filter((i) => i.lifeArea === areaId);
-}
-
-/**
- * Completion percentage for a set of items (0-100).
- * Items without a `completed` flag are ignored in the denominator.
- */
-export function areaProgress(items: AreaItem[]): number {
-  const trackable = items.filter((i) => typeof i.completed === 'boolean');
-  if (trackable.length === 0) return 0;
-  const done = trackable.filter((i) => i.completed).length;
-  return Math.round((done / trackable.length) * 100);
-}

@@ -6,8 +6,7 @@ import {
   fetchAndStorePrayerTimes,
 } from '@/lib/services/prayerTimeService';
 
-export async function GET(request: NextRequest) {
-  const t0 = performance.now();
+export async function GET(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
@@ -21,14 +20,10 @@ export async function GET(request: NextRequest) {
     }
     console.error('GET /api/prayer-times error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    const t1 = performance.now();
-    console.log(`[GET /api/prayer-times] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }
 
-export async function POST(request: NextRequest) {
-  const t0 = performance.now();
+export async function POST(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const body = await request.json();
@@ -67,8 +62,5 @@ export async function POST(request: NextRequest) {
       { error: (error as Error).message || 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    const t1 = performance.now();
-    console.log(`[POST /api/prayer-times] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }

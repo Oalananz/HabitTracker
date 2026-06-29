@@ -1,5 +1,7 @@
 'use client';
 
+import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
+
 interface PlanCardProps {
   id: string;
   title: string;
@@ -8,6 +10,7 @@ interface PlanCardProps {
   status: string;
   priority: string;
   category: string | null;
+  lifeArea?: string | null;
   prayerBlock: string | null;
   startDate: string;
   startTime?: string | null;
@@ -56,7 +59,7 @@ const WEEKDAY_LABELS: Record<string, string> = {
 
 export default function PlanCard({
   id, title, description, planType, status, priority,
-  category, prayerBlock, startDate, startTime, endDate, endTime,
+  category, lifeArea, prayerBlock, startDate, startTime, endDate, endTime,
   dayOfWeek, onStatusChange, onEdit, onDelete, compact,
 }: PlanCardProps) {
   const st = STATUS_STYLES[status] || STATUS_STYLES.planned;
@@ -129,6 +132,8 @@ export default function PlanCard({
                 {category}
               </span>
             )}
+
+            <LifeAreaBadge lifeArea={lifeArea} />
 
             {planType === 'weekly' && weekdayLabel && (
               <span className="px-1.5 py-0.5 rounded-[2px] bg-secondary/10 font-label text-[9px] text-secondary uppercase tracking-wide">

@@ -9,6 +9,7 @@ import StreakMatrix from '@/components/dashboard/StreakMatrix';
 import SevenDayReport from '@/components/dashboard/SevenDayReport';
 import Link from 'next/link';
 import dayjs from 'dayjs';
+import { LIFE_AREAS } from '@/lib/lifeAreas';
 
 export default function DashboardPage() {
   const {
@@ -17,6 +18,8 @@ export default function DashboardPage() {
     goalsSummary, fetchGoalsSummary,
     userStats, fetchUserStats,
     achievements, fetchAchievements,
+    goals, fetchGoals,
+    habits, fetchHabits,
   } = useStore();
 
   useEffect(() => {
@@ -25,7 +28,9 @@ export default function DashboardPage() {
     fetchGoalsSummary();
     void fetchUserStats();
     void fetchAchievements();
-  }, [fetchMetrics, fetchJourneys, fetchGoalsSummary, fetchUserStats, fetchAchievements]);
+    void fetchGoals();
+    void fetchHabits();
+  }, [fetchMetrics, fetchJourneys, fetchGoalsSummary, fetchUserStats, fetchAchievements, fetchGoals, fetchHabits]);
 
   const [now, setNow] = useState(() => dayjs());
   useEffect(() => {
@@ -93,6 +98,34 @@ export default function DashboardPage() {
                 subtitle="Trailing 30 days"
                 icon="donut_large"
               />
+            </div>
+
+            {/* Life Areas snapshot */}
+            <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
+                  <span className="text-primary">&gt;</span> LIFE_AREAS
+                </h3>
+                <Link href="/life-areas" className="font-mono text-[10px] text-primary hover:underline uppercase tracking-wider">VIEW ALL →</Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {LIFE_AREAS.map((area) => {
+                  const g = goals.filter((x) => x.lifeArea === area.id).length;
+                  const h = habits.filter((x) => x.isActive && x.lifeArea === area.id).length;
+                  return (
+                    <Link
+                      key={area.id}
+                      href={`/life-areas/${area.id}`}
+                      className="rounded-sm p-3 border transition-all hover:translate-y-[-2px]"
+                      style={{ borderColor: `${area.color}33` }}
+                    >
+                      <span className="material-symbols-outlined text-[20px]" style={{ color: area.color }}>{area.icon}</span>
+                      <div className="font-headline text-xs font-bold text-on-surface mt-1 truncate">{area.shortLabel}</div>
+                      <div className="font-mono text-[9px] text-on-surface-variant">{g}g · {h}h</div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Heatmap */}

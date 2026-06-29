@@ -13,8 +13,7 @@ import {
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  const t0 = performance.now();
+) {
   try {
     const userId = await requireAuthId();
     const { id } = await params;
@@ -27,9 +26,6 @@ export async function GET(
     console.error('GET /api/journeys/[id] error:', error);
     const status = (error as Error).message.includes('not found') || (error as Error).message.includes('access') ? 404 : 500;
     return NextResponse.json({ error: status === 404 ? 'Not found' : 'Internal server error' }, { status });
-  } finally {
-    const t1 = performance.now();
-    console.log(`[GET /api/journeys/[id]] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }
 

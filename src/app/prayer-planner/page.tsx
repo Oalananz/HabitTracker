@@ -343,6 +343,7 @@ export default function PrayerPlannerPage() {
             status: editPlanData.status,
             priority: editPlanData.priority,
             category: editPlanData.category || '',
+            lifeArea: editPlanData.lifeArea || null,
             notes: editPlanData.notes || '',
             startDate: editPlanData.startDate,
             endDate: editPlanData.endDate || '',
@@ -452,6 +453,7 @@ export default function PrayerPlannerPage() {
                             status={plan.status}
                             priority={plan.priority}
                             category={plan.category}
+                            lifeArea={plan.lifeArea}
                             prayerBlock={plan.prayerBlock}
                             startDate={plan.startDate}
                             endDate={plan.endDate}

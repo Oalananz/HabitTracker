@@ -484,6 +484,7 @@ export async function localCreatePlan(data: {
   endTime?: string;
   dayOfWeek?: string | null;
   prayerBlock?: string;
+  lifeArea?: string | null;
 }, userId: string): Promise<LocalPlan> {
   const now = new Date().toISOString();
   const plan: LocalPlan = {
@@ -504,6 +505,7 @@ export async function localCreatePlan(data: {
     occurrenceDate: data.startDate,
     occurrenceKey: `${data.startDate}_${genId().slice(0, 8)}`,
     prayerBlock: (data.prayerBlock || null) as LocalPlan['prayerBlock'],
+    lifeArea: data.lifeArea ?? null,
     completedAt: null,
     createdAt: now,
     updatedAt: now,

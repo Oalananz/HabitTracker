@@ -206,6 +206,22 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
   return allExisting.map(mapTask);
 }
 
+/** Full task rows for a date range (used by Weekly Review / Life Areas aggregation). */
+export async function getTasksForRange(userId: string, startDate: string, endDate: string) {
+  const start = dayjs(startDate).startOf('day').format('YYYY-MM-DD');
+  const end = dayjs(endDate).startOf('day').format('YYYY-MM-DD');
+
+  const { data: tasks, error } = await supabase
+    .from('task_instances')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('date', start)
+    .lte('date', end);
+
+  if (error) throw new Error(error.message);
+  return (tasks || []).map(mapTask);
+}
+
 export async function getTaskSummaryForRange(
   userId: string,
   startDate: string,

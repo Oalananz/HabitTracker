@@ -10,8 +10,7 @@ import {
   getGoalsSummary,
 } from '@/lib/services/goalService';
 
-export async function GET(request: NextRequest) {
-  const t0 = performance.now();
+export async function GET(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
@@ -31,9 +30,6 @@ export async function GET(request: NextRequest) {
     }
     console.error('GET /api/goals error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    const t1 = performance.now();
-    console.log(`[GET /api/goals] took ${(t1 - t0).toFixed(2)}ms`);
   }
 }
 

@@ -30,6 +30,7 @@ export interface PlanRow {
   end_time: string | null;
   day_of_week: string | null;
   prayer_block: string | null;
+  life_area: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -53,6 +54,7 @@ export interface Plan {
   occurrenceDate: string;
   occurrenceKey: string;
   prayerBlock: PrayerBlock | null;
+  lifeArea: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -108,6 +110,7 @@ function mapPlan(p: PlanRow): Plan {
     occurrenceDate: startDate,
     occurrenceKey: `${p.id}:${startDate}`,
     prayerBlock: p.prayer_block as PrayerBlock | null,
+    lifeArea: p.life_area,
     completedAt: p.completed_at,
     createdAt: p.created_at,
     updatedAt: p.updated_at,
@@ -264,6 +267,7 @@ export async function createPlan(
     endTime?: string;
     dayOfWeek?: string | null;
     prayerBlock?: string;
+    lifeArea?: string | null;
   }
 ) {
   const { data: plan, error } = await supabase
@@ -283,6 +287,7 @@ export async function createPlan(
       end_time: normalizeTime(data.endTime),
       day_of_week: normalizeDayOfWeek(data.dayOfWeek),
       prayer_block: data.prayerBlock || null,
+      life_area: data.lifeArea ?? null,
     })
     .select()
     .single();
@@ -308,6 +313,7 @@ export async function updatePlan(
     endTime?: string | null;
     dayOfWeek?: string | null;
     prayerBlock?: string | null;
+    lifeArea?: string | null;
   }
 ) {
   const updateData: Database['public']['Tables']['plans']['Update'] = {
@@ -334,6 +340,7 @@ export async function updatePlan(
   if (data.endTime !== undefined) updateData.end_time = normalizeTime(data.endTime);
   if (data.dayOfWeek !== undefined) updateData.day_of_week = normalizeDayOfWeek(data.dayOfWeek);
   if (data.prayerBlock !== undefined) updateData.prayer_block = data.prayerBlock;
+  if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
   const { data: plan, error } = await supabase
     .from('plans')

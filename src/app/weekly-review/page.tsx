@@ -52,13 +52,16 @@ function statusFor(progress: number, hasData: boolean): { label: string; color: 
   return { label: 'Needs Attention', color: '#ffb4ab' };
 }
 
+interface WeekTask { id: string; completed: boolean; lifeArea?: string | null; sourceType: string }
+
 export default function WeeklyReviewPage() {
-  const { goals, fetchGoals, habits, fetchHabits, tasks, fetchTasks } = useStore();
+  const { goals, fetchGoals, habits, fetchHabits } = useStore();
   const { addToast } = useToast();
 
   const today = dayjs();
   const [weekStart, setWeekStart] = useState(today.startOf('week'));
   const weekEnd = weekStart.endOf('week');
+  const [tasks, setTasks] = useState<WeekTask[]>([]);
 
   const [form, setForm] = useState<ReviewForm>(EMPTY);
   const [reviews, setReviews] = useState<SavedReview[]>([]);
@@ -95,13 +98,21 @@ export default function WeeklyReviewPage() {
   useEffect(() => {
     void fetchGoals();
     void fetchHabits();
-    void fetchTasks(today.format('YYYY-MM-DD'));
     void loadReviews();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void loadWeek(weekStart.format('YYYY-MM-DD'));
+    // Fetch the selected week's tasks for accurate weekly counts
+    (async () => {
+      try {
+        const res = await fetch(`/api/tasks/range?start=${weekStart.format('YYYY-MM-DD')}&end=${weekEnd.format('YYYY-MM-DD')}`);
+        const data = await res.json();
+        if (res.ok) setTasks(data.tasks || []);
+      } catch { setTasks([]); }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart, loadWeek]);
 
   // ── Summary + breakdown (computed from available store data) ──────

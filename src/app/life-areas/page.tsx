@@ -120,7 +120,7 @@ export default function LifeAreasPage() {
                 Open
               </Link>
               <Link
-                href={`/life-areas/${area.id}`}
+                href={`/goals?area=${area.id}`}
                 className="px-3 py-2 rounded-sm font-label text-[10px] uppercase tracking-wider text-on-surface-variant border border-outline-variant/20 hover:text-on-surface transition-colors"
               >
                 Add Goal

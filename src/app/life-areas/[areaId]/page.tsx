@@ -171,7 +171,7 @@ export default function LifeAreaDetailPage() {
                 ))}
               </div>
             )}
-            <Link href="/habits" className="inline-block mt-3 font-mono text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-wider">+ Add habit</Link>
+            <Link href={`/habits?area=${areaId}`} className="inline-block mt-3 font-mono text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-wider">+ Add habit</Link>
           </section>
         </div>
 
