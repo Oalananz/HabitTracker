@@ -8,11 +8,13 @@ import EmptyState from '@/components/ui/EmptyState';
 import DayStatusBanner from '@/components/today/DayStatusBanner';
 import DisciplineCard from '@/components/today/DisciplineCard';
 import HabitsSection from '@/components/today/HabitsSection';
+import OnboardingPrompt from '@/components/today/OnboardingPrompt';
 import ScoreDisplay from '@/components/today/ScoreDisplay';
 import ActivityLog from '@/components/today/ActivityLog';
 import AchievementToast from '@/components/achievements/AchievementToast';
 import { useToast } from '@/store/useToast';
 import dayjs from 'dayjs';
+import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
 
 export default function TodayPage() {
   const {
@@ -33,6 +35,7 @@ export default function TodayPage() {
   const [newDesc, setNewDesc] = useState('');
   const [newCategory, setNewCategory] = useState('General');
   const [newPriority, setNewPriority] = useState('nominal');
+  const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | ''>('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
@@ -85,10 +88,12 @@ export default function TodayPage() {
         category: newCategory,
         priority: newPriority,
         date: selectedDate,
+        lifeArea: newLifeArea || null,
       });
       addActivityLog('TASKS', `Task '${newTaskTitle.trim()}' created.`);
       setNewTaskTitle('');
       setNewDesc('');
+      setNewLifeArea('');
       setShowAddForm(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create task';
@@ -140,6 +145,9 @@ export default function TodayPage() {
     <div className="space-y-6 animate-page-enter">
       {/* Achievement Toast (global) */}
       <AchievementToast />
+
+      {/* Life Areas onboarding nudge (dismissible, non-blocking) */}
+      <OnboardingPrompt />
 
       {/* Header */}
       <header>
@@ -240,6 +248,7 @@ export default function TodayPage() {
                       priority={task.priority}
                       completed={task.completed}
                       sourceType={task.sourceType}
+                      lifeArea={task.lifeArea}
                       onToggle={handleToggle}
                       onDelete={handleDelete}
                       onEdit={handleEdit}
@@ -256,6 +265,7 @@ export default function TodayPage() {
                       priority={task.priority}
                       completed={task.completed}
                       sourceType={task.sourceType}
+                      lifeArea={task.lifeArea}
                       onToggle={handleToggle}
                       onDelete={handleDelete}
                       onEdit={handleEdit}
@@ -318,6 +328,10 @@ export default function TodayPage() {
                     <option value="low">Low</option>
                     <option value="nominal">Nominal</option>
                     <option value="critical">Critical</option>
+                  </select>
+                  <select value={newLifeArea} onChange={(e) => setNewLifeArea(e.target.value as LifeAreaId | '')} className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-label text-on-surface-variant">
+                    <option value="">No life area</option>
+                    {LIFE_AREAS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
                   </select>
                 </div>
                 <div className="flex gap-2 justify-end">

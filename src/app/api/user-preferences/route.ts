@@ -19,6 +19,8 @@ export async function GET() {
       sleep_goal_hours: 7,
       achievement_alerts: true,
       discipline_reminder: '22:00',
+      onboarding_completed: false,
+      focus_areas: [],
     }
   });
 }
@@ -29,7 +31,7 @@ export async function PUT(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const { focus_goal_hours, sleep_goal_hours, achievement_alerts, discipline_reminder } = body;
+  const { focus_goal_hours, sleep_goal_hours, achievement_alerts, discipline_reminder, onboarding_completed, focus_areas } = body;
 
   type PrefsUpdate = {
     user_id: string;
@@ -37,6 +39,8 @@ export async function PUT(request: NextRequest) {
     sleep_goal_hours?: number;
     achievement_alerts?: boolean;
     discipline_reminder?: string | null;
+    onboarding_completed?: boolean;
+    focus_areas?: string[];
     updated_at?: string;
   };
 
@@ -45,6 +49,8 @@ export async function PUT(request: NextRequest) {
   if (sleep_goal_hours !== undefined) updateData.sleep_goal_hours = sleep_goal_hours;
   if (achievement_alerts !== undefined) updateData.achievement_alerts = achievement_alerts;
   if (discipline_reminder !== undefined) updateData.discipline_reminder = discipline_reminder;
+  if (onboarding_completed !== undefined) updateData.onboarding_completed = onboarding_completed;
+  if (focus_areas !== undefined) updateData.focus_areas = focus_areas;
 
   const { data, error } = await supabase
     .from('user_preferences')

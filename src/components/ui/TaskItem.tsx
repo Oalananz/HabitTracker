@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 
 interface TaskItemProps {
   id: string;
@@ -10,6 +11,7 @@ interface TaskItemProps {
   priority: string;
   completed: boolean;
   sourceType: string;
+  lifeArea?: string | null;
   onToggle: (id: string, completed: boolean) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string, data: { title: string; description?: string; category?: string; priority?: string }) => void;
@@ -24,6 +26,7 @@ export default function TaskItem({
   priority,
   completed,
   sourceType,
+  lifeArea,
   onToggle,
   onDelete,
   onEdit,
@@ -189,7 +192,8 @@ export default function TaskItem({
           >
             {title}
           </h3>
-          <div className="flex gap-1.5 flex-shrink-0">
+          <div className="flex gap-1.5 flex-shrink-0 items-center">
+            <LifeAreaBadge lifeArea={lifeArea} />
             {!completed && (
               <span className={`px-1.5 py-0.5 bg-surface-container-lowest ${priorityColor} font-label text-[9px] uppercase rounded-[2px] border border-outline-variant/15`}>
                 {priorityLabel}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import HabitForm from '@/components/habits/HabitForm';
+import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
+import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
 
 const REPEAT_LABELS: Record<string, string> = {
   daily: 'Daily',
@@ -21,17 +23,18 @@ export default function HabitsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
 
   useEffect(() => {
     fetchHabits();
   }, [fetchHabits]);
 
-  const handleCreate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] } }) => {
+  const handleCreate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] }; lifeArea?: string | null }) => {
     await createHabit(data);
     setShowForm(false);
   };
 
-  const handleUpdate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] } }) => {
+  const handleUpdate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] }; lifeArea?: string | null }) => {
     if (editingId) {
       await updateHabit(editingId, data);
       setEditingId(null);
@@ -48,7 +51,9 @@ export default function HabitsPage() {
     }
   };
 
-  const activeHabits = habits.filter(h => h.isActive);
+  const activeHabits = habits
+    .filter(h => h.isActive)
+    .filter(h => filterArea === 'all' || h.lifeArea === filterArea);
   const inactiveHabits = habits.filter(h => !h.isActive);
 
   return (
@@ -73,6 +78,34 @@ export default function HabitsPage() {
                 </h2>
               </div>
               <span className="font-label text-xs text-on-surface-variant uppercase">COUNT: {String(activeHabits.length).padStart(2, '0')}</span>
+            </div>
+
+            {/* Life Area filter */}
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={() => setFilterArea('all')}
+                className={`px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border ${
+                  filterArea === 'all'
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/15 hover:text-on-surface'
+                }`}
+              >
+                All
+              </button>
+              {LIFE_AREAS.map((area) => (
+                <button
+                  key={area.id}
+                  onClick={() => setFilterArea(area.id)}
+                  className="px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border"
+                  style={
+                    filterArea === area.id
+                      ? { color: area.color, backgroundColor: `${area.color}1a`, borderColor: `${area.color}55` }
+                      : { borderColor: 'rgba(255,255,255,0.08)' }
+                  }
+                >
+                  {area.shortLabel}
+                </button>
+              ))}
             </div>
 
             {isHabitsLoading ? (
@@ -100,6 +133,7 @@ export default function HabitsPage() {
                               {habit.category?.includes('Health') ? 'fitness_center' : habit.category?.includes('Work') ? 'code' : habit.category?.includes('Learn') ? 'menu_book' : 'cached'}
                             </span>
                             <h3 className="font-headline font-semibold text-on-surface">{habit.title}</h3>
+                            <LifeAreaBadge lifeArea={habit.lifeArea} />
                           </div>
                           <div className="flex items-center gap-3 text-xs">
                             <span className="px-2 py-0.5 bg-surface-container-lowest font-label text-on-surface-variant rounded-[2px] border border-outline-variant/15 uppercase text-[10px]">
@@ -177,6 +211,7 @@ export default function HabitsPage() {
                   category: habits.find(h => h.id === editingId)?.category || 'General',
                   priority: habits.find(h => h.id === editingId)?.priority || 'nominal',
                   repeatRule: habits.find(h => h.id === editingId)?.repeatRule || { type: 'daily' },
+                  lifeArea: habits.find(h => h.id === editingId)?.lifeArea || null,
                 } : undefined}
               />
             ) : (

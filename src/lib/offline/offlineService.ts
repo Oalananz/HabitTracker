@@ -43,6 +43,7 @@ export async function localCreateTask(data: {
   category?: string;
   priority?: string;
   date: string;
+  lifeArea?: string | null;
 }): Promise<LocalTask> {
   const now = new Date().toISOString();
   const task: LocalTask = {
@@ -56,6 +57,7 @@ export async function localCreateTask(data: {
     completed: false,
     completedAt: null,
     sourceType: 'manual',
+    lifeArea: data.lifeArea ?? null,
     createdAt: now,
     updatedAt: now,
     _dirty: true,
@@ -69,6 +71,7 @@ export async function localCreateTask(data: {
     category: data.category,
     priority: data.priority,
     date: data.date,
+    lifeArea: data.lifeArea ?? null,
     _localId: task.id,
   }, '/api/tasks');
 
@@ -77,7 +80,7 @@ export async function localCreateTask(data: {
 
 export async function localUpdateTask(
   taskId: string,
-  data: { title?: string; description?: string; category?: string; priority?: string; date?: string }
+  data: { title?: string; description?: string; category?: string; priority?: string; date?: string; lifeArea?: string | null }
 ): Promise<void> {
   const now = new Date().toISOString();
   await offlineDB.tasks.update(taskId, { ...data, updatedAt: now, _dirty: true });
@@ -144,6 +147,7 @@ export async function localCreateHabit(data: {
   category?: string;
   priority?: string;
   repeatRule: { type: string; days?: number[] };
+  lifeArea?: string | null;
 }): Promise<LocalHabit> {
   const now = new Date().toISOString();
   const habit: LocalHabit = {
@@ -153,6 +157,7 @@ export async function localCreateHabit(data: {
     category: data.category || 'general',
     priority: data.priority || 'medium',
     repeatRule: data.repeatRule,
+    lifeArea: data.lifeArea ?? null,
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -171,7 +176,7 @@ export async function localCreateHabit(data: {
 
 export async function localUpdateHabit(
   habitId: string,
-  data: { title?: string; description?: string; category?: string; priority?: string; repeatRule?: { type: string; days?: number[] } }
+  data: { title?: string; description?: string; category?: string; priority?: string; repeatRule?: { type: string; days?: number[] }; lifeArea?: string | null }
 ): Promise<void> {
   const now = new Date().toISOString();
   await offlineDB.habits.update(habitId, { ...data, updatedAt: now, _dirty: true });
@@ -222,6 +227,7 @@ export async function localCreateGoal(data: {
   goalType: string;
   targetDate?: string;
   targetCount?: number;
+  lifeArea?: string | null;
 }): Promise<LocalGoal> {
   const now = new Date().toISOString();
   const goal: LocalGoal = {
@@ -234,6 +240,7 @@ export async function localCreateGoal(data: {
     currentCount: 0,
     completed: false,
     completedAt: null,
+    lifeArea: data.lifeArea ?? null,
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -252,7 +259,7 @@ export async function localCreateGoal(data: {
 
 export async function localUpdateGoal(
   goalId: string,
-  data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number }
+  data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null }
 ): Promise<void> {
   const now = new Date().toISOString();
   await offlineDB.goals.update(goalId, { ...data, updatedAt: now, _dirty: true });

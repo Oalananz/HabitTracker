@@ -67,6 +67,7 @@ export async function generateTasksForDate(userId: string, date: string) {
         priority: habit.priority,
         date: dateStr,
         source_type: 'habit',
+        life_area: habit.life_area ?? null,
       });
       created.push(habit.title);
     }
@@ -167,6 +168,7 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
         priority: habit.priority,
         date: dateStr,
         source_type: 'habit',
+        life_area: habit.life_area ?? null,
       });
     }
 
@@ -280,6 +282,7 @@ export async function createManualTask(
     category?: string;
     priority?: string;
     date: string;
+    lifeArea?: string | null;
   }
 ) {
   const dateStr = dayjs(data.date).startOf('day').format('YYYY-MM-DD');
@@ -294,6 +297,7 @@ export async function createManualTask(
       priority: data.priority || 'nominal',
       date: dateStr,
       source_type: 'manual',
+      life_area: data.lifeArea ?? null,
     })
     .select()
     .single();
@@ -311,6 +315,7 @@ export async function updateTask(
     category?: string;
     priority?: string;
     date?: string;
+    lifeArea?: string | null;
   }
 ) {
   const updateData: Database['public']['Tables']['task_instances']['Update'] = {};
@@ -319,6 +324,7 @@ export async function updateTask(
   if (data.category !== undefined) updateData.category = data.category;
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.date !== undefined) updateData.date = dayjs(data.date).startOf('day').format('YYYY-MM-DD');
+  if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
   const { data: task, error } = await supabase
     .from('task_instances')
@@ -368,6 +374,7 @@ function mapTask(t: TaskRow) {
     completed: t.completed,
     completedAt: t.completed_at,
     sourceType: t.source_type,
+    lifeArea: t.life_area ?? null,
     createdAt: t.created_at,
   };
 }

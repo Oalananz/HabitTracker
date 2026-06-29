@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import dayjs from 'dayjs';
+import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
+import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
+import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 
 type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
 
@@ -19,6 +22,8 @@ export default function GoalsPage() {
   const [newType, setNewType] = useState<'weekly' | 'dated' | 'open'>('open');
   const [newTargetDate, setNewTargetDate] = useState('');
   const [newTargetCount, setNewTargetCount] = useState(1);
+  const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | null>(null);
+  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
 
   useEffect(() => {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
@@ -32,14 +37,18 @@ export default function GoalsPage() {
       goalType: newType,
       targetDate: newType === 'dated' ? newTargetDate : undefined,
       targetCount: newTargetCount,
+      lifeArea: newLifeArea,
     });
     setNewTitle('');
     setNewDesc('');
     setNewType('open');
     setNewTargetDate('');
     setNewTargetCount(1);
+    setNewLifeArea(null);
     setShowCreate(false);
   };
+
+  const visibleGoals = filterArea === 'all' ? goals : goals.filter((g) => g.lifeArea === filterArea);
 
   const tabs: { key: GoalTab; label: string; icon: string }[] = [
     { key: 'all', label: 'All', icon: 'apps' },
@@ -172,6 +181,8 @@ export default function GoalsPage() {
                   />
                 </div>
               </div>
+
+              <LifeAreaSelect value={newLifeArea} onChange={setNewLifeArea} id="goal-life-area" />
             </div>
 
             <div>
@@ -226,12 +237,40 @@ export default function GoalsPage() {
           ))}
         </div>
 
+        {/* Life Area filter */}
+        <div className="flex gap-1.5 flex-wrap">
+          <button
+            onClick={() => setFilterArea('all')}
+            className={`px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border ${
+              filterArea === 'all'
+                ? 'bg-primary/10 text-primary border-primary/30'
+                : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/15 hover:text-on-surface'
+            }`}
+          >
+            All
+          </button>
+          {LIFE_AREAS.map((area) => (
+            <button
+              key={area.id}
+              onClick={() => setFilterArea(area.id)}
+              className="px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border"
+              style={
+                filterArea === area.id
+                  ? { color: area.color, backgroundColor: `${area.color}1a`, borderColor: `${area.color}55` }
+                  : { borderColor: 'rgba(255,255,255,0.08)' }
+              }
+            >
+              {area.shortLabel}
+            </button>
+          ))}
+        </div>
+
         {/* Goals List */}
         {isGoalsLoading ? (
           <div className="flex items-center gap-2 py-16 justify-center font-mono text-sm text-on-surface-variant">
             <span className="animate-blink text-primary">▊</span> Loading goals...
           </div>
-        ) : goals.length === 0 ? (
+        ) : visibleGoals.length === 0 ? (
           <div className="text-center py-16">
             <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4 block">flag</span>
             <p className="font-body text-on-surface-variant mb-2">No goals found.</p>
@@ -239,7 +278,7 @@ export default function GoalsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {goals.map((goal) => {
+            {visibleGoals.map((goal) => {
               const progress = goal.targetCount > 0
                 ? Math.min((goal.currentCount / goal.targetCount) * 100, 100)
                 : 0;
@@ -272,9 +311,12 @@ export default function GoalsPage() {
                       </button>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className={`font-headline text-sm font-bold ${goal.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
-                          {goal.title}
-                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className={`font-headline text-sm font-bold ${goal.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+                            {goal.title}
+                          </h3>
+                          <LifeAreaBadge lifeArea={goal.lifeArea} />
+                        </div>
                         {goal.description && (
                           <p className="font-body text-xs text-on-surface-variant mt-1 truncate">{goal.description}</p>
                         )}

@@ -12,6 +12,7 @@ export async function createHabit(
     category?: string;
     priority?: string;
     repeatRule: { type: string; days?: number[] };
+    lifeArea?: string | null;
   }
 ) {
   const { data: habit, error } = await supabase
@@ -23,6 +24,7 @@ export async function createHabit(
       category: data.category || 'general',
       priority: data.priority || 'nominal',
       repeat_rule: data.repeatRule,
+      life_area: data.lifeArea ?? null,
     })
     .select()
     .single();
@@ -40,6 +42,7 @@ export async function updateHabit(
     category?: string;
     priority?: string;
     repeatRule?: { type: string; days?: number[] };
+    lifeArea?: string | null;
   }
 ) {
   const updateData: Database['public']['Tables']['habits']['Update'] = {};
@@ -48,6 +51,7 @@ export async function updateHabit(
   if (data.category !== undefined) updateData.category = data.category;
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.repeatRule !== undefined) updateData.repeat_rule = data.repeatRule;
+  if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
   const { data: habit, error } = await supabase
     .from('habits')
@@ -165,6 +169,7 @@ function mapHabit(h: HabitRow) {
     category: h.category,
     priority: h.priority,
     repeatRule: h.repeat_rule,
+    lifeArea: h.life_area ?? null,
     isActive: h.is_active,
     createdAt: h.created_at,
   };
@@ -183,6 +188,7 @@ function mapTask(t: TaskRow) {
     completed: t.completed,
     completedAt: t.completed_at,
     sourceType: t.source_type,
+    lifeArea: t.life_area ?? null,
     createdAt: t.created_at,
   };
 }

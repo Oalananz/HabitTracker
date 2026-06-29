@@ -54,6 +54,7 @@ interface Task {
   completed: boolean;
   completedAt: string | null;
   sourceType: string;
+  lifeArea?: string | null;
   createdAt: string;
   habit?: { id: string; title: string; repeatRule: unknown } | null;
 }
@@ -65,6 +66,7 @@ interface Habit {
   category: string;
   priority: string;
   repeatRule: { type: string; days?: number[] };
+  lifeArea?: string | null;
   isActive: boolean;
   createdAt: string;
   _count?: { tasks: number };
@@ -105,6 +107,7 @@ interface Goal {
   currentCount: number;
   completed: boolean;
   completedAt: string | null;
+  lifeArea?: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -206,6 +209,8 @@ interface UserPreferences {
   sleepGoalHours: number;
   achievementAlerts: boolean;
   disciplineReminder: string | null;
+  onboardingCompleted: boolean;
+  focusAreas: string[];
 }
 
 interface Achievement {
@@ -251,16 +256,16 @@ interface AppState {
   fetchTasks: (date: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   uncompleteTask: (taskId: string) => Promise<void>;
-  createTask: (data: { title: string; description?: string; category?: string; priority?: string; date: string }) => Promise<void>;
-  updateTask: (taskId: string, data: { title?: string; description?: string; category?: string; priority?: string; date?: string }) => Promise<void>;
+  createTask: (data: { title: string; description?: string; category?: string; priority?: string; date: string; lifeArea?: string | null }) => Promise<void>;
+  updateTask: (taskId: string, data: { title?: string; description?: string; category?: string; priority?: string; date?: string; lifeArea?: string | null }) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
 
   // Habits
   habits: Habit[];
   isHabitsLoading: boolean;
   fetchHabits: () => Promise<void>;
-  createHabit: (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] } }) => Promise<void>;
-  updateHabit: (habitId: string, data: { title?: string; description?: string; category?: string; priority?: string; repeatRule?: { type: string; days?: number[] } }) => Promise<void>;
+  createHabit: (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] }; lifeArea?: string | null }) => Promise<void>;
+  updateHabit: (habitId: string, data: { title?: string; description?: string; category?: string; priority?: string; repeatRule?: { type: string; days?: number[] }; lifeArea?: string | null }) => Promise<void>;
   toggleHabit: (habitId: string, isActive: boolean) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
 
@@ -288,8 +293,8 @@ interface AppState {
   isGoalsLoading: boolean;
   fetchGoals: (type?: string) => Promise<void>;
   fetchGoalsSummary: () => Promise<void>;
-  createGoal: (data: { title: string; description?: string; goalType: string; targetDate?: string; targetCount?: number }) => Promise<void>;
-  updateGoal: (goalId: string, data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number }) => Promise<void>;
+  createGoal: (data: { title: string; description?: string; goalType: string; targetDate?: string; targetCount?: number; lifeArea?: string | null }) => Promise<void>;
+  updateGoal: (goalId: string, data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null }) => Promise<void>;
   toggleGoalComplete: (goalId: string) => Promise<void>;
   incrementGoal: (goalId: string, amount?: number) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
@@ -986,6 +991,8 @@ export const useStore = create<AppState>((set, get) => ({
             sleepGoalHours: p.sleep_goal_hours ?? 7,
             achievementAlerts: p.achievement_alerts ?? true,
             disciplineReminder: p.discipline_reminder || null,
+            onboardingCompleted: p.onboarding_completed ?? false,
+            focusAreas: p.focus_areas || [],
           },
         });
       }
@@ -999,6 +1006,8 @@ export const useStore = create<AppState>((set, get) => ({
     if (prefs.sleepGoalHours !== undefined) body.sleep_goal_hours = prefs.sleepGoalHours;
     if (prefs.achievementAlerts !== undefined) body.achievement_alerts = prefs.achievementAlerts;
     if (prefs.disciplineReminder !== undefined) body.discipline_reminder = prefs.disciplineReminder;
+    if (prefs.onboardingCompleted !== undefined) body.onboarding_completed = prefs.onboardingCompleted;
+    if (prefs.focusAreas !== undefined) body.focus_areas = prefs.focusAreas;
     try {
       const res = await fetch('/api/user-preferences', {
         method: 'PUT',

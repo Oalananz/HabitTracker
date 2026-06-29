@@ -10,10 +10,12 @@ import { performBackup, onSyncProgress, isSyncInProgress, type SyncResult } from
 const navItems = [
   { href: '/today', label: 'Today', icon: 'terminal' },
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
   { href: '/planner', label: 'Planner', icon: 'event_note' },
   { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
+  { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
   { href: '/habits', label: 'Habits', icon: 'cached' },
   { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },

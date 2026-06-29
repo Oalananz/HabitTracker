@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
           category: body.category,
           priority: body.priority,
           date: body.date || dayjs().format('YYYY-MM-DD'),
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ task });
       }
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
           category: body.category,
           priority: body.priority,
           date: body.date,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ task });
       }

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import TerminalWindow from '@/components/ui/TerminalWindow';
+import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
+import type { LifeAreaId } from '@/lib/lifeAreas';
 
 interface HabitFormProps {
   onSubmit: (data: {
@@ -10,6 +12,7 @@ interface HabitFormProps {
     category?: string;
     priority?: string;
     repeatRule: { type: string; days?: number[] };
+    lifeArea?: string | null;
   }) => void;
   onCancel: () => void;
   initialData?: {
@@ -18,6 +21,7 @@ interface HabitFormProps {
     category?: string;
     priority?: string;
     repeatRule: { type: string; days?: number[] };
+    lifeArea?: string | null;
   };
 }
 
@@ -31,6 +35,7 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
   const [priority, setPriority] = useState(initialData?.priority || 'nominal');
   const [repeatType, setRepeatType] = useState(initialData?.repeatRule?.type || 'daily');
   const [customDays, setCustomDays] = useState<number[]>(initialData?.repeatRule?.days || []);
+  const [lifeArea, setLifeArea] = useState<LifeAreaId | null>((initialData?.lifeArea as LifeAreaId) || null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +50,7 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
         type: repeatType,
         ...(repeatType === 'custom' ? { days: customDays } : {}),
       },
+      lifeArea,
     });
   };
 
@@ -116,6 +122,9 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
               ))}
             </select>
           </div>
+
+          {/* Life Area */}
+          <LifeAreaSelect value={lifeArea} onChange={setLifeArea} id="habit-life-area" />
 
           {/* Execution Frequency */}
           <div>

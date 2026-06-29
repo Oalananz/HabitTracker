@@ -143,6 +143,7 @@ In the Supabase **SQL Editor**, run the migrations **in order**:
 5. `supabase-migration.sql` — RPCs (`increment_goal_progress`, `increment_journey_failure`)
 6. **`supabase/migration_v3_day_records_achievements.sql`** — v2.0 system (day records, achievements, user stats, preferences, scoring trigger, streak calculator)
 7. **`supabase/migration_v5_full_score.sql`** — comprehensive daily score (all worship extras + tasks/habits bonus, `tasks_done` column)
+8. **`supabase/migration_v6_life_areas.sql`** — Life Areas system (`life_area` on goals/tasks/habits/plans, `weekly_reviews` table, onboarding state on `user_preferences`)
 
 ### 4. Run the dev server
 

@@ -45,6 +45,7 @@ export interface Database {
           category: string;
           priority: string;
           repeat_rule: Json;
+          life_area: string | null;
           is_active: boolean;
           created_at: string;
         };
@@ -56,6 +57,7 @@ export interface Database {
           category?: string;
           priority?: string;
           repeat_rule: Json;
+          life_area?: string | null;
           is_active?: boolean;
           created_at?: string;
         };
@@ -67,6 +69,7 @@ export interface Database {
           category?: string;
           priority?: string;
           repeat_rule?: Json;
+          life_area?: string | null;
           is_active?: boolean;
           created_at?: string;
         };
@@ -93,6 +96,7 @@ export interface Database {
           completed: boolean;
           completed_at: string | null;
           source_type: string;
+          life_area: string | null;
           created_at: string;
         };
         Insert: {
@@ -107,6 +111,7 @@ export interface Database {
           completed?: boolean;
           completed_at?: string | null;
           source_type?: string;
+          life_area?: string | null;
           created_at?: string;
         };
         Update: {
@@ -121,6 +126,7 @@ export interface Database {
           completed?: boolean;
           completed_at?: string | null;
           source_type?: string;
+          life_area?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -664,6 +670,7 @@ export interface Database {
           current_count: number;
           completed: boolean;
           completed_at: string | null;
+          life_area: string | null;
           is_active: boolean;
           created_at: string;
         };
@@ -678,6 +685,7 @@ export interface Database {
           current_count?: number;
           completed?: boolean;
           completed_at?: string | null;
+          life_area?: string | null;
           is_active?: boolean;
           created_at?: string;
         };
@@ -692,6 +700,7 @@ export interface Database {
           current_count?: number;
           completed?: boolean;
           completed_at?: string | null;
+          life_area?: string | null;
           is_active?: boolean;
           created_at?: string;
         };
@@ -722,6 +731,7 @@ export interface Database {
           end_time: string | null;
           day_of_week: string | null;
           prayer_block: string | null;
+          life_area: string | null;
           completed_at: string | null;
           created_at: string;
           updated_at: string;
@@ -742,6 +752,7 @@ export interface Database {
           end_time?: string | null;
           day_of_week?: string | null;
           prayer_block?: string | null;
+          life_area?: string | null;
           completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -762,6 +773,7 @@ export interface Database {
           end_time?: string | null;
           day_of_week?: string | null;
           prayer_block?: string | null;
+          life_area?: string | null;
           completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -989,6 +1001,8 @@ export interface Database {
           sleep_goal_hours: number;
           achievement_alerts: boolean;
           discipline_reminder: string | null;
+          onboarding_completed: boolean;
+          focus_areas: string[];
           updated_at: string;
         };
         Insert: {
@@ -997,6 +1011,8 @@ export interface Database {
           sleep_goal_hours?: number;
           achievement_alerts?: boolean;
           discipline_reminder?: string | null;
+          onboarding_completed?: boolean;
+          focus_areas?: string[];
           updated_at?: string;
         };
         Update: {
@@ -1005,6 +1021,65 @@ export interface Database {
           sleep_goal_hours?: number;
           achievement_alerts?: boolean;
           discipline_reminder?: string | null;
+          onboarding_completed?: boolean;
+          focus_areas?: string[];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      weekly_reviews: {
+        Row: {
+          id: string;
+          user_id: string;
+          week_start_date: string;
+          week_end_date: string;
+          wins: string | null;
+          problems: string | null;
+          lessons: string | null;
+          next_week_priorities: string | null;
+          health_review: string | null;
+          money_review: string | null;
+          work_business_review: string | null;
+          learning_review: string | null;
+          family_social_review: string | null;
+          personal_review: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          week_start_date: string;
+          week_end_date: string;
+          wins?: string | null;
+          problems?: string | null;
+          lessons?: string | null;
+          next_week_priorities?: string | null;
+          health_review?: string | null;
+          money_review?: string | null;
+          work_business_review?: string | null;
+          learning_review?: string | null;
+          family_social_review?: string | null;
+          personal_review?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          week_start_date?: string;
+          week_end_date?: string;
+          wins?: string | null;
+          problems?: string | null;
+          lessons?: string | null;
+          next_week_priorities?: string | null;
+          health_review?: string | null;
+          money_review?: string | null;
+          work_business_review?: string | null;
+          learning_review?: string | null;
+          family_social_review?: string | null;
+          personal_review?: string | null;
+          created_at?: string;
           updated_at?: string;
         };
         Relationships: [];

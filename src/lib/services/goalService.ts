@@ -40,6 +40,7 @@ export async function createGoal(
     goalType: string;
     targetDate?: string;
     targetCount?: number;
+    lifeArea?: string | null;
   }
 ) {
   const { data: goal, error } = await supabase
@@ -51,6 +52,7 @@ export async function createGoal(
       goal_type: data.goalType,
       target_date: data.targetDate || null,
       target_count: data.targetCount || 1,
+      life_area: data.lifeArea ?? null,
     })
     .select()
     .single();
@@ -69,6 +71,7 @@ export async function updateGoal(
     targetDate?: string;
     targetCount?: number;
     currentCount?: number;
+    lifeArea?: string | null;
   }
 ) {
   const updateData: Database['public']['Tables']['goals']['Update'] = {};
@@ -77,6 +80,7 @@ export async function updateGoal(
   if (data.goalType !== undefined) updateData.goal_type = data.goalType;
   if (data.targetDate !== undefined) updateData.target_date = data.targetDate;
   if (data.targetCount !== undefined) updateData.target_count = data.targetCount;
+  if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
   if (data.currentCount !== undefined) {
     updateData.current_count = data.currentCount;
     // Auto-complete if count meets target
@@ -199,6 +203,7 @@ function mapGoal(g: GoalRow) {
     currentCount: g.current_count,
     completed: g.completed,
     completedAt: g.completed_at,
+    lifeArea: g.life_area ?? null,
     isActive: g.is_active,
     createdAt: g.created_at,
   };

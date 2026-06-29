@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
           goalType: body.goalType,
           targetDate: body.targetDate,
           targetCount: body.targetCount,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ goal });
       }
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
           targetDate: body.targetDate,
           targetCount: body.targetCount,
           currentCount: body.currentCount,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ goal });
       }

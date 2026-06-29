@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
           category: body.category,
           priority: body.priority,
           repeatRule: body.repeatRule,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ habit });
       }
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
           category: body.category,
           priority: body.priority,
           repeatRule: body.repeatRule,
+          lifeArea: body.lifeArea,
         });
         return NextResponse.json({ habit });
       }

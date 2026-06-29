@@ -18,6 +18,7 @@ export interface LocalTask {
   completed: boolean;
   completedAt: string | null;
   sourceType: string;
+  lifeArea?: string | null;
   createdAt: string;
   updatedAt?: string;
   habit?: { id: string; title: string; repeatRule: unknown } | null;
@@ -31,6 +32,7 @@ export interface LocalHabit {
   category: string;
   priority: string;
   repeatRule: { type: string; days?: number[] };
+  lifeArea?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -48,6 +50,7 @@ export interface LocalGoal {
   currentCount: number;
   completed: boolean;
   completedAt: string | null;
+  lifeArea?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -93,6 +96,7 @@ export interface LocalPlan {
   occurrenceDate: string;
   occurrenceKey: string;
   prayerBlock: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | null;
+  lifeArea?: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
