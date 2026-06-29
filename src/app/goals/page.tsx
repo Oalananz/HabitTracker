@@ -12,7 +12,7 @@ type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
 export default function GoalsPage() {
   const {
     goals, isGoalsLoading,
-    fetchGoals, createGoal, toggleGoalComplete, incrementGoal, deleteGoal,
+    fetchGoals, createGoal, updateGoal, toggleGoalComplete, incrementGoal, deleteGoal,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<GoalTab>('all');
@@ -24,6 +24,7 @@ export default function GoalsPage() {
   const [newTargetCount, setNewTargetCount] = useState(1);
   const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | null>(null);
   const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
@@ -59,7 +60,10 @@ export default function GoalsPage() {
     setShowCreate(false);
   };
 
-  const visibleGoals = filterArea === 'all' ? goals : goals.filter((g) => g.lifeArea === filterArea);
+  const visibleGoals = goals
+    .filter((g) => filterArea === 'all' || g.lifeArea === filterArea)
+    .filter((g) => (showArchived ? g.isActive === false : g.isActive !== false));
+  const archivedCount = goals.filter((g) => g.isActive === false).length;
 
   const tabs: { key: GoalTab; label: string; icon: string }[] = [
     { key: 'all', label: 'All', icon: 'apps' },
@@ -274,6 +278,16 @@ export default function GoalsPage() {
               {area.shortLabel}
             </button>
           ))}
+          {archivedCount > 0 && (
+            <button
+              onClick={() => setShowArchived((v) => !v)}
+              className={`ml-auto px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border ${
+                showArchived ? 'bg-tertiary/10 text-tertiary border-tertiary/30' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/15 hover:text-on-surface'
+              }`}
+            >
+              {showArchived ? `Active goals` : `Archived (${archivedCount})`}
+            </button>
+          )}
         </div>
 
         {/* Goals List */}
@@ -367,6 +381,13 @@ export default function GoalsPage() {
                           {goal.goalType.toUpperCase()}
                         </span>
                       </div>
+                      <button
+                        onClick={() => updateGoal(goal.id, { isActive: goal.isActive === false })}
+                        className="text-outline hover:text-tertiary transition-colors"
+                        title={goal.isActive === false ? 'Unarchive' : 'Archive'}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
+                      </button>
                       <button
                         onClick={() => { if (confirm('Delete this goal?')) deleteGoal(goal.id); }}
                         className="text-outline hover:text-error transition-colors"

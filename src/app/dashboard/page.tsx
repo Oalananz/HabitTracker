@@ -7,6 +7,7 @@ import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
 import ChartWidgets from '@/components/dashboard/ChartWidgets';
 import StreakMatrix from '@/components/dashboard/StreakMatrix';
 import SevenDayReport from '@/components/dashboard/SevenDayReport';
+import WeeklyReviewNudge from '@/components/dashboard/WeeklyReviewNudge';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
@@ -48,6 +49,8 @@ export default function DashboardPage() {
             Diagnostic overview of habit adherence, goals, and recovery journeys.
           </p>
         </header>
+
+        <WeeklyReviewNudge />
 
         {isMetricsLoading || !metrics ? (
           <div className="space-y-6">

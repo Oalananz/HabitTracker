@@ -292,7 +292,7 @@ interface AppState {
   fetchGoals: (type?: string) => Promise<void>;
   fetchGoalsSummary: () => Promise<void>;
   createGoal: (data: { title: string; description?: string; goalType: string; targetDate?: string; targetCount?: number; lifeArea?: string | null }) => Promise<void>;
-  updateGoal: (goalId: string, data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null }) => Promise<void>;
+  updateGoal: (goalId: string, data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null; isActive?: boolean }) => Promise<void>;
   toggleGoalComplete: (goalId: string) => Promise<void>;
   incrementGoal: (goalId: string, amount?: number) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;

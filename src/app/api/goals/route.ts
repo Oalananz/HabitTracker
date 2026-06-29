@@ -10,7 +10,7 @@ import {
   getGoalsSummary,
 } from '@/lib/services/goalService';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
           targetCount: body.targetCount,
           currentCount: body.currentCount,
           lifeArea: body.lifeArea,
+          isActive: body.isActive,
         });
         return NextResponse.json({ goal });
       }

@@ -259,7 +259,7 @@ export async function localCreateGoal(data: {
 
 export async function localUpdateGoal(
   goalId: string,
-  data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null }
+  data: { title?: string; description?: string; targetDate?: string; targetCount?: number; currentCount?: number; lifeArea?: string | null; isActive?: boolean }
 ): Promise<void> {
   const now = new Date().toISOString();
   await offlineDB.goals.update(goalId, { ...data, updatedAt: now, _dirty: true });

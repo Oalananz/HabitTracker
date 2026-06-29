@@ -72,6 +72,7 @@ export async function updateGoal(
     targetCount?: number;
     currentCount?: number;
     lifeArea?: string | null;
+    isActive?: boolean;
   }
 ) {
   const updateData: Database['public']['Tables']['goals']['Update'] = {};
@@ -81,6 +82,7 @@ export async function updateGoal(
   if (data.targetDate !== undefined) updateData.target_date = data.targetDate;
   if (data.targetCount !== undefined) updateData.target_count = data.targetCount;
   if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
+  if (data.isActive !== undefined) updateData.is_active = data.isActive;
   if (data.currentCount !== undefined) {
     updateData.current_count = data.currentCount;
     // Auto-complete if count meets target
