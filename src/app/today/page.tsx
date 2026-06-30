@@ -9,6 +9,7 @@ import DayStatusBanner from '@/components/today/DayStatusBanner';
 import DisciplineCard from '@/components/today/DisciplineCard';
 import HabitsSection from '@/components/today/HabitsSection';
 import OnboardingPrompt from '@/components/today/OnboardingPrompt';
+import AiDailyPlanner from '@/components/ai/AiDailyPlanner';
 import ScoreDisplay from '@/components/today/ScoreDisplay';
 import ActivityLog from '@/components/today/ActivityLog';
 import AchievementToast from '@/components/achievements/AchievementToast';
@@ -163,6 +164,9 @@ export default function TodayPage() {
       {dayRecord && (
         <DayStatusBanner score={dayRecord.dailyScore} />
       )}
+
+      {/* AI Daily Planner */}
+      <AiDailyPlanner date={today} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Left: Tasks + Discipline ────────────────────────────── */}

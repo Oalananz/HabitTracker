@@ -16,6 +16,7 @@ const navItems = [
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
   { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
+  { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
   { href: '/habits', label: 'Habits', icon: 'cached' },
   { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },

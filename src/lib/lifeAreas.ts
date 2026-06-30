@@ -117,3 +117,20 @@ export function lifeAreaColor(id: string | null | undefined): string {
 export function lifeAreaIcon(id: string | null | undefined): string {
   return getLifeArea(id)?.icon ?? 'category';
 }
+
+/** id (e.g. "work_business") → display label ("Work / Business"). */
+export function lifeAreaIdToLabel(id: string | null | undefined): string {
+  return getLifeArea(id)?.label ?? '';
+}
+
+/** display label or id → internal id, or null if unrecognized. Used to map
+ *  AI output life-area labels back to internal ids when creating items. */
+export function lifeAreaLabelToId(value: string | null | undefined): LifeAreaId | null {
+  if (!value) return null;
+  const v = value.trim().toLowerCase();
+  if (v in LIFE_AREA_MAP) return v as LifeAreaId;
+  const match = LIFE_AREAS.find(
+    (a) => a.label.toLowerCase() === v || a.shortLabel.toLowerCase() === v,
+  );
+  return match ? match.id : null;
+}

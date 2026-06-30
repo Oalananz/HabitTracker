@@ -1,0 +1,39 @@
+/**
+ * AI service layer — the only place feature logic meets the model.
+ * Each function: privacy-minimizes the validated input, builds a prompt,
+ * then returns a schema-validated result.
+ */
+import { generateStructured } from './geminiClient';
+import { buildSafeDailyPlanner, buildSafeGoalBreaker, buildSafeWeeklyReview } from './privacy';
+import { buildDailyPlannerPrompt, buildGoalBreakerPrompt, buildWeeklyReviewPrompt } from './prompts';
+import {
+  DailyPlannerOutputSchema, GoalBreakerOutputSchema, WeeklyReviewOutputSchema,
+  type DailyPlannerInput, type GoalBreakerInput, type WeeklyReviewInput,
+} from './schemas';
+
+export async function generateDailyPlan(input: DailyPlannerInput) {
+  const safe = buildSafeDailyPlanner(input); // ← privacy filtering
+  return generateStructured({
+    prompt: buildDailyPlannerPrompt(safe),
+    schema: DailyPlannerOutputSchema,
+    temperature: 0.3,
+  });
+}
+
+export async function breakGoalIntoPlan(input: GoalBreakerInput) {
+  const safe = buildSafeGoalBreaker(input); // ← privacy filtering
+  return generateStructured({
+    prompt: buildGoalBreakerPrompt(safe),
+    schema: GoalBreakerOutputSchema,
+    temperature: 0.35,
+  });
+}
+
+export async function generateWeeklyReview(input: WeeklyReviewInput) {
+  const safe = buildSafeWeeklyReview(input); // ← privacy filtering
+  return generateStructured({
+    prompt: buildWeeklyReviewPrompt(safe),
+    schema: WeeklyReviewOutputSchema,
+    temperature: 0.3,
+  });
+}

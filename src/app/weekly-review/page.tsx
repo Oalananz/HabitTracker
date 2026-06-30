@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
+import AiWeeklyReview from '@/components/ai/AiWeeklyReview';
+import type { WeeklyReviewInput, WeeklyReviewOutput } from '@/lib/ai/schemas';
 import dayjs from 'dayjs';
 
 interface ReviewForm {
@@ -171,6 +173,48 @@ export default function WeeklyReviewPage() {
     }
   };
 
+  // Build the privacy-minimized AI input from aggregated stats + the user's
+  // own reflection text only (no ids, emails, descriptions, or notes).
+  const buildAiInput = (): WeeklyReviewInput => ({
+    weekStartDate: weekStart.format('YYYY-MM-DD'),
+    weekEndDate: weekEnd.format('YYYY-MM-DD'),
+    summaryStats: {
+      completedTasks: summary.tasksCompleted,
+      totalTasks: tasks.length,
+      overdueTasks: summary.overdue,
+      habitCompletionRate: summary.habitRate,
+      activeGoals: goals.filter((g) => g.isActive !== false && !g.completed).length,
+      completedGoals: summary.goalsCompleted,
+    },
+    lifeAreaStats: breakdown.map((b) => ({
+      lifeArea: b.area.label,
+      completedTasks: b.completedTasks,
+      totalTasks: tasks.filter((t) => t.lifeArea === b.area.id).length,
+      completedHabits: b.completedHabits,
+      totalHabits: habits.filter((h) => h.isActive && h.lifeArea === b.area.id).length,
+      activeGoals: b.activeGoals,
+      progressPercentage: b.progress,
+    })),
+    existingReflection: {
+      wins: form.wins, problems: form.problems, lessons: form.lessons, nextWeekPriorities: form.nextWeekPriorities,
+    },
+  });
+
+  // Apply AI suggestions without overwriting: append under a heading if the
+  // field already has manually-written text.
+  const applyAi = (review: WeeklyReviewOutput) => {
+    const merge = (key: keyof ReviewForm, text: string) => {
+      if (!text.trim()) return;
+      const current = form[key];
+      set(key, current.trim() ? `${current}\n\n--- AI Suggestions ---\n${text}` : text);
+    };
+    merge('wins', review.wins.join('\n'));
+    merge('problems', review.problems.join('\n'));
+    merge('lessons', review.patterns.join('\n'));
+    merge('nextWeekPriorities', review.nextWeekPriorities.map((p) => `- ${p.title}: ${p.reason}`).join('\n'));
+    addToast('Applied AI suggestions to the form', 'success', 2500);
+  };
+
   const summaryCards = [
     { label: 'TASKS_DONE', value: summary.tasksCompleted },
     { label: 'HABIT_RATE', value: `${summary.habitRate}%` },
@@ -206,6 +250,9 @@ export default function WeeklyReviewPage() {
           </button>
         </div>
       </header>
+
+      {/* AI Weekly Review */}
+      <AiWeeklyReview buildInput={buildAiInput} onApply={applyAi} />
 
       {/* A. Current Week Summary */}
       <section>
