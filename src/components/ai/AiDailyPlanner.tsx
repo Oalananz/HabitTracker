@@ -10,14 +10,29 @@ import { AiGenerateButton, AiLoadingState, AiErrorState, AiResultCard } from './
 import AiPlanPreview from './AiPlanPreview';
 import dayjs from 'dayjs';
 
+function planStorageKey(date: string) {
+  return `aiDailyPlan:${date}`;
+}
+
+function loadSavedPlan(date: string): DailyPlannerOutput | null {
+  try {
+    const raw = localStorage.getItem(planStorageKey(date));
+    return raw ? (JSON.parse(raw) as DailyPlannerOutput) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function AiDailyPlanner({ date }: { date: string }) {
   const { tasks, habits, goals, fetchGoals, fetchHabits, prayerTimes } = useStore();
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState<DailyPlannerOutput | null>(null);
+  // Restore a previously-saved plan for this date so it persists across reloads.
+  const [plan, setPlan] = useState<DailyPlannerOutput | null>(() => loadSavedPlan(date));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<boolean>(() => loadSavedPlan(date) !== null);
 
   useEffect(() => {
     if (goals.length === 0) void fetchGoals();
@@ -88,6 +103,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'AI request failed.'); return; }
       setPlan(data.plan);
+      setSaved(false); // freshly generated; not yet saved
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -112,10 +128,18 @@ export default function AiDailyPlanner({ date }: { date: string }) {
     try {
       // Saved locally (no DB migration needed) — consistent createdAt/updatedAt.
       const now = new Date().toISOString();
-      localStorage.setItem(`aiDailyPlan:${date}`, JSON.stringify({ id: `plan_${date}`, date, ...plan, createdAt: now, updatedAt: now }));
+      localStorage.setItem(planStorageKey(date), JSON.stringify({ id: `plan_${date}`, date, ...plan, createdAt: now, updatedAt: now }));
+      setSaved(true);
       addToast('Plan saved for today', 'success', 2000);
     } catch { addToast('Could not save plan', 'error'); }
     finally { setSaving(false); }
+  };
+
+  const dismiss = () => {
+    try { localStorage.removeItem(planStorageKey(date)); } catch { /* ignore */ }
+    setPlan(null);
+    setError(null);
+    setSaved(false);
   };
 
   // Push the plan's top priorities into the Today "Top 3 Priorities" card.
@@ -148,9 +172,15 @@ export default function AiDailyPlanner({ date }: { date: string }) {
           onSave={save} saving={saving}
           onCopy={copy}
           onRegenerate={generate}
-          onDismiss={() => { setPlan(null); setError(null); }}
-          saveLabel="Save Plan"
+          onDismiss={dismiss}
+          saveLabel={saved ? 'Update Saved Plan' : 'Save Plan'}
         >
+          {saved && (
+            <div className="mb-3 inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded-[2px]">
+              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              Saved on this device
+            </div>
+          )}
           {plan.topPriorities.length > 0 && (
             <button
               onClick={useAsPriorities}

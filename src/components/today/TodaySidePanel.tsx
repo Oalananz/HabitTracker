@@ -26,8 +26,10 @@ export default function TodaySidePanel({ dayRecord, date }: TodaySidePanelProps)
   const { tasks, habits, journeys, prayerTimes, userStats, activityLog } = useStore();
   const [logExpanded, setLogExpanded] = useState(false);
 
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
+  // Count manual tasks only — habits are reported separately below.
+  const manualTasks = tasks.filter(t => t.sourceType !== 'habit');
+  const completedTasks = manualTasks.filter(t => t.completed).length;
+  const totalTasks = manualTasks.length;
   const activeHabits = habits.filter(h => h.isActive);
   const dueHabits = activeHabits.filter(h => tasks.some(t => t.habitId === h.id && t.date === date));
   const doneHabits = dueHabits.filter(h => tasks.find(t => t.habitId === h.id && t.date === date)?.completed);

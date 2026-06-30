@@ -136,7 +136,11 @@ export default function TodayPage() {
     }
   };
 
-  const filteredTasks = tasks.filter(t => {
+  // Today's Tasks shows manual tasks/plans only — habit-generated tasks live
+  // in the "Today's Habits" section, not here.
+  const manualTasks = tasks.filter(t => t.sourceType !== 'habit');
+
+  const filteredTasks = manualTasks.filter(t => {
     if (filterStatus === 'pending' && t.completed) return false;
     if (filterStatus === 'completed' && !t.completed) return false;
     if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
@@ -145,9 +149,9 @@ export default function TodayPage() {
 
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
-  const uniqueCategories = Array.from(new Set(tasks.map(t => t.category || 'General')));
-  const activePendingCount = tasks.filter(t => !t.completed).length;
-  const activeCompletedCount = tasks.filter(t => t.completed).length;
+  const uniqueCategories = Array.from(new Set(manualTasks.map(t => t.category || 'General')));
+  const activePendingCount = manualTasks.filter(t => !t.completed).length;
+  const activeCompletedCount = manualTasks.filter(t => t.completed).length;
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -209,7 +213,7 @@ export default function TodayPage() {
               rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
             />
 
-            {tasks.length > 0 && (
+            {manualTasks.length > 0 && (
               <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2 mb-4">
                 <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">Filter</span>
                 <select
@@ -247,7 +251,7 @@ export default function TodayPage() {
                   </div>
                 ))}
               </div>
-            ) : tasks.length === 0 ? (
+            ) : manualTasks.length === 0 ? (
               <EmptyState title="No tasks planned for today" description="Add one task or generate a plan." icon="task_alt" />
             ) : filteredTasks.length === 0 ? (
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />

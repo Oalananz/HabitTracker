@@ -14,8 +14,10 @@ interface TodaySummaryCardsProps {
 export default function TodaySummaryCards({ dayRecord, date }: TodaySummaryCardsProps) {
   const { tasks, habits, journeys, failures, updateDayRecord, addActivityLog, prayerTimes } = useStore();
 
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
+  // Count manual tasks only — habits have their own "Habits" metric.
+  const manualTasks = tasks.filter(t => t.sourceType !== 'habit');
+  const completedTasks = manualTasks.filter(t => t.completed).length;
+  const totalTasks = manualTasks.length;
 
   const activeHabits = habits.filter(h => h.isActive);
   const dueHabits = activeHabits.filter(h => tasks.some(t => t.habitId === h.id && t.date === date));
