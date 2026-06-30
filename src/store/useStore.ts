@@ -255,6 +255,7 @@ interface AppState {
   taskSummary: TaskSummary | null;
   isTasksLoading: boolean;
   fetchTasks: (date: string) => Promise<void>;
+  generateTodayTasks: (date: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   uncompleteTask: (taskId: string) => Promise<void>;
   createTask: (data: { title: string; description?: string; category?: string; priority?: string; date: string; lifeArea?: string | null }) => Promise<void>;
@@ -473,6 +474,22 @@ export const useStore = create<AppState>((set, get) => ({
     } else {
       set({ isTasksLoading: false });
     }
+  },
+
+  generateTodayTasks: async (date) => {
+    // Explicitly create any habit-due tasks for the date, then load the list.
+    // The GET in fetchTasks also auto-generates, so this is a reliability net
+    // (e.g. stale local cache) and a no-op-safe upsert on the server.
+    if (networkStatus.isOnline) {
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate', date }),
+        });
+      } catch { /* fall through to fetch */ }
+    }
+    await get().fetchTasks(date);
   },
 
   completeTask: async (taskId) => {

@@ -14,7 +14,10 @@
  * full names, user/session IDs, raw notes, descriptions of recovery journeys,
  * and private URLs.
  */
-import type { DailyPlannerInput, GoalBreakerInput, WeeklyReviewInput } from './schemas';
+import type {
+  DailyPlannerInput, GoalBreakerInput, WeeklyReviewInput,
+  RecoveryInsightInput, EveningReviewInput,
+} from './schemas';
 
 const MAX_TITLE = 120;
 const MAX_TEXT = 2000;
@@ -87,6 +90,41 @@ export function buildSafeWeeklyReview(input: WeeklyReviewInput) {
       problems: clip(input.existingReflection.problems, MAX_TEXT),
       lessons: clip(input.existingReflection.lessons, MAX_TEXT),
       nextWeekPriorities: clip(input.existingReflection.nextWeekPriorities, MAX_TEXT),
+    },
+  };
+}
+
+/**
+ * Recovery insight: de-identified pattern signals ONLY. We deliberately drop
+ * journey titles, descriptions, and any slip-trigger note text — the model
+ * never learns what the user is recovering from, only numeric patterns.
+ */
+export function buildSafeRecoveryInsight(input: RecoveryInsightInput) {
+  return {
+    date: clip(input.date, 10),
+    journeys: input.journeys.slice(0, MAX_ITEMS).map((j) => ({
+      cleanDays: j.cleanDays,
+      totalSlips: j.totalSlips,
+      slippedToday: j.slippedToday,
+      slipsLast7Days: j.slipsLast7Days,
+    })),
+    context: input.context, // numeric wellbeing aggregates only
+  };
+}
+
+/** Evening review: the day's numeric stats + the user's own reflection text. */
+export function buildSafeEveningReview(input: EveningReviewInput) {
+  return {
+    date: clip(input.date, 10),
+    dayStats: input.dayStats, // numeric aggregates only
+    priorities: input.priorities.slice(0, 5).map((p) => ({
+      title: clip(p.title),
+      completed: p.completed,
+    })),
+    userReflection: {
+      wins: clip(input.userReflection.wins, MAX_TEXT),
+      problems: clip(input.userReflection.problems, MAX_TEXT),
+      tomorrowImprovement: clip(input.userReflection.tomorrowImprovement, MAX_TEXT),
     },
   };
 }

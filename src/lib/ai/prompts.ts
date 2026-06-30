@@ -98,6 +98,55 @@ DATA:
 ${JSON.stringify(safeInput)}`;
 }
 
+export function buildRecoveryInsightPrompt(safeInput: unknown): string {
+  return `You are a supportive recovery coach. Assess the user's relapse risk for TODAY using ONLY the de-identified pattern data below. You do NOT know what the user is recovering from — never guess or name a specific behavior, addiction, or substance.
+
+Guidelines:
+- Be compassionate, non-judgmental, and practical. Never shaming.
+- Base "riskLevel" on the signals: recent slips, a slip already today, low sleep, low daily score, and few completed tasks raise risk; long clean streaks, good sleep, and an on-track day lower it.
+- riskFactors / protectiveFactors must be grounded in the data provided (e.g. "Only slept below your goal", "Already 12 clean days"). Do not invent specifics.
+- recommendations: 3-5 small, concrete actions for the next few hours.
+- ifUrgeArises: 3-4 short, in-the-moment coping steps.
+- Keep every string to one short sentence.
+
+Return JSON with EXACTLY this shape:
+{
+  "riskLevel": "low" | "moderate" | "high",
+  "summary": string,
+  "riskFactors": [string],
+  "protectiveFactors": [string],
+  "recommendations": [string],
+  "ifUrgeArises": [string]
+}
+
+DATA:
+${JSON.stringify(safeInput)}`;
+}
+
+export function buildEveningReviewPrompt(safeInput: unknown): string {
+  return `Write a short, encouraging end-of-day reflection using ONLY the data below. Build on the user's own notes if they provided any; do not contradict or invent events.
+
+Guidelines:
+- "summary": 1-2 warm, honest sentences about how the day went based on the stats.
+- "wins": 2-4 specific positives drawn from the stats/notes (e.g. completed tasks, prayers, focus, sleep).
+- "improvements": 1-3 gentle, specific things to do differently — no shaming.
+- "tomorrowFocus": 2-3 concrete focus suggestions for tomorrow.
+- "encouragement": one short motivating closing line.
+- Keep each string to one sentence. Be practical and specific to the numbers given.
+
+Return JSON with EXACTLY this shape:
+{
+  "summary": string,
+  "wins": [string],
+  "improvements": [string],
+  "tomorrowFocus": [string],
+  "encouragement": string
+}
+
+DATA:
+${JSON.stringify(safeInput)}`;
+}
+
 /** Appended on the single retry when the first response failed validation. */
 export const CORRECTION_SUFFIX = `
 

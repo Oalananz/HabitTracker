@@ -4,11 +4,19 @@
  * then returns a schema-validated result.
  */
 import { generateStructured } from './geminiClient';
-import { buildSafeDailyPlanner, buildSafeGoalBreaker, buildSafeWeeklyReview } from './privacy';
-import { buildDailyPlannerPrompt, buildGoalBreakerPrompt, buildWeeklyReviewPrompt } from './prompts';
+import {
+  buildSafeDailyPlanner, buildSafeGoalBreaker, buildSafeWeeklyReview,
+  buildSafeRecoveryInsight, buildSafeEveningReview,
+} from './privacy';
+import {
+  buildDailyPlannerPrompt, buildGoalBreakerPrompt, buildWeeklyReviewPrompt,
+  buildRecoveryInsightPrompt, buildEveningReviewPrompt,
+} from './prompts';
 import {
   DailyPlannerOutputSchema, GoalBreakerOutputSchema, WeeklyReviewOutputSchema,
+  RecoveryInsightOutputSchema, EveningReviewOutputSchema,
   type DailyPlannerInput, type GoalBreakerInput, type WeeklyReviewInput,
+  type RecoveryInsightInput, type EveningReviewInput,
 } from './schemas';
 
 export async function generateDailyPlan(input: DailyPlannerInput) {
@@ -35,5 +43,23 @@ export async function generateWeeklyReview(input: WeeklyReviewInput) {
     prompt: buildWeeklyReviewPrompt(safe),
     schema: WeeklyReviewOutputSchema,
     temperature: 0.3,
+  });
+}
+
+export async function generateRecoveryInsight(input: RecoveryInsightInput) {
+  const safe = buildSafeRecoveryInsight(input); // ← privacy filtering (de-identified)
+  return generateStructured({
+    prompt: buildRecoveryInsightPrompt(safe),
+    schema: RecoveryInsightOutputSchema,
+    temperature: 0.4,
+  });
+}
+
+export async function generateEveningReflection(input: EveningReviewInput) {
+  const safe = buildSafeEveningReview(input); // ← privacy filtering
+  return generateStructured({
+    prompt: buildEveningReviewPrompt(safe),
+    schema: EveningReviewOutputSchema,
+    temperature: 0.4,
   });
 }

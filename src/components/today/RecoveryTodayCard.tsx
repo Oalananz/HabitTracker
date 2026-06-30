@@ -6,6 +6,8 @@ import dayjs from 'dayjs';
 import { useStore } from '@/store/useStore';
 import { useToast } from '@/store/useToast';
 import type { DayRecord, DayRecordUpdate } from '@/lib/services/dayRecordService';
+import type { RecoveryInsightOutput } from '@/lib/ai/schemas';
+import { AiLoadingState, AiErrorState } from '@/components/ai/AiPrimitives';
 
 interface RecoveryTodayCardProps {
   dayRecord: DayRecord;
@@ -23,12 +25,14 @@ interface SlipForm {
 const EMPTY_SLIP: SlipForm = { trigger: '', emotion: '', situation: '', lesson: '', prevention: '' };
 
 export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCardProps) {
-  const { updateDayRecord, addActivityLog, journeys, failures, recordJourneyFailure, deleteFailure } = useStore();
+  const { updateDayRecord, addActivityLog, journeys, failures, tasks, recordJourneyFailure, deleteFailure } = useStore();
   const { addToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [slipJourney, setSlipJourney] = useState<{ id: string; title: string } | null>(null);
   const [slipForm, setSlipForm] = useState<SlipForm>(EMPTY_SLIP);
   const [analyzing, setAnalyzing] = useState(false);
+  const [insight, setInsight] = useState<RecoveryInsightOutput | null>(null);
+  const [insightError, setInsightError] = useState<string | null>(null);
 
   const failedToday = (journeyId: string) =>
     failures.some(f => f.journeyId === journeyId && dayjs(f.timestamp).format('YYYY-MM-DD') === date);
@@ -89,6 +93,62 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  /**
+   * Build a DE-IDENTIFIED risk payload: pattern signals only — never journey
+   * titles, descriptions, or slip-trigger note text.
+   */
+  const analyzeRisk = async () => {
+    if (analyzing) return;
+    setAnalyzing(true);
+    setInsightError(null);
+    try {
+      const weekAgo = dayjs(date).subtract(6, 'day').startOf('day');
+      const journeyInputs = journeys.map(j => {
+        const jf = failures.filter(f => f.journeyId === j.id);
+        return {
+          cleanDays: Math.max(0, dayjs(date).endOf('day').diff(dayjs(j.startTime), 'day')),
+          totalSlips: jf.length,
+          slippedToday: jf.some(f => dayjs(f.timestamp).format('YYYY-MM-DD') === date),
+          slipsLast7Days: jf.filter(f => !dayjs(f.timestamp).isBefore(weekAgo)).length,
+        };
+      });
+      const prayersDone = (['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const)
+        .filter(k => dayRecord[k]).length;
+      const body = {
+        date,
+        journeys: journeyInputs,
+        context: {
+          dailyScore: dayRecord.dailyScore,
+          sleepHours: dayRecord.sleepHours,
+          sleepGoal: dayRecord.sleepGoal,
+          focusHours: dayRecord.focusHours,
+          prayersDone,
+          tasksCompleted: tasks.filter(t => t.completed).length,
+          tasksTotal: tasks.length,
+        },
+      };
+      const res = await fetch('/api/ai/recovery-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) { setInsightError(data.error || 'AI request failed.'); return; }
+      setInsight(data.insight);
+      addActivityLog('DISCIPLINE', 'AI recovery insight generated');
+    } catch {
+      setInsightError('Network error. Please try again.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const riskStyle: Record<string, string> = {
+    low: 'text-primary bg-primary/10 border-primary/30',
+    moderate: 'text-tertiary bg-tertiary/10 border-tertiary/30',
+    high: 'text-error bg-error/10 border-error/30',
   };
 
   return (
@@ -162,14 +222,82 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
         </>
       )}
 
-      <button
-        onClick={() => { setAnalyzing(true); setTimeout(() => setAnalyzing(false), 600); addToast('AI Recovery Insight is coming soon', 'info', 2500); }}
-        disabled={analyzing}
-        className="w-full px-3 py-2 border border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant hover:border-primary/30 hover:text-primary font-label text-[10px] uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-      >
-        <span className="material-symbols-outlined text-[14px]">insights</span>
-        {analyzing ? 'Analyzing…' : 'Analyze Risk (Coming Soon)'}
-      </button>
+      {journeys.length > 0 && (
+        <div className="space-y-2">
+          {!insight && !analyzing && (
+            <button
+              onClick={analyzeRisk}
+              className="w-full px-3 py-2 border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-label text-[10px] uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px]">insights</span>
+              Analyze Risk
+            </button>
+          )}
+
+          {analyzing && <AiLoadingState message="Analyzing today's risk…" />}
+          {insightError && !analyzing && <AiErrorState message={insightError} onRetry={analyzeRisk} />}
+
+          {insight && !analyzing && (
+            <div className="bg-surface-container-lowest border border-primary/25 rounded-md p-4 space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                  <span className="font-label text-xs font-bold text-on-surface uppercase tracking-wide">AI Recovery Insight</span>
+                </div>
+                <button onClick={() => setInsight(null)} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Dismiss">
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+
+              <span className={`inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm border ${riskStyle[insight.riskLevel]}`}>
+                {insight.riskLevel} risk today
+              </span>
+
+              {insight.summary && <p className="font-body text-sm text-on-surface">{insight.summary}</p>}
+
+              {insight.riskFactors.length > 0 && (
+                <div>
+                  <div className="font-label text-[10px] uppercase tracking-widest text-tertiary mb-1">Watch for</div>
+                  <ul className="space-y-0.5">
+                    {insight.riskFactors.map((f, i) => <li key={i} className="font-body text-xs text-on-surface-variant">• {f}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {insight.protectiveFactors.length > 0 && (
+                <div>
+                  <div className="font-label text-[10px] uppercase tracking-widest text-primary mb-1">In your favor</div>
+                  <ul className="space-y-0.5">
+                    {insight.protectiveFactors.map((f, i) => <li key={i} className="font-body text-xs text-on-surface-variant">• {f}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {insight.recommendations.length > 0 && (
+                <div>
+                  <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Do next</div>
+                  <ul className="space-y-0.5">
+                    {insight.recommendations.map((r, i) => <li key={i} className="font-body text-xs text-on-surface flex gap-1.5"><span className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{r}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {insight.ifUrgeArises.length > 0 && (
+                <div className="bg-tertiary/5 border border-tertiary/20 rounded-sm p-2.5">
+                  <div className="font-label text-[10px] uppercase tracking-widest text-tertiary mb-1">If an urge hits</div>
+                  <ul className="space-y-0.5">
+                    {insight.ifUrgeArises.map((s, i) => <li key={i} className="font-body text-xs text-on-surface-variant">• {s}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              <button onClick={analyzeRisk} className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors">
+                Regenerate
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Log Slip modal */}
       {slipJourney && (

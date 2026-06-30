@@ -33,6 +33,7 @@ export default function TodayPage() {
     addActivityLog,
     fetchJourneys, fetchFailures,
     fetchPrayerTimes,
+    fetchHabits, generateTodayTasks,
   } = useStore();
 
   const { addToast } = useToast();
@@ -50,13 +51,16 @@ export default function TodayPage() {
 
   useEffect(() => {
     setSelectedDate(today);
-    void fetchTasks(today);
     void fetchDayRecord(today);
     void fetchUserStats();
     void fetchAchievements();
     void fetchJourneys();
     void fetchFailures();
     void fetchPrayerTimes(today);
+    void fetchHabits();
+    // Auto-add today's habits: ensure habit-due tasks for today exist, then
+    // load the task list (falls back to a plain fetch if generation fails).
+    void generateTodayTasks(today).catch(() => fetchTasks(today));
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

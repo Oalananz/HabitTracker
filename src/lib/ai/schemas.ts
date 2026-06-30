@@ -62,26 +62,30 @@ export const DailyPlannerInputSchema = z.object({
 });
 export type DailyPlannerInput = z.infer<typeof DailyPlannerInputSchema>;
 
+// Output schema is intentionally lenient: the model occasionally omits a
+// non-essential field (e.g. a block description) or returns a duration as a
+// loose number. Coercing/defaulting here keeps an otherwise-good plan from
+// being rejected and surfacing as a generic "AI could not generate" error.
 export const DailyPlannerOutputSchema = z.object({
-  title: z.string(),
-  summary: z.string(),
+  title: z.string().default("Today's Plan"),
+  summary: z.string().default(''),
   topPriorities: z.array(z.object({
     title: z.string(),
-    reason: z.string(),
+    reason: z.string().default(''),
     lifeArea: lifeAreaOut.optional(),
   })).default([]),
   scheduleBlocks: z.array(z.object({
-    label: z.string(),
+    label: z.string().default(''),
     title: z.string(),
-    description: z.string(),
-    durationMinutes: z.number().int().positive().max(600),
+    description: z.string().default(''),
+    durationMinutes: z.coerce.number().int().positive().max(600).default(30),
     lifeArea: lifeAreaOut.optional(),
     relatedTaskTitle: z.string().optional(),
   })).default([]),
   habitFocus: z.array(z.object({
     title: z.string(),
     lifeArea: lifeAreaOut.optional(),
-    suggestion: z.string(),
+    suggestion: z.string().default(''),
   })).default([]),
   warnings: z.array(z.string()).default([]),
   eveningReviewQuestions: z.array(z.string()).default([]),
@@ -181,3 +185,76 @@ export const WeeklyReviewOutputSchema = z.object({
   reviewQuestions: z.array(z.string()).default([]),
 });
 export type WeeklyReviewOutput = z.infer<typeof WeeklyReviewOutputSchema>;
+
+// ─── Recovery Insight (Analyze Risk) ────────────────────────────────
+// PRIVACY: this feature never sends recovery journey TITLES, descriptions,
+// or raw slip-trigger text. Only de-identified pattern signals are forwarded
+// (clean-day counts, slip counts/timing, and the day's wellbeing stats).
+export const RecoveryInsightInputSchema = z.object({
+  date: z.string().min(1),
+  journeys: z.array(z.object({
+    cleanDays: z.number().int().nonnegative().default(0),
+    totalSlips: z.number().int().nonnegative().default(0),
+    slippedToday: z.boolean().default(false),
+    slipsLast7Days: z.number().int().nonnegative().default(0),
+  })).default([]),
+  context: z.object({
+    dailyScore: z.number().min(0).max(10).default(0),
+    sleepHours: z.number().min(0).max(24).default(0),
+    sleepGoal: z.number().min(0).max(24).default(7),
+    focusHours: z.number().min(0).max(24).default(0),
+    prayersDone: z.number().int().min(0).max(5).default(0),
+    tasksCompleted: z.number().int().nonnegative().default(0),
+    tasksTotal: z.number().int().nonnegative().default(0),
+  }),
+}).strict();
+export type RecoveryInsightInput = z.infer<typeof RecoveryInsightInputSchema>;
+
+export const RecoveryInsightOutputSchema = z.object({
+  riskLevel: z.enum(['low', 'moderate', 'high']).default('moderate'),
+  summary: z.string().default(''),
+  riskFactors: z.array(z.string()).default([]),
+  protectiveFactors: z.array(z.string()).default([]),
+  recommendations: z.array(z.string()).default([]),
+  ifUrgeArises: z.array(z.string()).default([]),
+});
+export type RecoveryInsightOutput = z.infer<typeof RecoveryInsightOutputSchema>;
+
+// ─── Evening Review (AI reflection) ─────────────────────────────────
+export const EveningReviewInputSchema = z.object({
+  date: z.string().min(1),
+  dayStats: z.object({
+    dailyScore: z.number().min(0).max(10).default(0),
+    tasksCompleted: z.number().int().nonnegative().default(0),
+    tasksTotal: z.number().int().nonnegative().default(0),
+    habitsDone: z.number().int().nonnegative().default(0),
+    habitsDue: z.number().int().nonnegative().default(0),
+    prayersDone: z.number().int().min(0).max(5).default(0),
+    focusHours: z.number().min(0).max(24).default(0),
+    focusGoal: z.number().min(0).max(24).default(6),
+    sleepHours: z.number().min(0).max(24).default(0),
+    sleepGoal: z.number().min(0).max(24).default(7),
+    slipsToday: z.number().int().nonnegative().default(0),
+  }),
+  priorities: z.array(z.object({
+    title: z.string().max(160),
+    completed: z.boolean().default(false),
+  })).default([]),
+  // The user's own typed reflection — forwarded so the AI can build on it,
+  // consistent with how the Weekly Review forwards the user's reflection.
+  userReflection: z.object({
+    wins: z.string().max(2000).default(''),
+    problems: z.string().max(2000).default(''),
+    tomorrowImprovement: z.string().max(2000).default(''),
+  }).default({ wins: '', problems: '', tomorrowImprovement: '' }),
+});
+export type EveningReviewInput = z.infer<typeof EveningReviewInputSchema>;
+
+export const EveningReviewOutputSchema = z.object({
+  summary: z.string().default(''),
+  wins: z.array(z.string()).default([]),
+  improvements: z.array(z.string()).default([]),
+  tomorrowFocus: z.array(z.string()).default([]),
+  encouragement: z.string().default(''),
+});
+export type EveningReviewOutput = z.infer<typeof EveningReviewOutputSchema>;

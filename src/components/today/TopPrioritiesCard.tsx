@@ -44,6 +44,16 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
 
   const persist = (next: Priority[]) => { setPriorities(next); save(date, next); };
 
+  // Reload when another card (e.g. the AI daily plan) sets priorities for today.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ date?: string }>).detail;
+      if (!detail?.date || detail.date === date) setPriorities(load(date));
+    };
+    window.addEventListener('topPriorities:updated', handler);
+    return () => window.removeEventListener('topPriorities:updated', handler);
+  }, [date]);
+
   // Keep linked priorities' completed state in sync with their source task.
   useEffect(() => {
     if (priorities.length === 0) return;

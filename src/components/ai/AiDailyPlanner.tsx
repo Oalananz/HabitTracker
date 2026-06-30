@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { LIFE_AREA_LABELS } from '@/lib/ai/schemas';
 import type { DailyPlannerOutput } from '@/lib/ai/schemas';
-import { lifeAreaIdToLabel } from '@/lib/lifeAreas';
+import { lifeAreaIdToLabel, lifeAreaLabelToId } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
 import { AiGenerateButton, AiLoadingState, AiErrorState, AiResultCard } from './AiPrimitives';
 import AiPlanPreview from './AiPlanPreview';
@@ -118,6 +118,23 @@ export default function AiDailyPlanner({ date }: { date: string }) {
     finally { setSaving(false); }
   };
 
+  // Push the plan's top priorities into the Today "Top 3 Priorities" card.
+  // Writes the same localStorage shape that card uses, then notifies it.
+  const useAsPriorities = () => {
+    if (!plan || plan.topPriorities.length === 0) return;
+    try {
+      const items = plan.topPriorities.slice(0, 3).map((p, i) => ({
+        id: `pr_ai_${date}_${i}`,
+        title: p.title,
+        lifeArea: lifeAreaLabelToId(p.lifeArea) || undefined,
+        completed: false,
+      }));
+      localStorage.setItem(`topPriorities:${date}`, JSON.stringify(items));
+      window.dispatchEvent(new CustomEvent('topPriorities:updated', { detail: { date } }));
+      addToast('Set as your Top 3 Priorities', 'success', 2000);
+    } catch { addToast('Could not set priorities', 'error'); }
+  };
+
   return (
     <div className="space-y-3">
       {!plan && !loading && (
@@ -134,6 +151,15 @@ export default function AiDailyPlanner({ date }: { date: string }) {
           onDismiss={() => { setPlan(null); setError(null); }}
           saveLabel="Save Plan"
         >
+          {plan.topPriorities.length > 0 && (
+            <button
+              onClick={useAsPriorities}
+              className="mb-4 inline-flex items-center gap-1.5 px-4 py-2 bg-scanline-gradient text-on-primary font-label text-[10px] uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-[16px]">flag</span>
+              Use as Top 3 Priorities
+            </button>
+          )}
           <AiPlanPreview plan={plan} />
           <div className="font-mono text-[9px] text-outline mt-4">{dayjs(date).format('ddd, MMM D, YYYY')}</div>
         </AiResultCard>
