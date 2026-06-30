@@ -19,6 +19,7 @@ import OnboardingPrompt from '@/components/today/OnboardingPrompt';
 import AiDailyPlanner from '@/components/ai/AiDailyPlanner';
 import AchievementToast from '@/components/achievements/AchievementToast';
 import { useToast } from '@/store/useToast';
+import { pullTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import dayjs from 'dayjs';
 import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
 
@@ -61,6 +62,11 @@ export default function TodayPage() {
     // Auto-add today's habits: ensure habit-due tasks for today exist, then
     // load the task list (falls back to a plain fetch if generation fails).
     void generateTodayTasks(today).catch(() => fetchTasks(today));
+    // Sync Today's saved extras (priorities, evening review, AI plan) from the
+    // DB, then tell the cards to re-read their now-hydrated localStorage.
+    void pullTodayState(today).then(changed => {
+      if (changed) window.dispatchEvent(new CustomEvent(TODAY_STATE_HYDRATED, { detail: { date: today } }));
+    });
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

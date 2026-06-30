@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { useToast } from '@/store/useToast';
 import type { DayRecord } from '@/lib/services/dayRecordService';
 import type { EveningReviewOutput } from '@/lib/ai/schemas';
 import { AiLoadingState, AiErrorState } from '@/components/ai/AiPrimitives';
+import { pushTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import dayjs from 'dayjs';
 
 interface DailyReview {
@@ -54,6 +55,23 @@ export default function EveningReviewCard({ date }: { date: string }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [reflection, setReflection] = useState<EveningReviewOutput | null>(null);
+
+  // When the server hydrates localStorage for this date, reload the saved
+  // review (only fills fields the user hasn't started editing).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ date?: string }>).detail;
+      if (detail?.date && detail.date !== date) return;
+      const existing = load(date);
+      if (!existing) return;
+      setWins(prev => (prev.trim() ? prev : existing.wins));
+      setProblems(prev => (prev.trim() ? prev : existing.problems));
+      setImprovement(prev => (prev.trim() ? prev : existing.tomorrowImprovement));
+      setSavedAt(existing.updatedAt);
+    };
+    window.addEventListener(TODAY_STATE_HYDRATED, handler);
+    return () => window.removeEventListener(TODAY_STATE_HYDRATED, handler);
+  }, [date]);
 
   const generateAi = async () => {
     if (aiLoading) return;
@@ -126,6 +144,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
       };
       localStorage.setItem(storageKey(date), JSON.stringify(review));
       setSavedAt(now);
+      pushTodayState(date); // sync to DB (across devices)
       addToast('Evening review saved', 'success', 2000);
     } catch {
       addToast('Could not save review', 'error');

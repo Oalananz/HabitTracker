@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
+import { useToast } from '@/store/useToast';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import type { DailyPlannerOutput } from '@/lib/ai/schemas';
 import { lifeAreaLabelToId } from '@/lib/lifeAreas';
+import { buildDailyPlannerInput } from '@/lib/ai/buildDailyPlannerInput';
+import { pushTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 
 interface Priority {
   id: string;
@@ -34,24 +37,31 @@ function save(date: string, priorities: Priority[]) {
 }
 
 export default function TopPrioritiesCard({ date }: { date: string }) {
-  const { tasks, completeTask, uncompleteTask } = useStore();
+  const { tasks, completeTask, uncompleteTask, fetchGoals } = useStore();
+  const { addToast } = useToast();
   const [priorities, setPriorities] = useState<Priority[]>(() => load(date));
   const [showAdd, setShowAdd] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [manualTitle, setManualTitle] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const idCounter = useRef(0);
   const nextId = (prefix: string) => `${prefix}_${date}_${idCounter.current++}`;
 
-  const persist = (next: Priority[]) => { setPriorities(next); save(date, next); };
+  // Persist locally, then mirror to the DB so priorities sync across devices.
+  const persist = (next: Priority[]) => { setPriorities(next); save(date, next); pushTodayState(date); };
 
-  // Reload when another card (e.g. the AI daily plan) sets priorities for today.
+  // Reload when another card sets priorities, or the server hydrates this date.
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ date?: string }>).detail;
       if (!detail?.date || detail.date === date) setPriorities(load(date));
     };
     window.addEventListener('topPriorities:updated', handler);
-    return () => window.removeEventListener('topPriorities:updated', handler);
+    window.addEventListener(TODAY_STATE_HYDRATED, handler);
+    return () => {
+      window.removeEventListener('topPriorities:updated', handler);
+      window.removeEventListener(TODAY_STATE_HYDRATED, handler);
+    };
   }, [date]);
 
   // Keep linked priorities' completed state in sync with their source task.
@@ -85,21 +95,60 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
     setShowPicker(false);
   };
 
-  const addFromAiPlan = () => {
-    try {
-      const raw = localStorage.getItem(`aiDailyPlan:${date}`);
-      if (!raw) return;
-      const plan = JSON.parse(raw) as DailyPlannerOutput;
-      const slots = MAX_PRIORITIES - priorities.length;
-      if (slots <= 0 || !plan.topPriorities?.length) return;
-      const additions: Priority[] = plan.topPriorities.slice(0, slots).map((p) => ({
+  const addPriorities = (top: DailyPlannerOutput['topPriorities']) => {
+    const slots = MAX_PRIORITIES - priorities.length;
+    if (slots <= 0) { addToast('You already have 3 priorities', 'info', 2000); return false; }
+    const existingTitles = new Set(priorities.map(p => p.title.toLowerCase()));
+    const additions: Priority[] = top
+      .filter(p => p.title && !existingTitles.has(p.title.toLowerCase()))
+      .slice(0, slots)
+      .map((p) => ({
         id: nextId('pr_ai'),
         title: p.title,
         lifeArea: lifeAreaLabelToId(p.lifeArea) || undefined,
         completed: false,
       }));
-      persist([...priorities, ...additions]);
-    } catch { /* ignore */ }
+    if (additions.length === 0) { addToast('No new priorities to add', 'info', 2000); return false; }
+    persist([...priorities, ...additions]);
+    return true;
+  };
+
+  // AI Suggest: use the saved plan's priorities if present, otherwise ask the
+  // AI to generate them on demand (so it works even before a plan is saved).
+  const aiSuggest = async () => {
+    if (aiLoading) return;
+    if (priorities.length >= MAX_PRIORITIES) { addToast('You already have 3 priorities', 'info', 2000); return; }
+
+    // 1) Reuse an already-saved plan if available.
+    try {
+      const raw = localStorage.getItem(`aiDailyPlan:${date}`);
+      if (raw) {
+        const plan = JSON.parse(raw) as DailyPlannerOutput;
+        if (plan.topPriorities?.length) { addPriorities(plan.topPriorities); return; }
+      }
+    } catch { /* fall through to generate */ }
+
+    // 2) Otherwise generate fresh priorities from the AI.
+    setAiLoading(true);
+    try {
+      if (useStore.getState().goals.length === 0) { try { await fetchGoals(); } catch { /* ignore */ } }
+      const s = useStore.getState();
+      const input = buildDailyPlannerInput(date, s.tasks, s.habits, s.goals, s.prayerTimes);
+      const res = await fetch('/api/ai/daily-planner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await res.json();
+      if (!res.ok) { addToast(data.error || 'AI suggestion failed.', 'error', 3000); return; }
+      const top = (data.plan?.topPriorities ?? []) as DailyPlannerOutput['topPriorities'];
+      if (!top.length) { addToast('AI had no priorities to suggest', 'info', 2500); return; }
+      addPriorities(top);
+    } catch {
+      addToast('Network error. Please try again.', 'error', 3000);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const toggle = async (p: Priority) => {
@@ -173,10 +222,14 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
             Choose From Tasks
           </button>
           <button
-            onClick={addFromAiPlan}
-            className="px-3 py-1.5 bg-primary/10 border border-primary/30 hover:border-primary/60 rounded-sm font-label text-xs text-primary transition-all"
+            onClick={aiSuggest}
+            disabled={aiLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/30 hover:border-primary/60 rounded-sm font-label text-xs text-primary transition-all disabled:opacity-50"
           >
-            AI Suggest
+            <span className={`material-symbols-outlined text-[14px] ${aiLoading ? 'animate-spin' : ''}`}>
+              {aiLoading ? 'progress_activity' : 'auto_awesome'}
+            </span>
+            {aiLoading ? 'Suggesting…' : 'AI Suggest'}
           </button>
         </div>
       )}

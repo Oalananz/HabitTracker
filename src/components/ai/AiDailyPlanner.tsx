@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { LIFE_AREA_LABELS } from '@/lib/ai/schemas';
 import type { DailyPlannerOutput } from '@/lib/ai/schemas';
-import { lifeAreaIdToLabel, lifeAreaLabelToId } from '@/lib/lifeAreas';
+import { lifeAreaLabelToId } from '@/lib/lifeAreas';
+import { buildDailyPlannerInput } from '@/lib/ai/buildDailyPlannerInput';
+import { pushTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import { useToast } from '@/store/useToast';
 import { AiGenerateButton, AiLoadingState, AiErrorState, AiResultCard } from './AiPrimitives';
 import AiPlanPreview from './AiPlanPreview';
@@ -40,56 +41,19 @@ export default function AiDailyPlanner({ date }: { date: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * PRIVACY: this payload is intentionally minimal — only generic titles,
-   * life-area LABELS, statuses, priorities, due dates and numeric stats.
-   * No descriptions, notes, ids, emails, or auth data are ever included.
-   */
-  function buildInput() {
-    const activeGoals = goals.filter((g) => g.isActive !== false && !g.completed);
-    const activeHabits = habits.filter((h) => h.isActive);
-    const completedTasks = tasks.filter((t) => t.completed).length;
-    const habitTasks = tasks.filter((t) => t.sourceType === 'habit');
-    const habitRate = habitTasks.length
-      ? Math.round((habitTasks.filter((t) => t.completed).length / habitTasks.length) * 100)
-      : 0;
-
-    const pt = prayerTimes
-      ? { fajr: prayerTimes.fajr, dhuhr: prayerTimes.dhuhr, asr: prayerTimes.asr, maghrib: prayerTimes.maghrib, isha: prayerTimes.isha }
-      : undefined;
-
-    return {
-      date,
-      lifeAreas: [...LIFE_AREA_LABELS],
-      dayStats: {
-        totalTasks: tasks.length,
-        completedTasks,
-        overdueTasks: 0,
-        activeGoals: activeGoals.length,
-        activeHabits: activeHabits.length,
-        habitCompletionRate: habitRate,
-      },
-      tasks: tasks.map((t) => ({
-        title: t.title,
-        lifeArea: lifeAreaIdToLabel(t.lifeArea) || undefined,
-        priority: t.priority,
-        status: t.completed ? 'completed' : 'pending',
-      })),
-      habits: activeHabits.map((h) => ({
-        title: h.title,
-        lifeArea: lifeAreaIdToLabel(h.lifeArea) || undefined,
-        status: 'pending',
-      })),
-      goals: activeGoals.map((g) => ({
-        title: g.title,
-        lifeArea: lifeAreaIdToLabel(g.lifeArea) || undefined,
-        progress: g.targetCount > 0 ? Math.round((g.currentCount / g.targetCount) * 100) : 0,
-        dueDate: g.targetDate || undefined,
-      })),
-      prayerTimes: pt,
-      preferences: { usePrayerBlocks: Boolean(pt), maxTopPriorities: 3, planningStyle: 'balanced' },
+  // Re-read the saved plan when the server hydrates localStorage for this date.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ date?: string }>).detail;
+      if (detail?.date && detail.date !== date) return;
+      const restored = loadSavedPlan(date);
+      if (restored) { setPlan(restored); setSaved(true); }
     };
-  }
+    window.addEventListener(TODAY_STATE_HYDRATED, handler);
+    return () => window.removeEventListener(TODAY_STATE_HYDRATED, handler);
+  }, [date]);
+
+  const buildInput = () => buildDailyPlannerInput(date, tasks, habits, goals, prayerTimes);
 
   const generate = async () => {
     setLoading(true);
@@ -130,6 +94,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
       const now = new Date().toISOString();
       localStorage.setItem(planStorageKey(date), JSON.stringify({ id: `plan_${date}`, date, ...plan, createdAt: now, updatedAt: now }));
       setSaved(true);
+      pushTodayState(date); // sync to DB (across devices)
       addToast('Plan saved for today', 'success', 2000);
     } catch { addToast('Could not save plan', 'error'); }
     finally { setSaving(false); }
@@ -140,6 +105,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
     setPlan(null);
     setError(null);
     setSaved(false);
+    pushTodayState(date); // sync removal to DB
   };
 
   // Push the plan's top priorities into the Today "Top 3 Priorities" card.
@@ -155,6 +121,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
       }));
       localStorage.setItem(`topPriorities:${date}`, JSON.stringify(items));
       window.dispatchEvent(new CustomEvent('topPriorities:updated', { detail: { date } }));
+      pushTodayState(date); // sync to DB
       addToast('Set as your Top 3 Priorities', 'success', 2000);
     } catch { addToast('Could not set priorities', 'error'); }
   };
