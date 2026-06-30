@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
+import AiGoalBreaker from '@/components/ai/AiGoalBreaker';
 
 type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
 
@@ -25,6 +26,7 @@ export default function GoalsPage() {
   const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | null>(null);
   const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
   const [showArchived, setShowArchived] = useState(false);
+  const [showBreaker, setShowBreaker] = useState(false);
 
   useEffect(() => {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
@@ -105,15 +107,34 @@ export default function GoalsPage() {
               Set targets. Track progress. Achieve milestones.
             </p>
           </div>
-          <button
-            onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity flex-shrink-0"
-            id="create-goal-btn"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            New Goal
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowBreaker((v) => !v)}
+              className="flex items-center gap-2 px-4 py-2.5 border border-primary/40 bg-primary/10 text-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-primary/15 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+              AI Breaker
+            </button>
+            <button
+              onClick={() => setShowCreate(!showCreate)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
+              id="create-goal-btn"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              New Goal
+            </button>
+          </div>
         </header>
+
+        {/* AI Goal Breaker (toggle) */}
+        {showBreaker && (
+          <AiGoalBreaker
+            key={`breaker-${newTitle}`}
+            initialTitle={newTitle}
+            initialDescription={newDesc}
+            initialLifeArea={newLifeArea}
+          />
+        )}
 
         {/* Create Goal Form */}
         {showCreate && (
@@ -223,6 +244,14 @@ export default function GoalsPage() {
                 className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 CREATE GOAL ↵
+              </button>
+              <button
+                onClick={() => { if (newTitle.trim()) setShowBreaker(true); }}
+                disabled={!newTitle.trim()}
+                className="px-4 py-2 border border-primary/40 bg-primary/10 text-primary font-label text-xs uppercase rounded-sm hover:bg-primary/15 transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+                Break with AI
               </button>
               <button
                 onClick={() => setShowCreate(false)}

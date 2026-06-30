@@ -166,6 +166,31 @@ Visit **http://localhost:3000**.
 
 ---
 
+## AI features (Gemini)
+
+Optional v2 AI assistants powered by the Gemini API via the official `@google/genai` SDK.
+All Gemini calls happen **server-side only** through API routes — the key is never shipped to the browser.
+
+- **AI Daily Planner** (Today page) — turns today's tasks/habits/goals + stats into a prioritized plan.
+- **AI Goal Breaker** (Goals page) — breaks a goal into milestones, tasks, habits, risks, and first actions; you confirm before anything is created.
+- **AI Weekly Review** (Weekly Review page) — analyzes the week's aggregated stats and can fill the reflection form.
+- **AI Coach** (`/ai-coach`) — placeholder for a future chat (disabled).
+
+**Environment variables** (server-only):
+
+```
+GEMINI_API_KEY=your-gemini-api-key      # required to enable AI features
+GEMINI_MODEL=gemini-2.5-flash           # optional, this is the default
+```
+
+If `GEMINI_API_KEY` is unset, the app still runs normally and AI buttons show a safe "AI is not configured" message.
+
+**Privacy:** only minimized, non-identifying data is sent to Gemini — generic item titles, life-area labels, statuses, due dates, priorities, completion rates, and (optionally) prayer-time labels. Emails, passwords, tokens, user ids, notes, and descriptions are never sent. Filtering lives in `src/lib/ai/privacy.ts` (plus Zod stripping in `schemas.ts`); raw prompts/responses are never logged.
+
+**Deploy on Vercel:** add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) under **Project → Settings → Environment Variables**, then redeploy.
+
+---
+
 ## Project Structure
 
 ```
