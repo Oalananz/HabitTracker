@@ -40,18 +40,14 @@ export default function ActivityLog({ entries }: ActivityLogProps) {
         <span className="w-2.5 h-2.5 rounded-full bg-outline-variant" />
         <span className="w-2.5 h-2.5 rounded-full bg-outline-variant" />
         <span className="w-2.5 h-2.5 rounded-full bg-outline-variant" />
-        <span className="ml-2 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">
-          logs/activity
+        <span className="ml-2 font-label text-[10px] text-on-surface-variant uppercase tracking-widest">
+          Activity Log
         </span>
       </div>
 
       <div className="p-4 font-mono text-xs text-on-surface-variant flex flex-col gap-1.5 overflow-y-auto max-h-[340px]">
         {entries.length === 0 && (
-          <div className="flex gap-2">
-            <span className="text-outline">[{dayjs().format('MMM-DD HH:mm').toUpperCase()}]</span>
-            <span className="text-secondary">SYSTEM:</span>
-            <span>Daily initialization complete.</span>
-          </div>
+          <span className="text-on-surface-variant">No activity logged yet today.</span>
         )}
         {entries.map((entry, i) => (
           <div key={i} className="flex gap-2 animate-fade-in">

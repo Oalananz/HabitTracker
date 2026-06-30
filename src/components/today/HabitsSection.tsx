@@ -56,8 +56,8 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
         className="w-full flex items-center justify-between px-4 py-3 group"
         aria-expanded={!collapsed}
       >
-        <h3 className="font-headline text-xs font-bold uppercase tracking-wider text-on-surface flex items-center gap-2">
-          <span className="text-primary">&gt;</span> HABITS_TRACKER
+        <h3 className="font-headline text-base font-bold text-on-surface flex items-center gap-2">
+          <span className="text-primary">&gt;</span> Today&apos;s Habits
         </h3>
         <div className="flex items-center gap-3">
           {scheduled.length > 0 && (
@@ -77,49 +77,47 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
             <div className="flex items-center gap-2 py-4 justify-center font-mono text-xs text-on-surface-variant">
               <span className="animate-blink text-primary">▊</span> Loading habits...
             </div>
-          ) : activeHabits.length === 0 ? (
-            <Link
-              href="/habits"
-              className="flex flex-col items-center text-center gap-1 py-5 border border-dashed border-outline-variant/25 rounded-sm hover:border-primary/40 hover:text-primary transition-colors mt-2"
-            >
+          ) : scheduled.length === 0 ? (
+            <div className="flex flex-col items-center text-center gap-2 py-5 mt-2">
               <span className="material-symbols-outlined text-[22px] text-outline">add_circle</span>
-              <span className="font-mono text-[10px] text-on-surface-variant">
-                No active habits — define one in Habits
-              </span>
-            </Link>
+              <span className="font-body text-sm text-on-surface-variant">No habits due today.</span>
+              <div className="flex gap-2">
+                <Link href="/habits" className="px-3 py-1.5 bg-primary/10 border border-primary/30 hover:border-primary/60 rounded-sm font-label text-[10px] text-primary transition-all">
+                  Add Habit
+                </Link>
+                <Link href="/habits" className="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/20 hover:border-primary/40 rounded-sm font-label text-[10px] text-on-surface-variant hover:text-primary transition-all">
+                  Open Habits
+                </Link>
+              </div>
+            </div>
           ) : (
             <div className="space-y-1.5 mt-2">
-              {activeHabits.map(habit => {
+              {scheduled.map(habit => {
                 const task = taskForHabit(habit.id);
                 const checked = Boolean(task?.completed);
-                const unscheduled = !task;
                 return (
                   <button
                     key={habit.id}
                     onClick={() => handleToggle(habit.id, habit.title)}
-                    disabled={unscheduled || busy === habit.id}
-                    title={unscheduled ? 'Not scheduled today' : undefined}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-sm border transition-all duration-150 text-left w-full ${
+                    disabled={busy === habit.id}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-sm border transition-all duration-150 text-left w-full cursor-pointer ${
                       checked
                         ? 'border-primary/30 bg-primary/5 text-primary'
                         : 'border-outline-variant/15 bg-surface-container-lowest text-on-surface-variant hover:border-primary/20 hover:text-on-surface'
-                    } ${unscheduled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                    }`}
                   >
                     <span className={`w-4 h-4 rounded-[2px] border flex items-center justify-center flex-shrink-0 transition-all ${
                       checked ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant/40 bg-transparent'
                     }`}>
                       {checked && <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>}
                     </span>
-                    <span className={`font-mono text-[11px] uppercase tracking-wider font-bold flex-1 ${checked ? 'line-through opacity-80' : ''}`}>
+                    <span className={`font-body text-sm font-bold flex-1 ${checked ? 'line-through opacity-80' : ''}`}>
                       {habit.title}
                     </span>
                     {habit.category && (
                       <span className="font-mono text-[9px] text-on-surface-variant/70 px-1.5 py-0.5">
                         {habit.category}
                       </span>
-                    )}
-                    {unscheduled && (
-                      <span className="font-mono text-[9px] text-outline px-1.5 py-0.5">off today</span>
                     )}
                   </button>
                 );

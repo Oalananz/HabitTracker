@@ -5,13 +5,18 @@ import { useStore } from '@/store/useStore';
 import SectionHeader from '@/components/ui/SectionHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
-import DayStatusBanner from '@/components/today/DayStatusBanner';
-import DisciplineCard from '@/components/today/DisciplineCard';
+import DailyProgressBar from '@/components/today/DailyProgressBar';
+import TodaySummaryCards from '@/components/today/TodaySummaryCards';
+import TopPrioritiesCard from '@/components/today/TopPrioritiesCard';
+import WorshipCard from '@/components/today/WorshipCard';
+import FocusTimeCard from '@/components/today/FocusTimeCard';
+import RecoveryTodayCard from '@/components/today/RecoveryTodayCard';
+import SleepCard from '@/components/today/SleepCard';
+import EveningReviewCard from '@/components/today/EveningReviewCard';
+import TodaySidePanel from '@/components/today/TodaySidePanel';
 import HabitsSection from '@/components/today/HabitsSection';
 import OnboardingPrompt from '@/components/today/OnboardingPrompt';
 import AiDailyPlanner from '@/components/ai/AiDailyPlanner';
-import ScoreDisplay from '@/components/today/ScoreDisplay';
-import ActivityLog from '@/components/today/ActivityLog';
 import AchievementToast from '@/components/achievements/AchievementToast';
 import { useToast } from '@/store/useToast';
 import dayjs from 'dayjs';
@@ -23,10 +28,11 @@ export default function TodayPage() {
     completeTask, uncompleteTask, createTask, deleteTask, updateTask,
     selectedDate, setSelectedDate,
     dayRecord, fetchDayRecord, isDayRecordLoading, updateDayRecord,
-    userStats, fetchUserStats,
+    fetchUserStats,
     fetchAchievements,
-    activityLog, addActivityLog,
+    addActivityLog,
     fetchJourneys, fetchFailures,
+    fetchPrayerTimes,
   } = useStore();
 
   const { addToast } = useToast();
@@ -50,6 +56,7 @@ export default function TodayPage() {
     void fetchAchievements();
     void fetchJourneys();
     void fetchFailures();
+    void fetchPrayerTimes(today);
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -137,10 +144,6 @@ export default function TodayPage() {
   const uniqueCategories = Array.from(new Set(tasks.map(t => t.category || 'General')));
   const activePendingCount = tasks.filter(t => !t.completed).length;
   const activeCompletedCount = tasks.filter(t => t.completed).length;
-  const activeTotalCount = tasks.length;
-
-  // Build log from activityLog + task completions
-  const logEntries = activityLog.slice().reverse().slice(0, 50);
 
   return (
     <div className="space-y-6 animate-page-enter">
@@ -152,70 +155,74 @@ export default function TodayPage() {
 
       {/* Header */}
       <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> system/tasks --date=today
+        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-1">
+          Today
         </h1>
         <p className="font-body text-on-surface-variant">
-          System initialized. Awaiting user input.
+          Your daily command center.
         </p>
+        <p className="font-mono text-[10px] text-outline mt-1">/system/today</p>
       </header>
 
-      {/* Day Status Banner */}
-      {dayRecord && (
-        <DayStatusBanner score={dayRecord.dailyScore} />
-      )}
+      {/* Daily Summary Cards */}
+      <TodaySummaryCards dayRecord={dayRecord} date={today} />
 
-      {/* AI Daily Planner */}
-      <AiDailyPlanner date={today} />
+      {/* Daily Progress */}
+      {dayRecord && <DailyProgressBar score={dayRecord.dailyScore} />}
+
+      {/* AI Daily Plan */}
+      <div>
+        <SectionHeader title="AI Daily Plan" />
+        <AiDailyPlanner date={today} />
+      </div>
+
+      {/* Top 3 Priorities */}
+      <TopPrioritiesCard date={today} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ── Left: Tasks + Discipline ────────────────────────────── */}
+        {/* ── Left: Worship, Focus, Tasks, Recovery, Sleep, Review ─── */}
         <div className="lg:col-span-2 space-y-6">
-          {/* DISCIPLINE CARD */}
-          <div>
-            <SectionHeader title="DISCIPLINE_CARD" />
-            {isDayRecordLoading && !dayRecord ? (
-              <div className="bg-surface-container-low rounded-md p-8 flex items-center justify-center">
-                <span className="animate-blink text-primary font-mono text-sm">▊</span>
-                <span className="font-mono text-sm text-on-surface-variant ml-2">Loading day record...</span>
-              </div>
-            ) : dayRecord ? (
-              <DisciplineCard
-                dayRecord={dayRecord}
-                date={today}
-              />
-            ) : (
-              <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
-                <span className="font-mono text-sm text-outline">Discipline card offline. Reconnect to sync.</span>
-              </div>
-            )}
-          </div>
+          {isDayRecordLoading && !dayRecord ? (
+            <div className="bg-surface-container-low rounded-md p-8 flex items-center justify-center">
+              <span className="animate-blink text-primary font-mono text-sm">▊</span>
+              <span className="font-mono text-sm text-on-surface-variant ml-2">Loading today&apos;s record...</span>
+            </div>
+          ) : dayRecord ? (
+            <>
+              <WorshipCard dayRecord={dayRecord} date={today} />
+              <FocusTimeCard dayRecord={dayRecord} date={today} />
+            </>
+          ) : (
+            <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
+              <span className="font-mono text-sm text-outline">Could not load today&apos;s record. Try refreshing.</span>
+            </div>
+          )}
 
           {/* TASK LIST */}
           <div>
             <SectionHeader
-              title="ACTIVE_ROUTINES"
+              title="Today's Tasks"
               rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
             />
 
             {tasks.length > 0 && (
               <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2 mb-4">
-                <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">&gt; FILTER</span>
+                <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">Filter</span>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'completed')}
-                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors uppercase cursor-pointer"
+                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
                 >
-                  <option value="all">ALL_STATUS</option>
-                  <option value="pending">PENDING</option>
-                  <option value="completed">COMPLETED</option>
+                  <option value="all">All status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
                 </select>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors uppercase cursor-pointer"
+                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
                 >
-                  <option value="all">ALL_CATEGORIES</option>
+                  <option value="all">All categories</option>
                   {uniqueCategories.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -237,7 +244,7 @@ export default function TodayPage() {
                 ))}
               </div>
             ) : tasks.length === 0 ? (
-              <EmptyState title="No tasks for today" description="Create a manual task to get started." icon="task_alt" />
+              <EmptyState title="No tasks planned for today" description="Add one task or generate a plan." icon="task_alt" />
             ) : filteredTasks.length === 0 ? (
               <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
             ) : (
@@ -294,7 +301,7 @@ export default function TodayPage() {
                     }
                   }}
                   className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0"
-                  placeholder="Add new task... (Enter to add, Shift+Enter for details)"
+                  placeholder="Add task, habit, goal, or note... (Enter to add, Shift+Enter for details)"
                   id="quick-add-task"
                 />
                 <button
@@ -345,30 +352,18 @@ export default function TodayPage() {
               </form>
             )}
           </div>
+
+          {dayRecord && <RecoveryTodayCard dayRecord={dayRecord} date={today} />}
+          {dayRecord && <SleepCard dayRecord={dayRecord} date={today} />}
+
+          <EveningReviewCard date={today} />
         </div>
 
-        {/* ── Right: Score + Log ──────────────────────────────────── */}
-        <div className="flex flex-col gap-6">
-          {/* Score Display */}
-          <ScoreDisplay dayRecord={dayRecord} userStats={userStats} />
-
-          {/* Stats quick card */}
-          <div className="bg-surface-container-lowest p-4 rounded-md border border-outline-variant/15 relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
-            <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; TASK_STATUS</span>
-            <div className="flex items-end gap-2 mt-2">
-              <span className="font-headline text-4xl font-black text-primary tracking-tighter">{activeCompletedCount}</span>
-              <span className="text-on-surface-variant font-headline text-xl mb-0.5">/ {activeTotalCount}</span>
-            </div>
-            <span className="font-body text-sm text-on-surface-variant block mt-1">Tasks completed today.</span>
-          </div>
-
-          {/* Activity Log */}
-          <ActivityLog entries={logEntries} />
-        </div>
+        {/* ── Right: compact side panel ───────────────────────────── */}
+        <TodaySidePanel dayRecord={dayRecord} date={today} />
       </div>
 
-      {/* ── Habits tracker (collapsible, last on page) ───────────── */}
+      {/* ── Habits due today (collapsible, last on page) ─────────── */}
       <HabitsSection date={today} />
     </div>
   );

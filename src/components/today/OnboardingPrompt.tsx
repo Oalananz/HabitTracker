@@ -38,14 +38,14 @@ export default function OnboardingPrompt() {
       <span className="material-symbols-outlined text-[24px] text-primary flex-shrink-0">grid_view</span>
       <div className="flex-1 min-w-0">
         <h3 className="font-headline text-sm font-bold text-on-surface">Set up your Life Areas</h3>
-        <p className="font-body text-xs text-on-surface-variant">Organize goals, habits, and tasks across the six areas of your life.</p>
+        <p className="font-body text-xs text-on-surface-variant">Organize your goals, habits, tasks, money, learning, and reviews across the six areas of your life.</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <Link
           href="/onboarding"
           className="px-4 py-2 bg-scanline-gradient text-on-primary font-label text-[10px] uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity"
         >
-          Start
+          Start Setup
         </Link>
         <button
           onClick={handleDismiss}

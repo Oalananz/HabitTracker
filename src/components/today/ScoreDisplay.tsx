@@ -27,13 +27,13 @@ function buildRows(r: DayRecord): ScoreRow[] {
   const discipline = r.noReels && r.noMasturbation && r.noMusic;
   const sleepMet = r.sleepHours >= r.sleepGoal;
   return [
-    { label: 'FOCUS_GOAL',    met: focusMet,        points: focusMet ? 2 : 0,      max: 2 },
-    { label: 'ALL_PRAYERS',   met: !!allPrayers,    points: allPrayers ? 2 : 0,    max: 2 },
-    { label: 'QURAN+DHIKR',   met: !!quranDhikr,    points: quranDhikr ? 1 : 0,    max: 1 },
-    { label: 'NIGHT+SUNNAH',  met: !!nightSunnah,   points: nightSunnah ? 1 : 0,   max: 1 },
-    { label: 'DISCIPLINE',    met: !!discipline,    points: discipline ? 2 : 0,    max: 2 },
-    { label: 'SLEEP_OK',      met: sleepMet,        points: sleepMet ? 1 : 0,      max: 1 },
-    { label: 'TASKS_DONE',    met: r.tasksDone,     points: r.tasksDone ? 1 : 0,   max: 1 },
+    { label: 'Focus',                points: focusMet ? 2 : 0,      met: focusMet,        max: 2 },
+    { label: 'Prayers',              points: allPrayers ? 2 : 0,    met: !!allPrayers,    max: 2 },
+    { label: 'Quran / Dhikr',        points: quranDhikr ? 1 : 0,    met: !!quranDhikr,    max: 1 },
+    { label: 'Night Prayer / Sunnah',points: nightSunnah ? 1 : 0,   met: !!nightSunnah,   max: 1 },
+    { label: 'Self-Control',         points: discipline ? 2 : 0,    met: !!discipline,    max: 2 },
+    { label: 'Sleep',                points: sleepMet ? 1 : 0,      met: sleepMet,        max: 1 },
+    { label: 'Tasks',                points: r.tasksDone ? 1 : 0,   met: r.tasksDone,     max: 1 },
   ];
 }
 
@@ -48,7 +48,7 @@ export default function ScoreDisplay({ dayRecord, userStats }: ScoreDisplayProps
       <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
 
       <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">
-        &gt; DAILY_SCORE
+        &gt; Daily Score
       </div>
 
       {/* Big score */}
@@ -72,8 +72,8 @@ export default function ScoreDisplay({ dayRecord, userStats }: ScoreDisplayProps
         <div className="space-y-1.5 border-t border-outline-variant/10 pt-3">
           {rows.map(row => (
             <div key={row.label} className="flex items-center justify-between">
-              <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-wide">
-                {row.label}:
+              <span className="font-body text-[11px] text-on-surface-variant">
+                {row.label}
               </span>
               <span className={`font-mono text-[10px] font-bold ${row.met ? 'text-primary' : 'text-outline'}`}>
                 {row.met ? `[✓ +${row.max}]` : `[✗ +0]`}
@@ -87,19 +87,19 @@ export default function ScoreDisplay({ dayRecord, userStats }: ScoreDisplayProps
       {userStats && (
         <div className="mt-4 pt-3 border-t border-outline-variant/10 space-y-1.5">
           <div className="flex justify-between items-center">
-            <span className="font-mono text-[10px] text-on-surface-variant">🔥 FOCUS_STREAK:</span>
+            <span className="font-body text-[11px] text-on-surface-variant">🔥 Focus streak</span>
             <span className="font-mono text-[10px] text-primary font-bold">{userStats.focusStreak}d</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="font-mono text-[10px] text-on-surface-variant">🕌 PRAYER_STREAK:</span>
+            <span className="font-body text-[11px] text-on-surface-variant">🕌 Prayer streak</span>
             <span className="font-mono text-[10px] text-primary font-bold">{userStats.prayerStreak}d</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="font-mono text-[10px] text-on-surface-variant">🚫 NO_REELS:</span>
+            <span className="font-body text-[11px] text-on-surface-variant">🚫 No reels</span>
             <span className="font-mono text-[10px] text-primary font-bold">{userStats.noReelsStreak}d</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="font-mono text-[10px] text-on-surface-variant">💪 DISCIPLINE:</span>
+            <span className="font-body text-[11px] text-on-surface-variant">💪 Self-control</span>
             <span className="font-mono text-[10px] text-primary font-bold">{userStats.fullDisciplineStreak}d</span>
           </div>
         </div>
