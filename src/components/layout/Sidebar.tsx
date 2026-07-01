@@ -15,6 +15,8 @@ const navItems = [
   { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
+  { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
+  { href: '/learning', label: 'Learning', icon: 'menu_book' },
   { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
   { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
   { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },

@@ -68,6 +68,8 @@ export default function WeeklyReviewPage() {
   const [form, setForm] = useState<ReviewForm>(EMPTY);
   const [reviews, setReviews] = useState<SavedReview[]>([]);
   const [saving, setSaving] = useState(false);
+  const [moneyBalance, setMoneyBalance] = useState<{ value: number; currency: string } | null>(null);
+  const [studyTimeMinutes, setStudyTimeMinutes] = useState<number | null>(null);
 
   const set = (key: keyof ReviewForm, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -101,6 +103,25 @@ export default function WeeklyReviewPage() {
     void fetchGoals();
     void fetchHabits();
     void loadReviews();
+
+    // Best-effort — a failed fetch (e.g. tables not migrated yet) must
+    // never break the rest of the weekly review page.
+    (async () => {
+      try {
+        const res = await fetch('/api/money/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setMoneyBalance({ value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' });
+        }
+      } catch { /* ignore */ }
+      try {
+        const res = await fetch('/api/learning/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setStudyTimeMinutes(data.summary?.studyTimeThisWeekMinutes ?? 0);
+        }
+      } catch { /* ignore */ }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -222,6 +243,8 @@ export default function WeeklyReviewPage() {
     { label: 'OVERDUE', value: summary.overdue },
     { label: 'BEST_AREA', value: summary.best ? summary.best.area.shortLabel : '—' },
     { label: 'WEAKEST', value: summary.weakest ? summary.weakest.area.shortLabel : '—' },
+    { label: 'NET_BALANCE', value: moneyBalance ? `${moneyBalance.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${moneyBalance.currency}` : '—' },
+    { label: 'STUDY_TIME', value: studyTimeMinutes != null ? `${Math.round((studyTimeMinutes / 60) * 10) / 10}h` : '—' },
   ];
 
   return (

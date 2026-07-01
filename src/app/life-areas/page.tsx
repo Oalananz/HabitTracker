@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import dayjs from 'dayjs';
+
+interface QuickStats {
+  money: { netBalance: number; currency: string } | null;
+  learning: { currentStreak: number } | null;
+}
 
 export default function LifeAreasPage() {
   const {
@@ -14,6 +19,8 @@ export default function LifeAreasPage() {
     selectedDate, setSelectedDate,
   } = useStore();
 
+  const [quickStats, setQuickStats] = useState<QuickStats>({ money: null, learning: null });
+
   const today = dayjs().format('YYYY-MM-DD');
 
   useEffect(() => {
@@ -21,6 +28,25 @@ export default function LifeAreasPage() {
     void fetchGoals();
     void fetchHabits();
     void fetchTasks(today);
+
+    // Best-effort extra stats for the Money/Learning cards — guarded so a
+    // failed fetch (e.g. tables not migrated yet) never breaks this page.
+    (async () => {
+      try {
+        const res = await fetch('/api/money/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setQuickStats((s) => ({ ...s, money: { netBalance: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' } }));
+        }
+      } catch { /* ignore */ }
+      try {
+        const res = await fetch('/api/learning/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setQuickStats((s) => ({ ...s, learning: { currentStreak: data.summary?.currentStreak ?? 0 } }));
+        }
+      } catch { /* ignore */ }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -85,6 +111,24 @@ export default function LifeAreasPage() {
 
             <p className="font-body text-xs text-on-surface-variant leading-relaxed">{area.description}</p>
 
+            {/* Quick stat for Money / Learning */}
+            {area.id === 'money' && quickStats.money && (
+              <div className="bg-surface-container-lowest rounded-sm py-2 px-3 border border-outline-variant/10 flex items-center justify-between">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">NET_BALANCE</span>
+                <span className="font-headline text-sm font-bold" style={{ color: area.color }}>
+                  {quickStats.money.netBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {quickStats.money.currency}
+                </span>
+              </div>
+            )}
+            {area.id === 'learning' && quickStats.learning && (
+              <div className="bg-surface-container-lowest rounded-sm py-2 px-3 border border-outline-variant/10 flex items-center justify-between">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">STUDY_STREAK</span>
+                <span className="font-headline text-sm font-bold" style={{ color: area.color }}>
+                  {quickStats.learning.currentStreak} days
+                </span>
+              </div>
+            )}
+
             {/* Counts */}
             <div className="grid grid-cols-3 gap-2 text-center">
               {[
@@ -113,7 +157,7 @@ export default function LifeAreasPage() {
             {/* Actions */}
             <div className="flex gap-2 mt-auto">
               <Link
-                href={`/life-areas/${area.id}`}
+                href={area.id === 'money' ? '/money' : area.id === 'learning' ? '/learning' : `/life-areas/${area.id}`}
                 className="flex-1 text-center px-3 py-2 rounded-sm font-label text-[10px] uppercase tracking-wider font-bold text-on-primary hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: area.color }}
               >

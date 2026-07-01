@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore';
 import { LIFE_AREAS, LIFE_AREA_IDS, type LifeAreaId } from '@/lib/lifeAreas';
 import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -27,6 +27,13 @@ export default function OnboardingPage() {
   const [habitTitle, setHabitTitle] = useState('');
   const [habitArea, setHabitArea] = useState<LifeAreaId | null>(null);
   const [habitFreq, setHabitFreq] = useState<'daily' | 'weekdays' | 'weekends'>('daily');
+
+  // Step 5 — Money & Learning setup (all optional/skippable)
+  const [monthlyBudgetTarget, setMonthlyBudgetTarget] = useState('');
+  const [savingsGoalAmount, setSavingsGoalAmount] = useState('');
+  const [firstCourseTitle, setFirstCourseTitle] = useState('');
+  const [firstCourseUrl, setFirstCourseUrl] = useState('');
+  const [firstSkillName, setFirstSkillName] = useState('');
 
   const toggleArea = (id: LifeAreaId) =>
     setFocusAreas((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
@@ -49,10 +56,61 @@ export default function OnboardingPage() {
           lifeArea: habitArea,
         });
       }
+
+      // Money & Learning setup — all optional, skipped silently if left blank.
+      const now = new Date();
+      if (monthlyBudgetTarget.trim()) {
+        const amount = parseFloat(monthlyBudgetTarget);
+        if (!isNaN(amount) && amount > 0) {
+          await fetch('/api/money/budgets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              month: now.getMonth() + 1,
+              year: now.getFullYear(),
+              amount,
+            }),
+          }).catch(() => {});
+        }
+      }
+      if (savingsGoalAmount.trim()) {
+        const amount = parseFloat(savingsGoalAmount);
+        if (!isNaN(amount) && amount > 0) {
+          await fetch('/api/money/savings-goals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create', title: 'Savings Goal', targetAmount: amount }),
+          }).catch(() => {});
+        }
+      }
+      if (firstCourseTitle.trim()) {
+        if (firstCourseUrl.trim()) {
+          await fetch('/api/learning/connections', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'manual-link', title: firstCourseTitle.trim(), courseUrl: firstCourseUrl.trim() }),
+          }).catch(() => {});
+        } else {
+          await fetch('/api/learning/courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create', title: firstCourseTitle.trim() }),
+          }).catch(() => {});
+        }
+      }
+      if (firstSkillName.trim()) {
+        await fetch('/api/learning/skills', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create', name: firstSkillName.trim() }),
+        }).catch(() => {});
+      }
+
       await saveUserPreferences({ onboardingCompleted: true, focusAreas });
     } finally {
       setBusy(false);
-      setStep(5);
+      setStep(6);
     }
   };
 
@@ -203,12 +261,77 @@ export default function OnboardingPage() {
                 </div>
               </div>
             </div>
+            {navButtons(() => setStep(5))}
+          </div>
+        )}
+
+        {/* Step 5 — Money & Learning setup (optional) */}
+        {step === 5 && (
+          <div>
+            <h2 className="font-headline text-2xl font-bold text-on-surface mb-1">Money &amp; Learning setup</h2>
+            <p className="font-body text-sm text-on-surface-variant mb-5">Optional — skip any or all of these and set them up later from the Money and Learning pages.</p>
+            <div className="space-y-5">
+              <div>
+                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; MONTHLY_BUDGET_TARGET (optional)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={monthlyBudgetTarget}
+                  onChange={(e) => setMonthlyBudgetTarget(e.target.value)}
+                  placeholder="e.g. 500"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 placeholder:text-outline"
+                />
+              </div>
+              <div>
+                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; SAVINGS_GOAL_AMOUNT (optional)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={savingsGoalAmount}
+                  onChange={(e) => setSavingsGoalAmount(e.target.value)}
+                  placeholder="e.g. 2000"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 placeholder:text-outline"
+                />
+              </div>
+              <div>
+                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_COURSE_TITLE (optional)</label>
+                <input
+                  type="text"
+                  value={firstCourseTitle}
+                  onChange={(e) => setFirstCourseTitle(e.target.value)}
+                  placeholder="e.g. Advanced React Patterns"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 placeholder:text-outline"
+                />
+              </div>
+              <div>
+                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; COURSE_LINK (optional)</label>
+                <input
+                  type="url"
+                  value={firstCourseUrl}
+                  onChange={(e) => setFirstCourseUrl(e.target.value)}
+                  placeholder="https://... (any learning website)"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 placeholder:text-outline"
+                />
+              </div>
+              <div>
+                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_SKILL (optional)</label>
+                <input
+                  type="text"
+                  value={firstSkillName}
+                  onChange={(e) => setFirstSkillName(e.target.value)}
+                  placeholder="e.g. TypeScript, Public Speaking"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm focus:border-primary/50 focus:ring-0 placeholder:text-outline"
+                />
+              </div>
+            </div>
             {navButtons(finish, busy ? 'Finishing…' : 'Finish Setup')}
           </div>
         )}
 
-        {/* Step 5 — Finish */}
-        {step === 5 && (
+        {/* Step 6 — Finish */}
+        {step === 6 && (
           <div className="text-center space-y-4 py-4">
             <span className="material-symbols-outlined text-[48px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
             <h1 className="font-headline text-3xl font-bold tracking-tighter text-on-surface">Your system is ready.</h1>

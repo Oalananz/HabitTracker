@@ -39,6 +39,29 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Optional Money/Learning cards — fetched defensively so a failure never
+  // breaks the rest of the dashboard (per "do not break existing dashboard").
+  const [moneyCard, setMoneyCard] = useState<{ value: number; currency: string } | null>(null);
+  const [studyTimeCard, setStudyTimeCard] = useState<number | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/money/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setMoneyCard({ value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' });
+        }
+      } catch { /* ignore — card simply won't render */ }
+      try {
+        const res = await fetch('/api/learning/summary');
+        if (res.ok) {
+          const data = await res.json();
+          setStudyTimeCard(data.summary?.studyTimeThisWeekMinutes ?? 0);
+        }
+      } catch { /* ignore — card simply won't render */ }
+    })();
+  }, []);
+
   return (
     <div className="space-y-8 animate-page-enter">
         <header>
@@ -101,6 +124,24 @@ export default function DashboardPage() {
                 subtitle="Trailing 30 days"
                 icon="donut_large"
               />
+              {moneyCard && (
+                <StatCard
+                  label="MONEY BALANCE"
+                  value={moneyCard.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  unit={moneyCard.currency}
+                  subtitle="Net this month"
+                  icon="account_balance_wallet"
+                />
+              )}
+              {studyTimeCard != null && (
+                <StatCard
+                  label="STUDY TIME"
+                  value={Math.round((studyTimeCard / 60) * 10) / 10}
+                  unit="HRS"
+                  subtitle="This week"
+                  icon="menu_book"
+                />
+              )}
             </div>
 
             {/* Life Areas snapshot */}
