@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 const ALLOWED_REDIRECT_PATHS = new Set([
-  '/today', '/dashboard', '/recovery', '/calendar', '/habits',
-  '/settings', '/planner', '/prayer-planner', '/goals', '/',
+  '/today', '/dashboard', '/recovery', '/habits', '/settings', '/planner',
+  '/goals', '/life-areas', '/money', '/learning',
+  '/weekly-review', '/achievements', '/ai-coach', '/onboarding', '/',
 ]);
 
 function isValidRedirectPath(path: string): boolean {

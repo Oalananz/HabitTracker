@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ComponentProps } from 'react';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
@@ -15,6 +15,8 @@ import DebtForm from '@/components/money/DebtForm';
 import SubscriptionForm from '@/components/money/SubscriptionForm';
 import ExpenseBreakdownChart from '@/components/money/ExpenseBreakdownChart';
 import { useConfirm } from '@/components/ui/useConfirm';
+import { useToast } from '@/store/useToast';
+import { downloadCsv } from '@/lib/csvExport';
 import {
   calculateSavingsProgress,
   calculateDebtProgress,
@@ -44,7 +46,37 @@ interface MoneySummary {
 type ActiveForm = 'income' | 'expense' | 'budget' | 'savings' | 'debt' | 'subscription' | null;
 type DateRangeMode = 'this_month' | 'last_month' | 'custom';
 
+type TransactionData = Parameters<ComponentProps<typeof TransactionForm>['onSubmit']>[0];
+type BudgetData = Parameters<ComponentProps<typeof BudgetForm>['onSubmit']>[0];
+type SavingsGoalData = Parameters<ComponentProps<typeof SavingsGoalForm>['onSubmit']>[0];
+type DebtData = Parameters<ComponentProps<typeof DebtForm>['onSubmit']>[0];
+type SubscriptionData = Parameters<ComponentProps<typeof SubscriptionForm>['onSubmit']>[0];
+
 const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** POST to a money API route; returns false (and toasts) on any failure. */
+async function postAction(
+  url: string,
+  body: Record<string, unknown>,
+  addToast: (msg: string, type: 'error') => void,
+  failureMessage: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      addToast(failureMessage, 'error');
+      return false;
+    }
+    return true;
+  } catch {
+    addToast(failureMessage, 'error');
+    return false;
+  }
+}
 
 export default function MoneyPage() {
   const [summary, setSummary] = useState<MoneySummary | null>(null);
@@ -58,6 +90,7 @@ export default function MoneyPage() {
 
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
   const { confirm, ConfirmDialog } = useConfirm();
+  const { addToast } = useToast();
 
   // Filters
   const [rangeMode, setRangeMode] = useState<DateRangeMode>('this_month');
@@ -145,12 +178,9 @@ export default function MoneyPage() {
 
   const closeForm = () => setActiveForm(null);
 
-  const handleCreateTransaction = async (data: any) => {
-    await fetch('/api/money/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateTransaction = async (data: TransactionData) => {
+    const ok = await postAction('/api/money/transactions', { action: 'create', ...data }, addToast, 'Failed to save transaction');
+    if (!ok) return;
     closeForm();
     fetchAll();
     fetchTransactions();
@@ -158,31 +188,22 @@ export default function MoneyPage() {
 
   const handleDeleteTransaction = async (transactionId: string) => {
     if (!(await confirm({ message: 'Delete this transaction?' }))) return;
-    await fetch('/api/money/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', transactionId }),
-    });
+    const ok = await postAction('/api/money/transactions', { action: 'delete', transactionId }, addToast, 'Failed to delete transaction');
+    if (!ok) return;
     fetchAll();
     fetchTransactions();
   };
 
-  const handleCreateBudget = async (data: any) => {
-    await fetch('/api/money/budgets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateBudget = async (data: BudgetData) => {
+    const ok = await postAction('/api/money/budgets', { action: 'create', ...data }, addToast, 'Failed to save budget');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
-  const handleCreateSavingsGoal = async (data: any) => {
-    await fetch('/api/money/savings-goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateSavingsGoal = async (data: SavingsGoalData) => {
+    const ok = await postAction('/api/money/savings-goals', { action: 'create', ...data }, addToast, 'Failed to save savings goal');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
@@ -192,30 +213,19 @@ export default function MoneyPage() {
     if (!amountStr) return;
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) return;
-    await fetch('/api/money/savings-goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'increment', goalId, amount }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/money/savings-goals', { action: 'increment', goalId, amount }, addToast, 'Failed to update savings goal');
+    if (ok) fetchAll();
   };
 
   const handleDeleteSavingsGoal = async (goalId: string) => {
     if (!(await confirm({ message: 'Delete this savings goal?' }))) return;
-    await fetch('/api/money/savings-goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', goalId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/money/savings-goals', { action: 'delete', goalId }, addToast, 'Failed to delete savings goal');
+    if (ok) fetchAll();
   };
 
-  const handleCreateDebt = async (data: any) => {
-    await fetch('/api/money/debts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateDebt = async (data: DebtData) => {
+    const ok = await postAction('/api/money/debts', { action: 'create', ...data }, addToast, 'Failed to save debt');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
@@ -225,42 +235,27 @@ export default function MoneyPage() {
     if (!amountStr) return;
     const amount = parseFloat(amountStr);
     if (isNaN(amount)) return;
-    await fetch('/api/money/debts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'decrement', debtId, amount }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/money/debts', { action: 'decrement', debtId, amount }, addToast, 'Failed to record payment');
+    if (ok) fetchAll();
   };
 
   const handleDeleteDebt = async (debtId: string) => {
     if (!(await confirm({ message: 'Delete this debt?' }))) return;
-    await fetch('/api/money/debts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', debtId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/money/debts', { action: 'delete', debtId }, addToast, 'Failed to delete debt');
+    if (ok) fetchAll();
   };
 
-  const handleCreateSubscription = async (data: any) => {
-    await fetch('/api/money/subscriptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateSubscription = async (data: SubscriptionData) => {
+    const ok = await postAction('/api/money/subscriptions', { action: 'create', ...data }, addToast, 'Failed to save subscription');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteSubscription = async (subscriptionId: string) => {
     if (!(await confirm({ message: 'Delete this subscription?' }))) return;
-    await fetch('/api/money/subscriptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', subscriptionId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/money/subscriptions', { action: 'delete', subscriptionId }, addToast, 'Failed to delete subscription');
+    if (ok) fetchAll();
   };
 
   const expenseByCategory = getExpenseByCategory(
@@ -277,6 +272,21 @@ export default function MoneyPage() {
   const currencies = Array.from(new Set(transactions.map((t) => t.currency)));
 
   const recentTransactions = transactions.slice(0, 10);
+
+  const handleExportTransactions = () => {
+    downloadCsv(
+      `transactions-${dayjs().format('YYYY-MM-DD')}.csv`,
+      transactions.map((t) => ({
+        date: t.date,
+        title: t.title,
+        type: t.type,
+        amount: t.amount,
+        currency: t.currency,
+        category: categories.find((c) => c.id === t.categoryId)?.name || '',
+        paymentMethod: t.paymentMethod || '',
+      }))
+    );
+  };
 
   return (
     <div className="space-y-8 animate-page-enter">
@@ -438,7 +448,17 @@ export default function MoneyPage() {
 
       {/* Recent transactions */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <SectionHeader title="Recent transactions" />
+        <SectionHeader
+          title="Recent transactions"
+          rightContent={
+            transactions.length > 0 ? (
+              <button onClick={handleExportTransactions} className="text-primary hover:underline flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">download</span>
+                Export CSV
+              </button>
+            ) : undefined
+          }
+        />
         {recentTransactions.length === 0 ? (
           <EmptyState compact title="No transactions" description="Add an income or expense to get started." />
         ) : (

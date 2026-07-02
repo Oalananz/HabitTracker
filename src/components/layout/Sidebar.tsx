@@ -12,10 +12,8 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/habits', label: 'Habits', icon: 'cached' },
   { href: '/planner', label: 'Planner', icon: 'event_note' },
-  { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
   { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
-  { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/learning', label: 'Learning', icon: 'menu_book' },
   { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
@@ -84,6 +82,8 @@ export default function Sidebar() {
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-on-surface-variant hover:text-primary transition-colors"
+          aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={sidebarOpen}
         >
           <span className="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
@@ -122,6 +122,7 @@ export default function Sidebar() {
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="hidden md:flex text-on-surface-variant/60 hover:text-primary transition-colors flex-shrink-0"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <span className="material-symbols-outlined text-[20px]">
               {sidebarCollapsed ? 'menu' : 'left_panel_close'}
@@ -139,6 +140,7 @@ export default function Sidebar() {
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
                 title={sidebarCollapsed ? item.label : undefined}
+                aria-current={isActive ? 'page' : undefined}
                 className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label transition-all duration-200 nav-glow ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''} ${
                   isActive
                     ? 'text-primary font-semibold border-l-2 border-primary bg-surface-container-low/60'

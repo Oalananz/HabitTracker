@@ -1,13 +1,19 @@
-const CACHE_NAME = 'habitterminal-cache-v1';
+const CACHE_NAME = 'habitterminal-cache-v3';
 const ASSETS_TO_CACHE = [
   '/today',
+  '/dashboard',
   '/planner',
-  '/prayer-planner',
   '/recovery',
   '/goals',
-  '/calendar',
+  '/life-areas',
   '/habits',
+  '/money',
+  '/learning',
+  '/weekly-review',
+  '/achievements',
+  '/ai-coach',
   '/settings',
+  '/onboarding',
   '/login',
   '/manifest.json',
   '/logo.png'

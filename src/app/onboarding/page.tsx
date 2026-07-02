@@ -344,6 +344,34 @@ export default function OnboardingPage() {
                 Open Life Areas
               </button>
             </div>
+
+            <div className="pt-6 mt-6 border-t border-outline-variant/10 text-left max-w-md mx-auto">
+              <p className="text-xs text-on-surface-variant/70 text-center mb-3">
+                Also worth a look — not covered in this setup:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => router.push('/planner?view=prayer')}
+                  className="flex items-center gap-2 p-3 rounded-sm border border-outline-variant/15 hover:border-primary/30 transition-colors text-left"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-primary">mosque</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-on-surface">Prayer view</div>
+                    <div className="text-[11px] text-on-surface-variant/70">Structure your day around prayer times, in Planner</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => router.push('/recovery')}
+                  className="flex items-center gap-2 p-3 rounded-sm border border-outline-variant/15 hover:border-primary/30 transition-colors text-left"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-primary">healing</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-on-surface">Recovery</div>
+                    <div className="text-[11px] text-on-surface-variant/70">Track a habit you're trying to quit</div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

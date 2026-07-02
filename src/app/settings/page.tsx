@@ -150,7 +150,15 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      {activeTab === 'preferences' && (
+      {activeTab === 'preferences' && !userPreferences && (
+        <Card className="max-w-lg space-y-3">
+          <div className="h-4 w-32 animate-shimmer rounded-md" />
+          <div className="h-9 w-full animate-shimmer rounded-sm" />
+          <div className="h-9 w-full animate-shimmer rounded-sm" />
+        </Card>
+      )}
+
+      {activeTab === 'preferences' && userPreferences && (
         <Card className="max-w-lg space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -6,7 +6,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/prayer',
-        destination: '/prayer-planner',
+        destination: '/planner?view=prayer',
+        permanent: true,
+      },
+      {
+        source: '/prayer-planner',
+        destination: '/planner?view=prayer',
         permanent: true,
       },
     ];

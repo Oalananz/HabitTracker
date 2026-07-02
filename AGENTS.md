@@ -10,7 +10,7 @@ deprecation notices.
 ## Backend
 
 Supabase (PostgreSQL + Auth) is the backend. The schema and RPCs live in `supabase/`
-and `supabase-migration.sql` — run the migrations in the order described in the README
+(including `supabase/legacy/`) — run the migrations in the order described in the README
 before starting the app. Concurrent counters (goal progress, journey failures) go
 through Postgres RPCs rather than read-then-write, so prefer extending those when adding
 similar increment logic.

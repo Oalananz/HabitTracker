@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import PageHeader from '@/components/ui/PageHeader';
+import SkeletonPulse from '@/components/ui/SkeletonPulse';
 import dayjs from 'dayjs';
 
 interface QuickStats {
@@ -14,11 +15,14 @@ interface QuickStats {
 
 export default function LifeAreasPage() {
   const {
-    goals, fetchGoals,
-    habits, fetchHabits,
-    tasks, fetchTasks,
+    goals, fetchGoals, isGoalsLoading,
+    habits, fetchHabits, isHabitsLoading,
+    tasks, fetchTasks, isTasksLoading,
     selectedDate, setSelectedDate,
   } = useStore();
+
+  const initialLoading = (isGoalsLoading || isHabitsLoading || isTasksLoading) &&
+    goals.length === 0 && habits.length === 0 && tasks.length === 0;
 
   const [quickStats, setQuickStats] = useState<QuickStats>({ money: null, learning: null });
 
@@ -82,6 +86,13 @@ export default function LifeAreasPage() {
         description="The six structured areas of your life. Organize goals, habits, and tasks across each."
       />
 
+      {initialLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonPulse key={i} variant="card" className="h-56" />
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
         {stats.map(({ area, goals: g, habits: h, tasks: t, progress }) => (
           <div
@@ -167,6 +178,7 @@ export default function LifeAreasPage() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

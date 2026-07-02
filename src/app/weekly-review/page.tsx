@@ -8,6 +8,7 @@ import AiWeeklyReview from '@/components/ai/AiWeeklyReview';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
+import SkeletonPulse from '@/components/ui/SkeletonPulse';
 import type { WeeklyReviewInput, WeeklyReviewOutput } from '@/lib/ai/schemas';
 import dayjs from 'dayjs';
 
@@ -73,6 +74,7 @@ export default function WeeklyReviewPage() {
   const [moneyBalance, setMoneyBalance] = useState<{ value: number; currency: string } | null>(null);
   const [studyTimeMinutes, setStudyTimeMinutes] = useState<number | null>(null);
   const [openSection, setOpenSection] = useState<'summary' | 'breakdown' | 'reflection' | 'nextWeek'>('summary');
+  const [pageLoading, setPageLoading] = useState(true);
 
   const set = (key: keyof ReviewForm, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -108,7 +110,7 @@ export default function WeeklyReviewPage() {
     void loadReviews();
 
     // Best-effort — a failed fetch (e.g. tables not migrated yet) must
-    // never break the rest of the weekly review page.
+    // never break the rest of the weekly review page. Fired in parallel.
     (async () => {
       try {
         const res = await fetch('/api/money/summary');
@@ -117,6 +119,8 @@ export default function WeeklyReviewPage() {
           setMoneyBalance({ value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' });
         }
       } catch { /* ignore */ }
+    })();
+    (async () => {
       try {
         const res = await fetch('/api/learning/summary');
         if (res.ok) {
@@ -136,7 +140,7 @@ export default function WeeklyReviewPage() {
         const res = await fetch(`/api/tasks/range?start=${weekStart.format('YYYY-MM-DD')}&end=${weekEnd.format('YYYY-MM-DD')}`);
         const data = await res.json();
         if (res.ok) setTasks(data.tasks || []);
-      } catch { setTasks([]); }
+      } catch { setTasks([]); } finally { setPageLoading(false); }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart, loadWeek]);
@@ -279,6 +283,14 @@ export default function WeeklyReviewPage() {
         }
       />
 
+      {pageLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonPulse key={i} variant="card" className="h-14" />
+          ))}
+        </div>
+      ) : (
+      <>
       {/* AI Weekly Review */}
       <AiWeeklyReview buildInput={buildAiInput} onApply={applyAi} />
 
@@ -404,6 +416,8 @@ export default function WeeklyReviewPage() {
           </div>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }

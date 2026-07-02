@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ComponentProps } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
@@ -15,6 +15,7 @@ import CertificateForm from '@/components/learning/CertificateForm';
 import ResourceForm from '@/components/learning/ResourceForm';
 import { useToast } from '@/store/useToast';
 import { useConfirm } from '@/components/ui/useConfirm';
+import { downloadCsv } from '@/lib/csvExport';
 import {
   calculateCourseProgress,
   getActiveCourses,
@@ -37,6 +38,36 @@ interface LearningSummary {
 }
 
 type ActiveForm = 'course' | 'skill' | 'session' | 'certificate' | 'resource' | null;
+
+type CourseData = Parameters<ComponentProps<typeof CourseForm>['onSubmit']>[0];
+type SkillData = Parameters<ComponentProps<typeof SkillForm>['onSubmit']>[0];
+type SessionData = Parameters<ComponentProps<typeof StudySessionForm>['onSubmit']>[0];
+type CertificateData = Parameters<ComponentProps<typeof CertificateForm>['onSubmit']>[0];
+type ResourceData = Parameters<ComponentProps<typeof ResourceForm>['onSubmit']>[0];
+
+/** POST to a learning API route; returns false (and toasts) on any failure. */
+async function postAction(
+  url: string,
+  body: Record<string, unknown>,
+  addToast: (msg: string, type: 'error') => void,
+  failureMessage: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      addToast(failureMessage, 'error');
+      return false;
+    }
+    return true;
+  } catch {
+    addToast(failureMessage, 'error');
+    return false;
+  }
+}
 
 export default function LearningPage() {
   const { addToast } = useToast();
@@ -81,10 +112,11 @@ export default function LearningPage() {
       setResources(resourcesData.resources || []);
     } catch (err) {
       console.error('Failed to load learning data:', err);
+      addToast('Failed to load learning data', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   useEffect(() => {
     fetchAll();
@@ -92,104 +124,69 @@ export default function LearningPage() {
 
   const closeForm = () => setActiveForm(null);
 
-  const handleCreateCourse = async (data: any) => {
-    await fetch('/api/learning/courses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateCourse = async (data: CourseData) => {
+    const ok = await postAction('/api/learning/courses', { action: 'create', ...data }, addToast, 'Failed to save course');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteCourse = async (courseId: string) => {
     if (!(await confirm({ message: 'Delete this course?' }))) return;
-    await fetch('/api/learning/courses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', courseId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/learning/courses', { action: 'delete', courseId }, addToast, 'Failed to delete course');
+    if (ok) fetchAll();
   };
 
-  const handleCreateSkill = async (data: any) => {
-    await fetch('/api/learning/skills', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateSkill = async (data: SkillData) => {
+    const ok = await postAction('/api/learning/skills', { action: 'create', ...data }, addToast, 'Failed to save skill');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteSkill = async (skillId: string) => {
     if (!(await confirm({ message: 'Delete this skill?' }))) return;
-    await fetch('/api/learning/skills', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', skillId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/learning/skills', { action: 'delete', skillId }, addToast, 'Failed to delete skill');
+    if (ok) fetchAll();
   };
 
-  const handleCreateSession = async (data: any) => {
-    await fetch('/api/learning/study-sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateSession = async (data: SessionData) => {
+    const ok = await postAction('/api/learning/study-sessions', { action: 'create', ...data }, addToast, 'Failed to save study session');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteSession = async (sessionId: string) => {
     if (!(await confirm({ message: 'Delete this study session?' }))) return;
-    await fetch('/api/learning/study-sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', sessionId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/learning/study-sessions', { action: 'delete', sessionId }, addToast, 'Failed to delete study session');
+    if (ok) fetchAll();
   };
 
-  const handleCreateCertificate = async (data: any) => {
-    await fetch('/api/learning/certificates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateCertificate = async (data: CertificateData) => {
+    const ok = await postAction('/api/learning/certificates', { action: 'create', ...data }, addToast, 'Failed to save certificate');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteCertificate = async (certificateId: string) => {
     if (!(await confirm({ message: 'Delete this certificate?' }))) return;
-    await fetch('/api/learning/certificates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', certificateId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/learning/certificates', { action: 'delete', certificateId }, addToast, 'Failed to delete certificate');
+    if (ok) fetchAll();
   };
 
-  const handleCreateResource = async (data: any) => {
-    await fetch('/api/learning/resources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...data }),
-    });
+  const handleCreateResource = async (data: ResourceData) => {
+    const ok = await postAction('/api/learning/resources', { action: 'create', ...data }, addToast, 'Failed to save resource');
+    if (!ok) return;
     closeForm();
     fetchAll();
   };
 
   const handleDeleteResource = async (resourceId: string) => {
     if (!(await confirm({ message: 'Delete this resource?' }))) return;
-    await fetch('/api/learning/resources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', resourceId }),
-    });
-    fetchAll();
+    const ok = await postAction('/api/learning/resources', { action: 'delete', resourceId }, addToast, 'Failed to delete resource');
+    if (ok) fetchAll();
   };
 
   const handleGeneratePlan = async () => {

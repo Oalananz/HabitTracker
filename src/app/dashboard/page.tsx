@@ -47,6 +47,8 @@ export default function DashboardPage() {
   const [moneyCard, setMoneyCard] = useState<{ value: number; currency: string } | null>(null);
   const [studyTimeCard, setStudyTimeCard] = useState<number | null>(null);
   useEffect(() => {
+    // Fetched in parallel — each is independently best-effort so one
+    // failing never blocks or breaks the other's card.
     (async () => {
       try {
         const res = await fetch('/api/money/summary');
@@ -55,6 +57,8 @@ export default function DashboardPage() {
           setMoneyCard({ value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' });
         }
       } catch { /* ignore — card simply won't render */ }
+    })();
+    (async () => {
       try {
         const res = await fetch('/api/learning/summary');
         if (res.ok) {
