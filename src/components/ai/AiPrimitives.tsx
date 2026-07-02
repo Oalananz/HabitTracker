@@ -18,7 +18,7 @@ export function AiGenerateButton({
     <button
       onClick={onClick}
       disabled={loading || disabled}
-      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-sm font-headline font-bold text-sm uppercase tracking-wider transition-all disabled:opacity-50 border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 ${className}`}
+      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-sm font-headline font-semibold text-sm transition-all disabled:opacity-50 border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 ${className}`}
     >
       <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
         {loading ? 'progress_activity' : icon}
@@ -49,7 +49,7 @@ export function AiErrorState({ message, onRetry }: { message: string; onRetry?: 
         <p className="font-mono text-xs text-on-surface-variant break-words">{message}</p>
       </div>
       {onRetry && (
-        <button onClick={onRetry} className="px-3 py-1.5 font-label text-[10px] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors flex-shrink-0">
+        <button onClick={onRetry} className="px-3 py-1.5 font-label text-xs text-on-surface-variant hover:text-primary transition-colors flex-shrink-0">
           Retry
         </button>
       )}
@@ -78,8 +78,8 @@ export function AiResultCard({
       <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/15 bg-surface-container-lowest/50">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
-          <span className="font-headline text-sm font-bold text-on-surface uppercase tracking-wide">{title}</span>
-          <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-[2px] bg-primary/15 text-primary">AI</span>
+          <span className="font-headline text-sm font-semibold text-on-surface">{title}</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded-[2px] bg-primary/15 text-primary">AI</span>
         </div>
         {onDismiss && (
           <button onClick={onDismiss} className="text-on-surface-variant hover:text-on-surface transition-colors p-1" title="Dismiss">
@@ -93,17 +93,17 @@ export function AiResultCard({
       {(onSave || onCopy || onRegenerate) && (
         <div className="flex flex-wrap gap-2 px-5 py-3 border-t border-outline-variant/10 bg-surface-container-lowest/30">
           {onSave && (
-            <button onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-scanline-gradient text-on-primary font-label text-[10px] uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+            <button onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-scanline-gradient text-on-primary font-label text-xs font-semibold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50">
               {saving ? 'Saving…' : saveLabel}
             </button>
           )}
           {onCopy && (
-            <button onClick={onCopy} className="px-4 py-1.5 border border-outline-variant/20 text-on-surface-variant font-label text-[10px] uppercase tracking-wider rounded-sm hover:text-on-surface transition-colors">
+            <button onClick={onCopy} className="px-4 py-1.5 border border-outline-variant/20 text-on-surface-variant font-label text-xs rounded-sm hover:text-on-surface transition-colors">
               Copy
             </button>
           )}
           {onRegenerate && (
-            <button onClick={onRegenerate} disabled={regenerating} className="px-4 py-1.5 border border-outline-variant/20 text-on-surface-variant font-label text-[10px] uppercase tracking-wider rounded-sm hover:text-primary transition-colors disabled:opacity-50">
+            <button onClick={onRegenerate} disabled={regenerating} className="px-4 py-1.5 border border-outline-variant/20 text-on-surface-variant font-label text-xs rounded-sm hover:text-primary transition-colors disabled:opacity-50">
               {regenerating ? 'Regenerating…' : 'Regenerate'}
             </button>
           )}
@@ -117,7 +117,7 @@ export function AiResultCard({
 export function AiSection({ icon, label, children }: { icon: string; label: string; children: ReactNode }) {
   return (
     <div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant mb-2 flex items-center gap-1.5">
+      <div className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant/80 mb-2 flex items-center gap-1.5">
         <span className="material-symbols-outlined text-[13px] text-primary">{icon}</span>{label}
       </div>
       {children}

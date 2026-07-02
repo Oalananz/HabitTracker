@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Button from '@/components/ui/Button';
+import { Select } from '@/components/ui/Input';
 import TransactionForm from '@/components/money/TransactionForm';
 import BudgetForm from '@/components/money/BudgetForm';
 import SavingsGoalForm from '@/components/money/SavingsGoalForm';
@@ -277,21 +281,17 @@ export default function MoneyPage() {
   return (
     <div className="space-y-8 animate-page-enter">
       {ConfirmDialog}
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> Money
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          Track income, expenses, savings, and debt — all in one place.
-        </p>
-      </header>
+      <PageHeader
+        title="Money"
+        description="Track income, expenses, savings, and debt — all in one place."
+      />
 
       {/* Budget warning banner */}
       {warningBudgets.length > 0 && (
         <div className="bg-error/10 border border-error/30 text-error rounded-md p-4 flex items-start gap-3">
           <span className="material-symbols-outlined text-[20px] flex-shrink-0">warning</span>
           <div>
-            <p className="font-headline text-sm font-bold">Budget Alert</p>
+            <p className="font-headline text-sm font-semibold">Budget alert</p>
             <p className="font-body text-xs mt-1">
               {warningBudgets.length} budget{warningBudgets.length > 1 ? 's are' : ' is'} over 90% used this month.
             </p>
@@ -331,48 +331,24 @@ export default function MoneyPage() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setActiveForm(activeForm === 'income' ? null : 'income')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Add Income
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'expense' ? null : 'expense')}
-          className="flex items-center gap-2 px-4 py-2.5 border border-primary/40 bg-primary/10 text-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-primary/15 transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Add Expense
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'budget' ? null : 'budget')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">pie_chart</span>
-          Add Budget
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'savings' ? null : 'savings')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">savings</span>
-          Add Savings Goal
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'debt' ? null : 'debt')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">credit_card</span>
-          Add Debt
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'subscription' ? null : 'subscription')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-          Add Subscription
-        </button>
+        <Button variant="primary" icon="add" onClick={() => setActiveForm(activeForm === 'income' ? null : 'income')}>
+          Add income
+        </Button>
+        <Button variant="secondary" icon="add" onClick={() => setActiveForm(activeForm === 'expense' ? null : 'expense')}>
+          Add expense
+        </Button>
+        <Button variant="secondary" icon="pie_chart" onClick={() => setActiveForm(activeForm === 'budget' ? null : 'budget')}>
+          Add budget
+        </Button>
+        <Button variant="secondary" icon="savings" onClick={() => setActiveForm(activeForm === 'savings' ? null : 'savings')}>
+          Add savings goal
+        </Button>
+        <Button variant="secondary" icon="credit_card" onClick={() => setActiveForm(activeForm === 'debt' ? null : 'debt')}>
+          Add debt
+        </Button>
+        <Button variant="secondary" icon="receipt_long" onClick={() => setActiveForm(activeForm === 'subscription' ? null : 'subscription')}>
+          Add subscription
+        </Button>
       </div>
 
       {/* Inline forms */}
@@ -406,19 +382,17 @@ export default function MoneyPage() {
 
       {/* Filters */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-4 space-y-3">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-          <span className="text-primary">&gt;</span> FILTERS
-        </h3>
+        <h3 className="font-headline text-sm font-semibold text-on-surface">Filters</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <select
+          <Select
             value={rangeMode}
             onChange={(e) => setRangeMode(e.target.value as DateRangeMode)}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-xs font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
+            className="text-xs py-2"
           >
-            <option value="this_month">This Month</option>
-            <option value="last_month">Last Month</option>
-            <option value="custom">Custom Range</option>
-          </select>
+            <option value="this_month">This month</option>
+            <option value="last_month">Last month</option>
+            <option value="custom">Custom range</option>
+          </Select>
           {rangeMode === 'custom' && (
             <>
               <input
@@ -435,56 +409,38 @@ export default function MoneyPage() {
               />
             </>
           )}
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-xs font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
-          >
-            <option value="all">All Types</option>
+          <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="text-xs py-2">
+            <option value="all">All types</option>
             <option value="income">Income</option>
             <option value="expense">Expense</option>
             <option value="transfer">Transfer</option>
-          </select>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-xs font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
-          >
-            <option value="all">All Categories</option>
+          </Select>
+          <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="text-xs py-2">
+            <option value="all">All categories</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
-          <select
-            value={filterPaymentMethod}
-            onChange={(e) => setFilterPaymentMethod(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-xs font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
-          >
-            <option value="all">All Payment Methods</option>
+          </Select>
+          <Select value={filterPaymentMethod} onChange={(e) => setFilterPaymentMethod(e.target.value)} className="text-xs py-2">
+            <option value="all">All payment methods</option>
             {paymentMethods.map((pm) => (
               <option key={pm} value={pm}>{pm}</option>
             ))}
-          </select>
-          <select
-            value={filterCurrency}
-            onChange={(e) => setFilterCurrency(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-xs font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
-          >
-            <option value="all">All Currencies</option>
+          </Select>
+          <Select value={filterCurrency} onChange={(e) => setFilterCurrency(e.target.value)} className="text-xs py-2">
+            <option value="all">All currencies</option>
             {currencies.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
       {/* Recent transactions */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> RECENT_TRANSACTIONS
-        </h3>
+        <SectionHeader title="Recent transactions" />
         {recentTransactions.length === 0 ? (
-          <EmptyState title="No transactions" description="Add an income or expense to get started." icon="receipt_long" />
+          <EmptyState compact title="No transactions" description="Add an income or expense to get started." />
         ) : (
           <div className="space-y-2">
             {recentTransactions.map((t) => (
@@ -529,11 +485,9 @@ export default function MoneyPage() {
 
       {/* Savings goals */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> SAVINGS_GOALS
-        </h3>
+        <SectionHeader title="Savings goals" />
         {savingsGoals.length === 0 ? (
-          <EmptyState title="No savings goals" description="Set a savings target to start tracking progress." icon="savings" />
+          <EmptyState compact title="No savings goals" description="Set a savings target to start tracking progress." />
         ) : (
           <div className="space-y-3">
             {savingsGoals.map((goal) => {
@@ -567,7 +521,7 @@ export default function MoneyPage() {
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                     <div className="h-full bg-scanline-gradient rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{progress}% {goal.status === 'completed' ? '· COMPLETED' : ''}</p>
+                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{progress}% {goal.status === 'completed' ? '· Completed' : ''}</p>
                 </div>
               );
             })}
@@ -577,11 +531,9 @@ export default function MoneyPage() {
 
       {/* Debts */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> DEBTS
-        </h3>
+        <SectionHeader title="Debts" />
         {debts.length === 0 ? (
-          <EmptyState title="No debts" description="Track loans and balances you're paying off here." icon="credit_card" />
+          <EmptyState compact title="No debts" description="Track loans and balances you're paying off here." />
         ) : (
           <div className="space-y-3">
             {debts.map((debt) => {
@@ -615,7 +567,7 @@ export default function MoneyPage() {
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                     <div className="h-full bg-scanline-gradient rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{progress}% paid off {debt.status === 'paid' ? '· PAID' : ''}</p>
+                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{progress}% paid off {debt.status === 'paid' ? '· Paid' : ''}</p>
                 </div>
               );
             })}
@@ -625,11 +577,9 @@ export default function MoneyPage() {
 
       {/* Subscriptions */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> SUBSCRIPTIONS
-        </h3>
+        <SectionHeader title="Subscriptions" />
         {subscriptions.length === 0 ? (
-          <EmptyState title="No subscriptions" description="Track recurring bills and upcoming charges." icon="subscriptions" />
+          <EmptyState compact title="No subscriptions" description="Track recurring bills and upcoming charges." />
         ) : (
           <div className="space-y-2">
             {subscriptions.map((sub) => {
@@ -648,8 +598,8 @@ export default function MoneyPage() {
                     <div className="min-w-0">
                       <p className="font-body text-sm text-on-surface truncate">{sub.title}</p>
                       <p className="font-mono text-[10px] text-outline">
-                        {sub.billingCycle?.toUpperCase()} {sub.nextBillingDate && `· next ${dayjs(sub.nextBillingDate).format('MMM D, YYYY')}`}
-                        {!sub.isActive && ' · INACTIVE'}
+                        {sub.billingCycle} {sub.nextBillingDate && `· next ${dayjs(sub.nextBillingDate).format('MMM D, YYYY')}`}
+                        {!sub.isActive && ' · Inactive'}
                       </p>
                     </div>
                   </div>
@@ -673,15 +623,10 @@ export default function MoneyPage() {
 
       {/* AI Money Review (coming soon) */}
       <div className="flex flex-col items-start gap-2">
-        <button
-          disabled
-          className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface-variant font-headline font-bold text-sm uppercase tracking-wider rounded-sm opacity-50 cursor-not-allowed"
-          title="Coming soon: AI will analyze your spending and suggest budget improvements."
-        >
-          <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-          AI Money Review
-        </button>
-        <p className="font-mono text-[10px] text-outline">
+        <Button variant="secondary" icon="auto_awesome" disabled>
+          AI money review
+        </Button>
+        <p className="text-xs text-on-surface-variant/60">
           Coming soon: AI will analyze your spending and suggest budget improvements.
         </p>
       </div>

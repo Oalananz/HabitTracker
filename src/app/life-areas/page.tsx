@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
+import PageHeader from '@/components/ui/PageHeader';
 import dayjs from 'dayjs';
 
 interface QuickStats {
@@ -76,54 +77,47 @@ export default function LifeAreasPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> Life Areas
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          The six structured areas of your life. Organize goals, habits, and tasks across each.
-        </p>
-      </header>
+      <PageHeader
+        title="Life Areas"
+        description="The six structured areas of your life. Organize goals, habits, and tasks across each."
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
         {stats.map(({ area, goals: g, habits: h, tasks: t, progress }) => (
           <div
             key={area.id}
-            className="bg-surface-container-low border rounded-md p-5 flex flex-col gap-4 transition-all hover:translate-y-[-2px]"
-            style={{ borderColor: `${area.color}33` }}
+            className="h-full bg-surface-container-low border border-outline-variant/15 rounded-md p-5 flex flex-col gap-4 transition-all hover:translate-y-[-2px]"
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <span
-                  className="material-symbols-outlined text-[24px] flex-shrink-0"
-                  style={{ color: area.color }}
-                  aria-hidden="true"
-                >
-                  {area.icon}
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-headline text-base font-bold text-on-surface truncate">{area.label}</h3>
-                  <span className="font-mono text-[9px] uppercase tracking-widest" style={{ color: area.color }}>{area.badge}</span>
-                </div>
+            <div className="flex items-center gap-3 min-w-0">
+              <span
+                className="material-symbols-outlined text-[22px] flex-shrink-0 rounded-sm p-1.5"
+                style={{ color: area.color, backgroundColor: `${area.color}14` }}
+                aria-hidden="true"
+              >
+                {area.icon}
+              </span>
+              <div className="min-w-0">
+                <h3 className="font-headline text-base font-semibold text-on-surface truncate">{area.label}</h3>
+                <span className="text-xs text-on-surface-variant/70">{area.badge}</span>
               </div>
             </div>
 
-            <p className="font-body text-xs text-on-surface-variant leading-relaxed">{area.description}</p>
+            <p className="font-body text-sm text-on-surface-variant leading-relaxed">{area.description}</p>
 
             {/* Quick stat for Money / Learning */}
             {area.id === 'money' && quickStats.money && (
               <div className="bg-surface-container-lowest rounded-sm py-2 px-3 border border-outline-variant/10 flex items-center justify-between">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">NET_BALANCE</span>
-                <span className="font-headline text-sm font-bold" style={{ color: area.color }}>
+                <span className="text-xs text-on-surface-variant/80">Net balance</span>
+                <span className="font-headline text-sm font-semibold text-on-surface">
                   {quickStats.money.netBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {quickStats.money.currency}
                 </span>
               </div>
             )}
             {area.id === 'learning' && quickStats.learning && (
               <div className="bg-surface-container-lowest rounded-sm py-2 px-3 border border-outline-variant/10 flex items-center justify-between">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">STUDY_STREAK</span>
-                <span className="font-headline text-sm font-bold" style={{ color: area.color }}>
+                <span className="text-xs text-on-surface-variant/80">Study streak</span>
+                <span className="font-headline text-sm font-semibold text-on-surface">
                   {quickStats.learning.currentStreak} days
                 </span>
               </div>
@@ -132,22 +126,22 @@ export default function LifeAreasPage() {
             {/* Counts */}
             <div className="grid grid-cols-3 gap-2 text-center">
               {[
-                { label: 'GOALS', value: g },
-                { label: 'HABITS', value: h },
-                { label: 'TASKS', value: t },
+                { label: 'Goals', value: g },
+                { label: 'Habits', value: h },
+                { label: 'Tasks', value: t },
               ].map((c) => (
                 <div key={c.label} className="bg-surface-container-lowest rounded-sm py-2 border border-outline-variant/10">
                   <div className="font-headline text-lg font-bold text-on-surface">{c.value}</div>
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">{c.label}</div>
+                  <div className="text-xs text-on-surface-variant/70">{c.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Progress */}
-            <div>
+            <div className="mt-auto">
               <div className="flex justify-between items-baseline mb-1">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">PROGRESS</span>
-                <span className="font-mono text-[10px] font-bold" style={{ color: area.color }}>{progress}%</span>
+                <span className="text-xs text-on-surface-variant/70">Progress</span>
+                <span className="text-xs font-semibold text-on-surface">{progress}%</span>
               </div>
               <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, backgroundColor: area.color }} />
@@ -155,19 +149,19 @@ export default function LifeAreasPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 mt-auto">
+            <div className="flex gap-2">
               <Link
                 href={area.id === 'money' ? '/money' : area.id === 'learning' ? '/learning' : `/life-areas/${area.id}`}
-                className="flex-1 text-center px-3 py-2 rounded-sm font-label text-[10px] uppercase tracking-wider font-bold text-on-primary hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: area.color }}
+                className="flex-1 text-center px-3 py-2 rounded-sm font-label text-sm font-semibold border transition-colors"
+                style={{ color: area.color, backgroundColor: `${area.color}14`, borderColor: `${area.color}40` }}
               >
                 Open
               </Link>
               <Link
                 href={`/goals?area=${area.id}`}
-                className="px-3 py-2 rounded-sm font-label text-[10px] uppercase tracking-wider text-on-surface-variant border border-outline-variant/20 hover:text-on-surface transition-colors"
+                className="px-3 py-2 rounded-sm font-label text-sm text-on-surface-variant border border-outline-variant/20 hover:text-on-surface transition-colors"
               >
-                Add Goal
+                Add goal
               </Link>
             </div>
           </div>

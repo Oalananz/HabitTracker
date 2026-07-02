@@ -34,7 +34,7 @@ export default function ConfirmDialog({
         className="glass w-full max-w-sm rounded-md border border-outline-variant/20 p-5 shadow-2xl shadow-black/40"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="font-headline text-base font-bold text-on-surface uppercase tracking-wide">
+        <h3 className="font-headline text-base font-bold text-on-surface">
           {title}
         </h3>
         <p className="font-body text-sm text-on-surface-variant mt-2">{message}</p>

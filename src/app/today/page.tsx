@@ -7,6 +7,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
 import SkeletonPulse from '@/components/ui/SkeletonPulse';
+import Button from '@/components/ui/Button';
+import { Select, Textarea } from '@/components/ui/Input';
 import DailyProgressBar from '@/components/today/DailyProgressBar';
 import TodaySummaryCards from '@/components/today/TodaySummaryCards';
 import TopPrioritiesCard from '@/components/today/TopPrioritiesCard';
@@ -170,7 +172,7 @@ export default function TodayPage() {
       <OnboardingPrompt />
 
       {/* Header */}
-      <PageHeader title="system/today" description="Your daily command center." />
+      <PageHeader title="Today" eyebrow="system/today" description="Your daily command center." />
 
       {/* Daily Summary Cards */}
       <TodaySummaryCards dayRecord={dayRecord} date={today} />
@@ -215,26 +217,26 @@ export default function TodayPage() {
 
             {manualTasks.length > 0 && (
               <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2 mb-4">
-                <span className="text-[10px] font-label tracking-widest text-on-surface-variant uppercase">Filter</span>
-                <select
+                <span className="text-xs text-on-surface-variant/70">Filter</span>
+                <Select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'completed')}
-                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                  className="w-auto py-1.5 text-xs"
                 >
                   <option value="all">All status</option>
                   <option value="pending">Pending</option>
                   <option value="completed">Completed</option>
-                </select>
-                <select
+                </Select>
+                <Select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1.5 text-xs font-label text-on-surface-variant focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                  className="w-auto py-1.5 text-xs"
                 >
                   <option value="all">All categories</option>
                   {uniqueCategories.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
 
@@ -332,30 +334,29 @@ export default function TodayPage() {
                     autoFocus
                   />
                 </div>
-                <textarea
+                <Textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-surface-container-low rounded-sm text-on-surface text-sm font-body placeholder:text-outline border border-outline-variant/15 p-2 focus:ring-0 focus:border-primary/50 resize-none"
                   placeholder="Description (optional)"
                   rows={2}
                 />
                 <div className="flex gap-2 flex-wrap">
-                  <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-label text-on-surface-variant">
+                  <Select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-auto py-1.5 text-xs">
                     {['General', 'Health', 'Work', 'Learning', 'Personal', 'Admin'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-label text-on-surface-variant">
+                  </Select>
+                  <Select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-auto py-1.5 text-xs">
                     <option value="low">Low</option>
                     <option value="nominal">Nominal</option>
                     <option value="critical">Critical</option>
-                  </select>
-                  <select value={newLifeArea} onChange={(e) => setNewLifeArea(e.target.value as LifeAreaId | '')} className="bg-surface-container-low border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-label text-on-surface-variant">
+                  </Select>
+                  <Select value={newLifeArea} onChange={(e) => setNewLifeArea(e.target.value as LifeAreaId | '')} className="w-auto py-1.5 text-xs">
                     <option value="">No life area</option>
                     {LIFE_AREAS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-                  </select>
+                  </Select>
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => { setShowAddForm(false); setNewTaskTitle(''); }} className="px-3 py-1.5 text-xs font-label uppercase text-on-surface-variant hover:text-on-surface transition-colors">Cancel</button>
-                  <button type="submit" className="px-4 py-1.5 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90">Add Task</button>
+                  <Button type="button" variant="ghost" onClick={() => { setShowAddForm(false); setNewTaskTitle(''); }}>Cancel</Button>
+                  <Button type="submit" variant="primary">Add task</Button>
                 </div>
               </form>
             )}

@@ -7,50 +7,23 @@ import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
 import { onSyncProgress, initAutoSync } from '@/lib/offline/syncManager';
 
-const navGroups = [
-  {
-    label: 'Daily',
-    items: [
-      { href: '/today', label: 'Today', icon: 'terminal' },
-      { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-      { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
-    ],
-  },
-  {
-    label: 'Plan',
-    items: [
-      { href: '/planner', label: 'Planner', icon: 'event_note' },
-      { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
-      { href: '/goals', label: 'Goals', icon: 'flag' },
-      { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
-    ],
-  },
-  {
-    label: 'Life',
-    items: [
-      { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
-      { href: '/habits', label: 'Habits', icon: 'cached' },
-      { href: '/recovery', label: 'Recovery', icon: 'healing' },
-      { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
-      { href: '/learning', label: 'Learning', icon: 'menu_book' },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
-      { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { href: '/settings', label: 'Settings', icon: 'settings' },
-    ],
-  },
+const navItems = [
+  { href: '/today', label: 'Today', icon: 'terminal' },
+  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/habits', label: 'Habits', icon: 'cached' },
+  { href: '/planner', label: 'Planner', icon: 'event_note' },
+  { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
+  { href: '/goals', label: 'Goals', icon: 'flag' },
+  { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
+  { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
+  { href: '/recovery', label: 'Recovery', icon: 'healing' },
+  { href: '/learning', label: 'Learning', icon: 'menu_book' },
+  { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
+  { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
+  { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
+  { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
-
-const COLLAPSED_GROUPS_KEY = 'sidebarCollapsedGroups';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -60,22 +33,6 @@ export default function Sidebar() {
   } = useStore();
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(COLLAPSED_GROUPS_KEY);
-      if (saved) setCollapsedGroups(JSON.parse(saved));
-    } catch { /* ignore */ }
-  }, []);
-
-  const toggleGroup = (label: string) => {
-    setCollapsedGroups((prev) => {
-      const next = { ...prev, [label]: !prev[label] };
-      try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -150,20 +107,20 @@ export default function Sidebar() {
         {/* User Section */}
         <div className={`mb-6 flex items-center justify-between ${sidebarCollapsed ? 'md:px-3' : 'px-6'}`}>
           <div className={sidebarCollapsed ? 'md:hidden' : ''}>
-            <div className="font-headline text-lg font-bold text-primary tracking-tighter">
-              &gt; {user?.username || 'system/user'}
+            <div className="font-headline text-lg font-bold text-primary tracking-tight">
+              {user?.username || 'User'}
             </div>
             <div className="flex items-center gap-1.5 mt-1">
               <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'} ${isSyncing ? 'animate-pulse' : ''}`} />
               <span className="text-xs text-on-surface-variant font-body">
-                {isSyncing ? 'Syncing...' : `Status: ${isOnline ? 'Online' : 'Offline'}`}
-                {!isSyncing && pendingSyncCount > 0 && ` (${pendingSyncCount} pending)`}
+                {isSyncing ? 'Syncing...' : isOnline ? 'Online' : 'Offline'}
+                {!isSyncing && pendingSyncCount > 0 && ` · ${pendingSyncCount} pending`}
               </span>
             </div>
           </div>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden md:flex text-on-surface-variant/50 hover:text-primary transition-colors flex-shrink-0"
+            className="hidden md:flex text-on-surface-variant/60 hover:text-primary transition-colors flex-shrink-0"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <span className="material-symbols-outlined text-[20px]">
@@ -173,54 +130,36 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 mt-2 overflow-y-auto overflow-x-hidden">
-          {navGroups.map((group) => {
-            const groupCollapsed = !!collapsedGroups[group.label];
+        <nav className="flex-1 mt-1 overflow-y-auto overflow-x-hidden space-y-0.5">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
             return (
-              <div key={group.label} className="mb-3">
-                <button
-                  onClick={() => toggleGroup(group.label)}
-                  className={`w-full flex items-center justify-between px-5 mb-1 font-label text-[10px] uppercase tracking-widest text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors ${sidebarCollapsed ? 'md:hidden' : ''}`}
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label transition-all duration-200 nav-glow ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''} ${
+                  isActive
+                    ? 'text-primary font-semibold border-l-2 border-primary bg-surface-container-low/60'
+                    : 'text-on-surface-variant/75 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
+                }`}
+              >
+                <span
+                  className={`material-symbols-outlined text-[20px] transition-all duration-200 flex-shrink-0 ${isActive ? 'text-primary' : ''}`}
+                  aria-hidden="true"
+                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
-                  {group.label}
-                  <span className="material-symbols-outlined text-[14px] transition-transform duration-150" style={{ transform: groupCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
-                    expand_more
+                  {item.icon}
+                </span>
+                <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
+                {/* Achievement badge */}
+                {item.href === '/achievements' && newAchievementCount > 0 && (
+                  <span className={`ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                    {newAchievementCount}
                   </span>
-                </button>
-                <div className={`space-y-0.5 ${groupCollapsed ? 'md:hidden hidden' : ''}`}>
-                  {group.items.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        title={sidebarCollapsed ? item.label : undefined}
-                        className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''} ${
-                          isActive
-                            ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
-                            : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
-                        }`}
-                      >
-                        <span
-                          className="material-symbols-outlined text-[20px] transition-all duration-200 flex-shrink-0"
-                          aria-hidden="true"
-                          style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                        >
-                          {item.icon}
-                        </span>
-                        <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
-                        {/* Achievement badge */}
-                        {item.href === '/achievements' && newAchievementCount > 0 && (
-                          <span className={`ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center ${sidebarCollapsed ? 'md:hidden' : ''}`}>
-                            {newAchievementCount}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+                )}
+              </Link>
             );
           })}
         </nav>
@@ -230,7 +169,7 @@ export default function Sidebar() {
           <button
             onClick={handleLogout}
             title={sidebarCollapsed ? 'Logout' : undefined}
-            className={`flex items-center gap-3 w-full text-on-surface-variant/60 hover:text-error pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
+            className={`flex items-center gap-3 w-full text-on-surface-variant/75 hover:text-error pl-5 pr-4 py-2.5 text-sm font-label transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
           >
             <span className="material-symbols-outlined text-[20px]" aria-hidden="true">logout</span>
             <span className={sidebarCollapsed ? 'md:hidden' : ''}>Logout</span>

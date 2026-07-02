@@ -5,6 +5,9 @@ import Link from 'next/link';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
+import PageHeader from '@/components/ui/PageHeader';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Button from '@/components/ui/Button';
 import CourseForm from '@/components/learning/CourseForm';
 import SkillForm from '@/components/learning/SkillForm';
 import StudySessionForm from '@/components/learning/StudySessionForm';
@@ -213,23 +216,15 @@ export default function LearningPage() {
   return (
     <div className="space-y-8 animate-page-enter">
       {ConfirmDialog}
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-            <span className="text-primary">&gt;</span> Learning
-          </h1>
-          <p className="font-body text-on-surface-variant">
-            Track courses, skills, study time, and certificates in one place.
-          </p>
-        </div>
-        <Link
-          href="/learning/connections"
-          className="flex items-center gap-2 px-4 py-2.5 border border-outline-variant/20 text-on-surface-variant font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:border-primary/40 hover:text-primary transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">link</span>
-          Connect Learning Website
-        </Link>
-      </header>
+      <PageHeader
+        title="Learning"
+        description="Track courses, skills, study time, and certificates in one place."
+        actions={
+          <Link href="/learning/connections">
+            <Button variant="secondary" icon="link">Connect learning website</Button>
+          </Link>
+        }
+      />
 
       {/* Stat cards */}
       {loading ? (
@@ -269,41 +264,21 @@ export default function LearningPage() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setActiveForm(activeForm === 'course' ? null : 'course')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Add Course
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'skill' ? null : 'skill')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">psychology</span>
-          Add Skill
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'session' ? null : 'session')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">schedule</span>
-          Log Study Session
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'certificate' ? null : 'certificate')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">military_tech</span>
-          Add Certificate
-        </button>
-        <button
-          onClick={() => setActiveForm(activeForm === 'resource' ? null : 'resource')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">bookmark_add</span>
-          Add Resource
-        </button>
+        <Button variant="primary" icon="add" onClick={() => setActiveForm(activeForm === 'course' ? null : 'course')}>
+          Add course
+        </Button>
+        <Button variant="secondary" icon="psychology" onClick={() => setActiveForm(activeForm === 'skill' ? null : 'skill')}>
+          Add skill
+        </Button>
+        <Button variant="secondary" icon="schedule" onClick={() => setActiveForm(activeForm === 'session' ? null : 'session')}>
+          Log study session
+        </Button>
+        <Button variant="secondary" icon="military_tech" onClick={() => setActiveForm(activeForm === 'certificate' ? null : 'certificate')}>
+          Add certificate
+        </Button>
+        <Button variant="secondary" icon="bookmark_add" onClick={() => setActiveForm(activeForm === 'resource' ? null : 'resource')}>
+          Add resource
+        </Button>
       </div>
 
       {/* Inline forms */}
@@ -317,11 +292,9 @@ export default function LearningPage() {
 
       {/* Courses */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> COURSES
-        </h3>
+        <SectionHeader title="Courses" />
         {courses.length === 0 ? (
-          <EmptyState title="No courses yet" description="Add a course to start tracking your progress." icon="school" />
+          <EmptyState compact title="No courses yet" description="Add a course to start tracking your progress." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {courses.map((course) => {
@@ -356,11 +329,9 @@ export default function LearningPage() {
 
       {/* Skills */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> SKILLS
-        </h3>
+        <SectionHeader title="Skills" />
         {skills.length === 0 ? (
-          <EmptyState title="No skills tracked" description="Add a skill to monitor your growth over time." icon="psychology" />
+          <EmptyState compact title="No skills tracked" description="Add a skill to monitor your growth over time." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {skills.map((skill) => (
@@ -391,11 +362,9 @@ export default function LearningPage() {
 
       {/* Study session history */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> STUDY_HISTORY
-        </h3>
+        <SectionHeader title="Study history" />
         {sessions.length === 0 ? (
-          <EmptyState title="No study sessions logged" description="Log a session after you study to build your streak." icon="schedule" />
+          <EmptyState compact title="No study sessions logged" description="Log a session after you study to build your streak." />
         ) : (
           <div className="space-y-2">
             {sessions.map((s) => (
@@ -421,11 +390,9 @@ export default function LearningPage() {
 
       {/* Certificates */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> CERTIFICATES
-        </h3>
+        <SectionHeader title="Certificates" />
         {certificates.length === 0 ? (
-          <EmptyState title="No certificates yet" description="Add a certificate once you complete a course." icon="military_tech" />
+          <EmptyState compact title="No certificates yet" description="Add a certificate once you complete a course." />
         ) : (
           <div className="space-y-2">
             {certificates.map((c) => (
@@ -450,11 +417,9 @@ export default function LearningPage() {
 
       {/* Resources */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-          <span className="text-primary">&gt;</span> RESOURCES
-        </h3>
+        <SectionHeader title="Resources" />
         {resources.length === 0 ? (
-          <EmptyState title="No saved resources" description="Save articles, videos, or docs you want to come back to." icon="bookmark" />
+          <EmptyState compact title="No saved resources" description="Save articles, videos, or docs you want to come back to." />
         ) : (
           <div className="space-y-2">
             {resources.map((r) => (
@@ -477,15 +442,10 @@ export default function LearningPage() {
 
       {/* AI Study Plan */}
       <div className="flex flex-col items-start gap-2">
-        <button
-          onClick={handleGeneratePlan}
-          disabled={generatingPlan}
-          className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-surface-bright transition-colors disabled:opacity-50"
-        >
-          <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-          {generatingPlan ? 'Checking…' : 'Generate Study Plan'}
-        </button>
-        {planMessage && <p className="font-mono text-[10px] text-outline">{planMessage}</p>}
+        <Button variant="secondary" icon="auto_awesome" onClick={handleGeneratePlan} disabled={generatingPlan}>
+          {generatingPlan ? 'Checking…' : 'Generate study plan'}
+        </Button>
+        {planMessage && <p className="text-xs text-on-surface-variant/60">{planMessage}</p>}
       </div>
     </div>
   );

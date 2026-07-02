@@ -6,6 +6,7 @@ import { useToast } from '@/store/useToast';
 import type { DayRecord } from '@/lib/services/dayRecordService';
 import type { EveningReviewOutput } from '@/lib/ai/schemas';
 import { AiLoadingState, AiErrorState } from '@/components/ai/AiPrimitives';
+import Button from '@/components/ui/Button';
 import { pushTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import dayjs from 'dayjs';
 
@@ -156,11 +157,9 @@ export default function EveningReviewCard({ date }: { date: string }) {
   return (
     <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-headline text-base font-bold text-on-surface">
-          <span className="text-primary">&gt;</span> Evening Review
-        </h3>
+        <h3 className="font-headline text-base font-semibold text-on-surface">Evening review</h3>
         {savedAt && (
-          <span className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider">✓ Saved</span>
+          <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-[2px]">✓ Saved</span>
         )}
       </div>
 
@@ -198,23 +197,22 @@ export default function EveningReviewCard({ date }: { date: string }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
+          variant="primary"
           onClick={save}
           disabled={saving || (!wins.trim() && !problems.trim() && !improvement.trim())}
-          className="px-4 py-2 bg-scanline-gradient text-on-primary font-label text-xs uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-40"
         >
-          {saving ? 'Saving…' : 'Save Review'}
-        </button>
-        <button
+          {saving ? 'Saving…' : 'Save review'}
+        </Button>
+        <Button
+          variant="secondary"
           onClick={generateAi}
           disabled={aiLoading}
-          className="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/40 bg-primary/10 text-primary font-label text-xs uppercase tracking-wider font-bold rounded-sm hover:bg-primary/15 transition-all disabled:opacity-50"
+          icon={aiLoading ? undefined : 'auto_awesome'}
         >
-          <span className={`material-symbols-outlined text-[16px] ${aiLoading ? 'animate-spin' : ''}`}>
-            {aiLoading ? 'progress_activity' : 'auto_awesome'}
-          </span>
-          {aiLoading ? 'Reflecting…' : 'Generate AI Reflection'}
-        </button>
+          {aiLoading && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+          {aiLoading ? 'Reflecting…' : 'Generate AI reflection'}
+        </Button>
       </div>
 
       {aiLoading && <AiLoadingState message="Reflecting on your day…" />}
@@ -225,7 +223,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
-              <span className="font-label text-xs font-bold text-on-surface uppercase tracking-wide">AI Reflection</span>
+              <span className="font-label text-xs font-semibold text-on-surface">AI reflection</span>
             </div>
             <button onClick={() => setReflection(null)} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Dismiss">
               <span className="material-symbols-outlined text-[16px]">close</span>
@@ -236,7 +234,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
 
           {reflection.wins.length > 0 && (
             <div>
-              <div className="font-label text-[10px] uppercase tracking-widest text-primary mb-1">Wins</div>
+              <div className="font-label text-xs text-primary mb-1">Wins</div>
               <ul className="space-y-0.5">
                 {reflection.wins.map((w, i) => <li key={i} className="font-body text-xs text-on-surface-variant">• {w}</li>)}
               </ul>
@@ -245,7 +243,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
 
           {reflection.improvements.length > 0 && (
             <div>
-              <div className="font-label text-[10px] uppercase tracking-widest text-tertiary mb-1">Improve</div>
+              <div className="font-label text-xs text-tertiary mb-1">Improve</div>
               <ul className="space-y-0.5">
                 {reflection.improvements.map((w, i) => <li key={i} className="font-body text-xs text-on-surface-variant">• {w}</li>)}
               </ul>
@@ -254,7 +252,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
 
           {reflection.tomorrowFocus.length > 0 && (
             <div>
-              <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Tomorrow</div>
+              <div className="font-label text-xs text-on-surface-variant/80 mb-1">Tomorrow</div>
               <ul className="space-y-0.5">
                 {reflection.tomorrowFocus.map((w, i) => <li key={i} className="font-body text-xs text-on-surface flex gap-1.5"><span className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{w}</li>)}
               </ul>
@@ -265,13 +263,9 @@ export default function EveningReviewCard({ date }: { date: string }) {
             <p className="font-body text-xs text-primary/90 italic">{reflection.encouragement}</p>
           )}
 
-          <button
-            onClick={applyAi}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-scanline-gradient text-on-primary font-label text-[10px] uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity"
-          >
-            <span className="material-symbols-outlined text-[14px]">download</span>
+          <Button variant="primary" onClick={applyAi} icon="download" className="text-xs px-3 py-1.5">
             Apply to empty fields
-          </button>
+          </Button>
         </div>
       )}
     </div>

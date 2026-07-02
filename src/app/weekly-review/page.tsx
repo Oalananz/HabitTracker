@@ -5,6 +5,9 @@ import { useStore } from '@/store/useStore';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
 import AiWeeklyReview from '@/components/ai/AiWeeklyReview';
+import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Input';
 import type { WeeklyReviewInput, WeeklyReviewOutput } from '@/lib/ai/schemas';
 import dayjs from 'dayjs';
 
@@ -38,7 +41,6 @@ const REFLECTION_FIELDS: { key: keyof ReviewForm; label: string; placeholder: st
   { key: 'wins', label: 'Wins this week', placeholder: 'What went well this week?' },
   { key: 'problems', label: 'Problems this week', placeholder: 'What slowed you down?' },
   { key: 'lessons', label: 'Lessons learned', placeholder: 'What did you learn about yourself?' },
-  { key: 'nextWeekPriorities', label: 'Next week priorities', placeholder: 'Choose 3 important priorities for next week.' },
   { key: 'healthReview', label: 'Health review', placeholder: 'How was your sleep, exercise, food, and energy?' },
   { key: 'moneyReview', label: 'Money review', placeholder: 'Did you control spending and make progress financially?' },
   { key: 'workBusinessReview', label: 'Work / Business review', placeholder: 'What moved your work or business forward?' },
@@ -70,6 +72,7 @@ export default function WeeklyReviewPage() {
   const [saving, setSaving] = useState(false);
   const [moneyBalance, setMoneyBalance] = useState<{ value: number; currency: string } | null>(null);
   const [studyTimeMinutes, setStudyTimeMinutes] = useState<number | null>(null);
+  const [openSection, setOpenSection] = useState<'summary' | 'breakdown' | 'reflection' | 'nextWeek'>('summary');
 
   const set = (key: keyof ReviewForm, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -237,120 +240,149 @@ export default function WeeklyReviewPage() {
   };
 
   const summaryCards = [
-    { label: 'TASKS_DONE', value: summary.tasksCompleted },
-    { label: 'HABIT_RATE', value: `${summary.habitRate}%` },
-    { label: 'GOALS_DONE', value: summary.goalsCompleted },
-    { label: 'OVERDUE', value: summary.overdue },
-    { label: 'BEST_AREA', value: summary.best ? summary.best.area.shortLabel : '—' },
-    { label: 'WEAKEST', value: summary.weakest ? summary.weakest.area.shortLabel : '—' },
-    { label: 'NET_BALANCE', value: moneyBalance ? `${moneyBalance.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${moneyBalance.currency}` : '—' },
-    { label: 'STUDY_TIME', value: studyTimeMinutes != null ? `${Math.round((studyTimeMinutes / 60) * 10) / 10}h` : '—' },
+    { label: 'Tasks done', value: summary.tasksCompleted },
+    { label: 'Habit rate', value: `${summary.habitRate}%` },
+    { label: 'Goals done', value: summary.goalsCompleted },
+    { label: 'Overdue', value: summary.overdue },
+    { label: 'Best area', value: summary.best ? summary.best.area.shortLabel : '—' },
+    { label: 'Weakest', value: summary.weakest ? summary.weakest.area.shortLabel : '—' },
+    { label: 'Net balance', value: moneyBalance ? `${moneyBalance.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${moneyBalance.currency}` : '—' },
+    { label: 'Study time', value: studyTimeMinutes != null ? `${Math.round((studyTimeMinutes / 60) * 10) / 10}h` : '—' },
+  ];
+
+  const sections: { key: typeof openSection; label: string; icon: string }[] = [
+    { key: 'summary', label: 'Summary', icon: 'bar_chart' },
+    { key: 'breakdown', label: 'Area breakdown', icon: 'grid_view' },
+    { key: 'reflection', label: 'Reflection', icon: 'edit_note' },
+    { key: 'nextWeek', label: 'Next week', icon: 'flag' },
   ];
 
   return (
     <div className="space-y-8 animate-page-enter">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-            <span className="text-primary">&gt;</span> Weekly Review
-          </h1>
-          <p className="font-body text-on-surface-variant">Reflect on your week across the six life areas.</p>
-        </div>
-        {/* Week nav */}
-        <div className="flex items-center gap-3">
-          <button onClick={() => setWeekStart(weekStart.subtract(1, 'week'))} className="text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-          </button>
-          <div className="text-center">
-            <div className="font-mono text-xs text-on-surface">{weekStart.format('MMM D')} – {weekEnd.format('MMM D, YYYY')}</div>
+      <PageHeader
+        title="Weekly Review"
+        description="Reflect on your week across the six life areas."
+        actions={
+          <div className="flex items-center gap-3">
+            <button onClick={() => setWeekStart(weekStart.subtract(1, 'week'))} className="text-on-surface-variant hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+            </button>
+            <div className="text-sm text-on-surface whitespace-nowrap">{weekStart.format('MMM D')} – {weekEnd.format('MMM D, YYYY')}</div>
+            <button
+              onClick={() => setWeekStart(weekStart.add(1, 'week'))}
+              disabled={weekStart.add(1, 'week').isAfter(today)}
+              className="text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30"
+            >
+              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+            </button>
           </div>
-          <button
-            onClick={() => setWeekStart(weekStart.add(1, 'week'))}
-            disabled={weekStart.add(1, 'week').isAfter(today)}
-            className="text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30"
-          >
-            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-          </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* AI Weekly Review */}
       <AiWeeklyReview buildInput={buildAiInput} onApply={applyAi} />
 
-      {/* A. Current Week Summary */}
-      <section>
-        <h2 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-3"><span className="text-primary">&gt;</span> WEEK_SUMMARY</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {summaryCards.map((c) => (
-            <div key={c.label} className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3">
-              <div className="font-headline text-xl font-black text-on-surface truncate">{c.value}</div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">{c.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* B. Life Area Breakdown */}
-      <section>
-        <h2 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-3"><span className="text-primary">&gt;</span> AREA_BREAKDOWN</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {breakdown.map((b) => (
-            <div key={b.area.id} className="bg-surface-container-low border rounded-md p-4" style={{ borderColor: `${b.area.color}33` }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]" style={{ color: b.area.color }}>{b.area.icon}</span>
-                  <span className="font-headline text-sm font-bold text-on-surface">{b.area.label}</span>
+      {/* Guided sections — one open at a time */}
+      <div className="space-y-2">
+        {sections.map((s) => {
+          const isOpen = openSection === s.key;
+          return (
+            <div key={s.key} className="bg-surface-container-low border border-outline-variant/15 rounded-md overflow-hidden">
+              <button
+                onClick={() => setOpenSection(s.key)}
+                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-container-lowest/30 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[18px] text-primary">{s.icon}</span>
+                  <span className="font-headline text-sm font-semibold text-on-surface">{s.label}</span>
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px]" style={{ color: b.color, backgroundColor: `${b.color}1a` }}>{b.label}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center mb-2">
-                <div><div className="font-headline text-base font-bold text-on-surface">{b.completedTasks}</div><div className="font-mono text-[8px] uppercase text-on-surface-variant">TASKS</div></div>
-                <div><div className="font-headline text-base font-bold text-on-surface">{b.completedHabits}</div><div className="font-mono text-[8px] uppercase text-on-surface-variant">HABITS</div></div>
-                <div><div className="font-headline text-base font-bold text-on-surface">{b.activeGoals}</div><div className="font-mono text-[8px] uppercase text-on-surface-variant">GOALS</div></div>
-              </div>
-              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${b.progress}%`, backgroundColor: b.area.color }} />
-              </div>
+                <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="px-5 pb-5 border-t border-outline-variant/10 pt-4 animate-fade-in">
+                  {s.key === 'summary' && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                      {summaryCards.map((c) => (
+                        <div key={c.label} className="bg-surface-container-lowest border border-outline-variant/10 rounded-md p-3">
+                          <div className="font-headline text-xl font-bold text-on-surface truncate">{c.value}</div>
+                          <div className="text-xs text-on-surface-variant/70">{c.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {s.key === 'breakdown' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {breakdown.map((b) => (
+                        <div key={b.area.id} className="bg-surface-container-lowest border rounded-md p-4" style={{ borderColor: `${b.area.color}33` }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-[18px]" style={{ color: b.area.color }}>{b.area.icon}</span>
+                              <span className="font-headline text-sm font-semibold text-on-surface">{b.area.label}</span>
+                            </div>
+                            <span className="text-xs px-1.5 py-0.5 rounded-[2px]" style={{ color: b.color, backgroundColor: `${b.color}1a` }}>{b.label}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                            <div><div className="font-headline text-base font-bold text-on-surface">{b.completedTasks}</div><div className="text-[11px] text-on-surface-variant/70">Tasks</div></div>
+                            <div><div className="font-headline text-base font-bold text-on-surface">{b.completedHabits}</div><div className="text-[11px] text-on-surface-variant/70">Habits</div></div>
+                            <div><div className="font-headline text-base font-bold text-on-surface">{b.activeGoals}</div><div className="text-[11px] text-on-surface-variant/70">Goals</div></div>
+                          </div>
+                          <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${b.progress}%`, backgroundColor: b.area.color }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {s.key === 'reflection' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {REFLECTION_FIELDS.map((f) => (
+                        <div key={f.key}>
+                          <label className="text-xs text-on-surface-variant/80 block mb-1.5">{f.label}</label>
+                          <Textarea
+                            value={form[f.key]}
+                            onChange={(e) => set(f.key, e.target.value)}
+                            placeholder={f.placeholder}
+                            rows={3}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {s.key === 'nextWeek' && (
+                    <div>
+                      <label className="text-xs text-on-surface-variant/80 block mb-1.5">Next week priorities</label>
+                      <Textarea
+                        value={form.nextWeekPriorities}
+                        onChange={(e) => set('nextWeekPriorities', e.target.value)}
+                        placeholder="Choose 3 important priorities for next week."
+                        rows={4}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex justify-end mt-4">
+                    <Button variant="primary" onClick={handleSave} disabled={saving}>
+                      {saving ? 'Saving…' : 'Save review'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </section>
+          );
+        })}
+      </div>
 
-      {/* C. Reflection Form */}
+      {/* Previous Reviews */}
       <section>
-        <h2 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-3"><span className="text-primary">&gt;</span> REFLECTION</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {REFLECTION_FIELDS.map((f) => (
-            <div key={f.key}>
-              <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; {f.label}</label>
-              <textarea
-                value={form[f.key]}
-                onChange={(e) => set(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                rows={3}
-                className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body placeholder:text-outline focus:border-primary/50 focus:ring-0 resize-none"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* D. Save */}
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : 'Save Review ↵'}
-          </button>
-        </div>
-      </section>
-
-      {/* E. Previous Reviews */}
-      <section>
-        <h2 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-3"><span className="text-primary">&gt;</span> PREVIOUS_REVIEWS</h2>
+        <h2 className="font-headline text-sm font-semibold text-on-surface mb-3">Previous reviews</h2>
         {reviews.length === 0 ? (
-          <p className="font-mono text-[11px] text-outline py-4 text-center border border-dashed border-outline-variant/20 rounded-sm">No saved reviews yet.</p>
+          <p className="text-xs text-on-surface-variant/50 py-4 text-center border border-dashed border-outline-variant/20 rounded-sm">No saved reviews yet.</p>
         ) : (
           <div className="space-y-2">
             {reviews.map((r) => (
@@ -360,11 +392,11 @@ export default function WeeklyReviewPage() {
                 className="w-full text-left bg-surface-container-low border border-outline-variant/15 rounded-md p-3 hover:border-primary/30 transition-colors flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <div className="font-mono text-xs text-on-surface">{dayjs(r.weekStartDate).format('MMM D')} – {dayjs(r.weekEndDate).format('MMM D, YYYY')}</div>
-                  <div className="font-body text-[11px] text-on-surface-variant truncate mt-0.5">{r.wins || r.nextWeekPriorities || 'No summary'}</div>
+                  <div className="text-sm text-on-surface">{dayjs(r.weekStartDate).format('MMM D')} – {dayjs(r.weekEndDate).format('MMM D, YYYY')}</div>
+                  <div className="text-xs text-on-surface-variant/70 truncate mt-0.5">{r.wins || r.nextWeekPriorities || 'No summary'}</div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="font-mono text-[9px] text-outline">{dayjs(r.createdAt).format('MMM D')}</span>
+                  <span className="text-xs text-on-surface-variant/50">{dayjs(r.createdAt).format('MMM D')}</span>
                   <span className="material-symbols-outlined text-[16px] text-on-surface-variant">edit</span>
                 </div>
               </button>

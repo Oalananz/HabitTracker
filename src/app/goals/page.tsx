@@ -9,6 +9,8 @@ import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 import AiGoalBreaker from '@/components/ai/AiGoalBreaker';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
+import { Input, Textarea } from '@/components/ui/Input';
+import EmptyState from '@/components/ui/EmptyState';
 import { useConfirm } from '@/components/ui/useConfirm';
 
 type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
@@ -30,6 +32,7 @@ export default function GoalsPage() {
   const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
   const [showArchived, setShowArchived] = useState(false);
   const [showBreaker, setShowBreaker] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -89,26 +92,34 @@ export default function GoalsPage() {
   };
 
   const getStatusLabel = (goal: typeof goals[0]) => {
-    if (goal.completed) return 'COMPLETED';
+    if (goal.completed) return 'Completed';
     if (goal.goalType === 'dated' && goal.targetDate) {
       const diff = dayjs(goal.targetDate).diff(dayjs(), 'day');
-      if (diff < 0) return `OVERDUE ${Math.abs(diff)}D`;
-      if (diff === 0) return 'DUE TODAY';
-      return `${diff}D LEFT`;
+      if (diff < 0) return `Overdue ${Math.abs(diff)}d`;
+      if (diff === 0) return 'Due today';
+      return `${diff}d left`;
     }
-    if (goal.goalType === 'weekly') return 'THIS WEEK';
-    return 'IN PROGRESS';
+    if (goal.goalType === 'weekly') return 'This week';
+    return 'In progress';
   };
+
+  const isOverdue = (goal: typeof goals[0]) =>
+    !goal.completed && goal.goalType === 'dated' && !!goal.targetDate && dayjs(goal.targetDate).diff(dayjs(), 'day') < 0;
+
+  const overdueGoals = visibleGoals.filter((g) => isOverdue(g));
+  const activeGoals = visibleGoals.filter((g) => !g.completed && !isOverdue(g));
+  const completedGoals = visibleGoals.filter((g) => g.completed);
 
   return (
     <div className="space-y-8 animate-page-enter">
         {ConfirmDialog}
         <PageHeader
           title="Goals"
+          eyebrow="system/goals"
           description="Set targets. Track progress. Achieve milestones."
           actions={
             <>
-              <Button variant="tertiary" icon="auto_awesome" onClick={() => setShowBreaker((v) => !v)}>
+              <Button variant="secondary" icon="auto_awesome" onClick={() => setShowBreaker((v) => !v)}>
                 AI Breaker
               </Button>
               <Button variant="primary" icon="add" onClick={() => setShowCreate(!showCreate)} id="create-goal-btn">
@@ -131,23 +142,19 @@ export default function GoalsPage() {
         {/* Create Goal Form */}
         {showCreate && (
           <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
-            <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-              <span className="text-primary">&gt;</span> CREATE_NEW_GOAL
-            </h3>
+            <h3 className="font-headline text-sm font-semibold text-on-surface">New goal</h3>
 
             {/* Goal Type Selector */}
             <div>
-              <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
-                &gt; GOAL_TYPE
-              </label>
+              <label className="text-xs text-on-surface-variant/80 block mb-2">Goal type</label>
               <div className="flex gap-2">
                 {(['weekly', 'dated', 'open'] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setNewType(type)}
-                    className={`px-4 py-2 rounded-sm font-label text-xs uppercase tracking-wider transition-colors ${
+                    className={`px-4 py-2 rounded-sm font-label text-sm capitalize transition-colors ${
                       newType === type
-                        ? 'bg-primary text-on-primary'
+                        ? 'bg-primary text-on-primary font-semibold'
                         : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-bright'
                     }`}
                   >
@@ -159,98 +166,66 @@ export default function GoalsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
-                  &gt; TITLE
-                </label>
-                <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
-                  <span className="text-primary font-mono text-sm">&gt;</span>
-                  <input
-                    type="text"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0"
-                    placeholder="e.g. Read 3 books, Exercise 4x, Ship feature"
-                    id="goal-title"
-                  />
-                </div>
+                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Title</label>
+                <Input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Read 3 books, Exercise 4x, Ship feature"
+                  id="goal-title"
+                />
               </div>
 
               {newType === 'dated' && (
                 <div>
-                  <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
-                    &gt; TARGET_DATE
-                  </label>
-                  <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
-                    <span className="text-primary font-mono text-sm">&gt;</span>
-                    <input
-                      type="date"
-                      value={newTargetDate}
-                      onChange={(e) => setNewTargetDate(e.target.value)}
-                      className="w-full bg-transparent text-on-surface text-sm font-body border-none p-0 focus:ring-0"
-                      id="goal-target-date"
-                    />
-                  </div>
+                  <label className="text-xs text-on-surface-variant/80 block mb-1.5">Target date</label>
+                  <Input
+                    type="date"
+                    value={newTargetDate}
+                    onChange={(e) => setNewTargetDate(e.target.value)}
+                    id="goal-target-date"
+                  />
                 </div>
               )}
 
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
-                  &gt; TARGET_COUNT
-                </label>
-                <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
-                  <span className="text-primary font-mono text-sm">&gt;</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={newTargetCount}
-                    onChange={(e) => setNewTargetCount(parseInt(e.target.value) || 1)}
-                    className="w-full bg-transparent text-on-surface text-sm font-body border-none p-0 focus:ring-0"
-                    id="goal-target-count"
-                  />
-                </div>
+                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Target count</label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={newTargetCount}
+                  onChange={(e) => setNewTargetCount(parseInt(e.target.value) || 1)}
+                  id="goal-target-count"
+                />
               </div>
 
               <LifeAreaSelect value={newLifeArea} onChange={setNewLifeArea} id="goal-life-area" />
             </div>
 
             <div>
-              <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
-                &gt; DESCRIPTION (optional)
-              </label>
-              <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 focus-within:border-primary/50 transition-colors">
-                <textarea
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0 resize-none"
-                  rows={2}
-                  placeholder="Details about this goal..."
-                  id="goal-desc"
-                />
-              </div>
+              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Description (optional)</label>
+              <Textarea
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                rows={2}
+                placeholder="Details about this goal..."
+                id="goal-desc"
+              />
             </div>
 
             <div className="flex gap-3">
-              <button
-                onClick={handleCreate}
-                disabled={!newTitle.trim()}
-                className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                CREATE GOAL ↵
-              </button>
-              <button
+              <Button variant="primary" onClick={handleCreate} disabled={!newTitle.trim()}>
+                Create goal
+              </Button>
+              <Button
+                variant="secondary"
+                icon="auto_awesome"
                 onClick={() => { if (newTitle.trim()) setShowBreaker(true); }}
                 disabled={!newTitle.trim()}
-                className="px-4 py-2 border border-primary/40 bg-primary/10 text-primary font-label text-xs uppercase rounded-sm hover:bg-primary/15 transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
                 Break with AI
-              </button>
-              <button
-                onClick={() => setShowCreate(false)}
-                className="px-4 py-2 bg-surface-container-high text-on-surface-variant font-label text-xs uppercase rounded-sm hover:bg-surface-bright transition-colors"
-              >
-                CANCEL
-              </button>
+              </Button>
+              <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             </div>
           </div>
         )}
@@ -261,9 +236,9 @@ export default function GoalsPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm font-label text-xs uppercase tracking-wider transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm font-label text-sm transition-all ${
                 activeTab === tab.key
-                  ? 'bg-primary text-on-primary font-bold'
+                  ? 'bg-primary text-on-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container-high'
               }`}
             >
@@ -277,7 +252,7 @@ export default function GoalsPage() {
         <div className="flex gap-1.5 flex-wrap">
           <button
             onClick={() => setFilterArea('all')}
-            className={`px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border ${
+            className={`px-3 py-1.5 rounded-sm text-xs transition-colors border ${
               filterArea === 'all'
                 ? 'bg-primary/10 text-primary border-primary/30'
                 : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/15 hover:text-on-surface'
@@ -289,7 +264,7 @@ export default function GoalsPage() {
             <button
               key={area.id}
               onClick={() => setFilterArea(area.id)}
-              className="px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border"
+              className="px-3 py-1.5 rounded-sm text-xs transition-colors border"
               style={
                 filterArea === area.id
                   ? { color: area.color, backgroundColor: `${area.color}1a`, borderColor: `${area.color}55` }
@@ -302,7 +277,7 @@ export default function GoalsPage() {
           {archivedCount > 0 && (
             <button
               onClick={() => setShowArchived((v) => !v)}
-              className={`ml-auto px-3 py-1.5 rounded-sm font-mono text-[10px] uppercase tracking-wider transition-colors border ${
+              className={`ml-auto px-3 py-1.5 rounded-sm text-xs transition-colors border ${
                 showArchived ? 'bg-tertiary/10 text-tertiary border-tertiary/30' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/15 hover:text-on-surface'
               }`}
             >
@@ -317,111 +292,231 @@ export default function GoalsPage() {
             <span className="animate-blink text-primary">▊</span> Loading goals...
           </div>
         ) : visibleGoals.length === 0 ? (
-          <div className="text-center py-16">
-            <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4 block">flag</span>
-            <p className="font-body text-on-surface-variant mb-2">No goals found.</p>
-            <p className="font-mono text-xs text-outline">Click &quot;New Goal&quot; to set a target.</p>
+          <EmptyState icon="flag" title="No goals found" description={'Click "New goal" to set a target.'} />
+        ) : showArchived ? (
+          <div className="space-y-2">
+            {visibleGoals.map((goal) => (
+              <GoalRow
+                key={goal.id}
+                goal={goal}
+                openMenuId={openMenuId}
+                setOpenMenuId={setOpenMenuId}
+                toggleGoalComplete={toggleGoalComplete}
+                incrementGoal={incrementGoal}
+                updateGoal={updateGoal}
+                deleteGoal={deleteGoal}
+                confirm={confirm}
+                getStatusColor={getStatusColor}
+                getStatusLabel={getStatusLabel}
+              />
+            ))}
           </div>
         ) : (
-          <div className="space-y-3">
-            {visibleGoals.map((goal) => {
-              const progress = goal.targetCount > 0
-                ? Math.min((goal.currentCount / goal.targetCount) * 100, 100)
-                : 0;
-
-              return (
-                <div
-                  key={goal.id}
-                  className={`bg-surface-container-low rounded-md border p-4 transition-all ${
-                    goal.completed
-                      ? 'border-primary/20 opacity-75'
-                      : 'border-outline-variant/15'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Left: Checkbox + Info */}
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <button
-                        onClick={() => toggleGoalComplete(goal.id)}
-                        className={`mt-0.5 w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                          goal.completed
-                            ? 'bg-primary border-primary'
-                            : 'border-outline-variant/40 hover:border-primary/60'
-                        }`}
-                      >
-                        {goal.completed && (
-                          <span className="material-symbols-outlined text-[14px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                            check
-                          </span>
-                        )}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className={`font-headline text-sm font-bold ${goal.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
-                            {goal.title}
-                          </h3>
-                          <LifeAreaBadge lifeArea={goal.lifeArea} />
-                        </div>
-                        {goal.description && (
-                          <p className="font-body text-xs text-on-surface-variant mt-1 truncate">{goal.description}</p>
-                        )}
-
-                        {/* Progress bar for quantifiable goals */}
-                        {goal.targetCount > 1 && (
-                          <div className="mt-2 flex items-center gap-3">
-                            <div className="flex-1 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-scanline-gradient rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                            <span className="font-mono text-[10px] text-on-surface-variant whitespace-nowrap">
-                              {goal.currentCount}/{goal.targetCount}
-                            </span>
-                            {!goal.completed && (
-                              <button
-                                onClick={() => incrementGoal(goal.id)}
-                                className="w-6 h-6 rounded-sm bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-[14px]">add</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Meta */}
-                    <div className="flex items-start gap-3 flex-shrink-0">
-                      <div className="text-right flex flex-col items-end gap-1 min-w-[88px] leading-tight">
-                        <span className={`font-label text-[10px] uppercase tracking-widest ${getStatusColor(goal)} whitespace-nowrap`}>
-                          {getStatusLabel(goal)}
-                        </span>
-                        <span className="font-mono text-[10px] text-outline whitespace-nowrap">
-                          {goal.goalType.toUpperCase()}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => updateGoal(goal.id, { isActive: goal.isActive === false })}
-                        className="text-outline hover:text-tertiary transition-colors"
-                        title={goal.isActive === false ? 'Unarchive' : 'Archive'}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
-                      </button>
-                      <button
-                        onClick={async () => { if (await confirm({ message: 'Delete this goal?' })) deleteGoal(goal.id); }}
-                        className="text-outline hover:text-error transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">close</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-6">
+            {overdueGoals.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-error/80">Overdue ({overdueGoals.length})</div>
+                {overdueGoals.map((goal) => (
+                  <GoalRow
+                    key={goal.id}
+                    goal={goal}
+                    openMenuId={openMenuId}
+                    setOpenMenuId={setOpenMenuId}
+                    toggleGoalComplete={toggleGoalComplete}
+                    incrementGoal={incrementGoal}
+                    updateGoal={updateGoal}
+                    deleteGoal={deleteGoal}
+                    confirm={confirm}
+                    getStatusColor={getStatusColor}
+                    getStatusLabel={getStatusLabel}
+                  />
+                ))}
+              </div>
+            )}
+            {activeGoals.length > 0 && (
+              <div className="space-y-2">
+                {overdueGoals.length > 0 && <div className="text-xs font-medium text-on-surface-variant/70">Active ({activeGoals.length})</div>}
+                {activeGoals.map((goal) => (
+                  <GoalRow
+                    key={goal.id}
+                    goal={goal}
+                    openMenuId={openMenuId}
+                    setOpenMenuId={setOpenMenuId}
+                    toggleGoalComplete={toggleGoalComplete}
+                    incrementGoal={incrementGoal}
+                    updateGoal={updateGoal}
+                    deleteGoal={deleteGoal}
+                    confirm={confirm}
+                    getStatusColor={getStatusColor}
+                    getStatusLabel={getStatusLabel}
+                  />
+                ))}
+              </div>
+            )}
+            {completedGoals.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-primary/80">Completed ({completedGoals.length})</div>
+                {completedGoals.map((goal) => (
+                  <GoalRow
+                    key={goal.id}
+                    goal={goal}
+                    openMenuId={openMenuId}
+                    setOpenMenuId={setOpenMenuId}
+                    toggleGoalComplete={toggleGoalComplete}
+                    incrementGoal={incrementGoal}
+                    updateGoal={updateGoal}
+                    deleteGoal={deleteGoal}
+                    confirm={confirm}
+                    getStatusColor={getStatusColor}
+                    getStatusLabel={getStatusLabel}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
+  );
+}
+
+type GoalItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  goalType: 'weekly' | 'dated' | 'open';
+  targetDate: string | null;
+  targetCount: number;
+  currentCount: number;
+  completed: boolean;
+  completedAt: string | null;
+  lifeArea?: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+function GoalRow({
+  goal, openMenuId, setOpenMenuId, toggleGoalComplete, incrementGoal, updateGoal, deleteGoal, confirm, getStatusColor, getStatusLabel,
+}: {
+  goal: GoalItem;
+  openMenuId: string | null;
+  setOpenMenuId: (id: string | null) => void;
+  toggleGoalComplete: (id: string) => void;
+  incrementGoal: (id: string) => void;
+  updateGoal: (id: string, data: { isActive?: boolean }) => void;
+  deleteGoal: (id: string) => void;
+  confirm: (opts: { message: string }) => Promise<boolean>;
+  getStatusColor: (goal: GoalItem) => string;
+  getStatusLabel: (goal: GoalItem) => string;
+}) {
+  const progress = goal.targetCount > 0
+    ? Math.min((goal.currentCount / goal.targetCount) * 100, 100)
+    : 0;
+  const menuOpen = openMenuId === goal.id;
+
+  return (
+    <div
+      className={`bg-surface-container-low rounded-md border p-4 transition-all ${
+        goal.completed
+          ? 'border-primary/20 opacity-75'
+          : 'border-outline-variant/15'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        {/* Left: Checkbox + Info */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <button
+            onClick={() => toggleGoalComplete(goal.id)}
+            className={`mt-0.5 w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+              goal.completed
+                ? 'bg-primary border-primary'
+                : 'border-outline-variant/40 hover:border-primary/60'
+            }`}
+          >
+            {goal.completed && (
+              <span className="material-symbols-outlined text-[14px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                check
+              </span>
+            )}
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className={`font-headline text-sm font-semibold ${goal.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+                {goal.title}
+              </h3>
+              <LifeAreaBadge lifeArea={goal.lifeArea} />
+            </div>
+            {goal.description && (
+              <p className="font-body text-xs text-on-surface-variant mt-1 truncate">{goal.description}</p>
+            )}
+
+            {/* Progress bar for quantifiable goals */}
+            {goal.targetCount > 1 && (
+              <div className="mt-2 flex items-center gap-3">
+                <div className="flex-1 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-scanline-gradient rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-on-surface-variant whitespace-nowrap">
+                  {goal.currentCount}/{goal.targetCount}
+                </span>
+                {!goal.completed && (
+                  <button
+                    onClick={() => incrementGoal(goal.id)}
+                    className="w-6 h-6 rounded-sm bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">add</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Meta */}
+        <div className="flex items-start gap-3 flex-shrink-0">
+          <div className="text-right flex flex-col items-end gap-1 min-w-[88px] leading-tight">
+            <span className={`text-xs font-medium ${getStatusColor(goal)} whitespace-nowrap`}>
+              {getStatusLabel(goal)}
+            </span>
+            <span className="text-xs text-on-surface-variant/60 whitespace-nowrap capitalize">
+              {goal.goalType}
+            </span>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setOpenMenuId(menuOpen ? null : goal.id)}
+              className="text-on-surface-variant/60 hover:text-on-surface transition-colors p-1"
+              title="More actions"
+            >
+              <span className="material-symbols-outlined text-[18px]">more_vert</span>
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                <div className="absolute right-0 top-full mt-1 z-20 bg-surface-container-high border border-outline-variant/20 rounded-sm shadow-lg py-1 min-w-[140px]">
+                  <button
+                    onClick={() => { updateGoal(goal.id, { isActive: goal.isActive === false }); setOpenMenuId(null); }}
+                    className="w-full text-left px-3 py-1.5 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
+                    {goal.isActive === false ? 'Unarchive' : 'Archive'}
+                  </button>
+                  <button
+                    onClick={async () => { setOpenMenuId(null); if (await confirm({ message: 'Delete this goal?' })) deleteGoal(goal.id); }}
+                    className="w-full text-left px-3 py-1.5 text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

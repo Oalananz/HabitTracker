@@ -1,6 +1,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface ExpenseCategorySlice {
   categoryName: string;
@@ -19,14 +20,9 @@ export default function ExpenseBreakdownChart({ data }: ExpenseBreakdownChartPro
 
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-          <span className="text-primary">&gt;</span> EXPENSE_BREAKDOWN
-        </h3>
-        <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">THIS MONTH</span>
-      </div>
+      <SectionHeader title="Expense breakdown" rightContent="This month" />
       {!hasData ? (
-        <div className="h-[250px] flex items-center justify-center font-mono text-xs text-outline">
+        <div className="h-[120px] flex items-center justify-center text-xs text-on-surface-variant/50">
           No expenses recorded this month.
         </div>
       ) : (

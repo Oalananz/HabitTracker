@@ -7,13 +7,29 @@ import { clearAllLocalData } from '@/lib/offline/db';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
 import PageHeader from '@/components/ui/PageHeader';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useConfirm } from '@/components/ui/useConfirm';
+
+type SettingsTab = 'profile' | 'preferences' | 'life-areas' | 'data' | 'appearance' | 'advanced';
+
+const TABS: { key: SettingsTab; label: string; icon: string }[] = [
+  { key: 'profile', label: 'Profile', icon: 'person' },
+  { key: 'preferences', label: 'Preferences', icon: 'tune' },
+  { key: 'life-areas', label: 'Life Areas', icon: 'grid_view' },
+  { key: 'data', label: 'Data & Backup', icon: 'cloud_done' },
+  { key: 'appearance', label: 'Appearance', icon: 'palette' },
+  { key: 'advanced', label: 'Advanced', icon: 'build' },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, logout, userPreferences, fetchUserPreferences, saveUserPreferences, setUser } = useStore();
   const { addToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saving, setSaving] = useState(false);
 
   // Controlled profile inputs
@@ -78,7 +94,11 @@ export default function SettingsPage() {
   };
 
   const handleClearLocalCache = async () => {
-    setShowClearConfirm(false);
+    if (!(await confirm({
+      title: 'Clear local cache',
+      message: "This clears offline data stored on this device and re-pulls from the server. Unsynced offline changes will be lost.",
+      confirmLabel: 'Clear cache',
+    }))) return;
     await clearAllLocalData();
     addToast('Local cache cleared — re-syncing…', 'info', 2500);
     window.location.href = '/today';
@@ -92,136 +112,140 @@ export default function SettingsPage() {
   const focusAreas = userPreferences?.focusAreas || [];
 
   return (
-    <div className="space-y-8 animate-page-enter">
-      <PageHeader
-        title="system/settings"
-        description="Adjust your profile, goals, focus areas, and local data."
-      />
+    <div className="space-y-6 animate-page-enter">
+      {ConfirmDialog}
+      <PageHeader title="Settings" eyebrow="system/settings" description="Manage your profile, preferences, and data." />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile */}
-        <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-primary">person</span>
-            <h3 className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; system/profile</h3>
-          </div>
-
-          <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">USERNAME_ALIAS</label>
-            <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
-              <span className="text-primary font-mono text-sm">&gt;</span>
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-transparent text-on-surface text-sm font-body border-none p-0 focus:ring-0" id="settings-username" />
-            </div>
-          </div>
-
-          <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">STATUS_MESSAGE</label>
-            <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
-              <span className="text-primary font-mono text-sm">&gt;</span>
-              <input type="text" value={statusMsg} onChange={(e) => setStatusMsg(e.target.value)} className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0" placeholder="Compiling habits..." id="settings-status" />
-            </div>
-          </div>
-
-          <button onClick={handleSaveProfile} disabled={saving} className="w-full px-4 py-2 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50">
-            {saving ? 'SAVING...' : 'SAVE PROFILE'}
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-1 border-b border-outline-variant/10 pb-0">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-label border-b-2 -mb-px transition-colors ${
+              activeTab === tab.key
+                ? 'text-primary border-primary'
+                : 'text-on-surface-variant/70 border-transparent hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+            {tab.label}
           </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Goals & Preferences */}
-          <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-6 space-y-5">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-secondary">tune</span>
-              <h3 className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; system/preferences</h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">FOCUS_GOAL (h)</label>
-                <input type="number" min={0} max={24} step={0.5} value={focusGoal} onChange={(e) => setFocusGoal(parseFloat(e.target.value) || 0)} className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-sm focus:border-primary/50 focus:ring-0" />
-              </div>
-              <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">SLEEP_GOAL (h)</label>
-                <input type="number" min={0} max={24} step={0.5} value={sleepGoal} onChange={(e) => setSleepGoal(parseFloat(e.target.value) || 0)} className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-on-surface text-sm focus:border-primary/50 focus:ring-0" />
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="font-label text-xs uppercase tracking-wider text-on-surface">ACHIEVEMENT_ALERTS</div>
-                <div className="font-body text-xs text-on-surface-variant mt-0.5">Toasts when you unlock achievements.</div>
-              </div>
-              <button onClick={() => setAlerts((a) => !a)} className={`toggle-switch ${alerts ? 'active' : ''}`} aria-pressed={alerts} />
-            </div>
-
-            <button onClick={handleSavePrefs} disabled={saving} className="w-full px-4 py-2 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50">
-              SAVE PREFERENCES
-            </button>
-          </div>
-
-          {/* Life Areas / onboarding */}
-          <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-primary">grid_view</span>
-              <h3 className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; system/life_areas</h3>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {LIFE_AREAS.map((area) => {
-                const on = focusAreas.length === 0 || focusAreas.includes(area.id);
-                return (
-                  <span key={area.id} className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px]" style={{ color: on ? area.color : '#8a8f98', backgroundColor: on ? `${area.color}1a` : 'transparent', border: `1px solid ${on ? `${area.color}40` : 'rgba(255,255,255,0.08)'}` }}>
-                    {area.shortLabel}
-                  </span>
-                );
-              })}
-            </div>
-            <button onClick={handleRerunOnboarding} className="w-full px-4 py-2.5 bg-surface-container-high border border-outline-variant/20 rounded-sm font-label text-xs uppercase text-on-surface-variant hover:text-primary transition-colors">
-              Re-run setup / edit focus areas
-            </button>
-          </div>
-
-          {/* Data */}
-          <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-tertiary">database</span>
-              <h3 className="font-label text-xs uppercase tracking-widest text-on-surface-variant">&gt; system/data</h3>
-            </div>
-            <p className="font-body text-xs text-on-surface-variant">
-              Clears this device&apos;s offline cache and re-syncs from the server. Your account data is not deleted.
-            </p>
-            <button onClick={() => setShowClearConfirm(true)} className="w-full px-4 py-2.5 border border-outline-variant/30 rounded-sm font-label text-xs uppercase tracking-wider text-on-surface-variant hover:text-primary hover:border-primary/40 transition-colors">
-              Clear local cache & re-sync
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
+
+      {activeTab === 'profile' && (
+        <Card className="max-w-lg space-y-5">
+          <div>
+            <label className="text-xs text-on-surface-variant/80 block mb-1.5" htmlFor="settings-username">Username</label>
+            <Input id="settings-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-on-surface-variant/80 block mb-1.5" htmlFor="settings-status">Status message</label>
+            <Input id="settings-status" type="text" value={statusMsg} onChange={(e) => setStatusMsg(e.target.value)} placeholder="What are you working on?" />
+          </div>
+          <Button variant="primary" onClick={handleSaveProfile} disabled={saving} className="w-full">
+            {saving ? 'Saving…' : 'Save profile'}
+          </Button>
+        </Card>
+      )}
+
+      {activeTab === 'preferences' && (
+        <Card className="max-w-lg space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Focus goal (hours/day)</label>
+              <Input type="number" min={0} max={24} step={0.5} value={focusGoal} onChange={(e) => setFocusGoal(parseFloat(e.target.value) || 0)} />
+            </div>
+            <div>
+              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Sleep goal (hours/night)</label>
+              <Input type="number" min={0} max={24} step={0.5} value={sleepGoal} onChange={(e) => setSleepGoal(parseFloat(e.target.value) || 0)} />
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-sm text-on-surface">Achievement alerts</div>
+              <div className="text-xs text-on-surface-variant/80 mt-0.5">Toasts when you unlock achievements.</div>
+            </div>
+            <button onClick={() => setAlerts((a) => !a)} className={`toggle-switch ${alerts ? 'active' : ''}`} aria-pressed={alerts} />
+          </div>
+          <Button variant="primary" onClick={handleSavePrefs} disabled={saving} className="w-full">
+            Save preferences
+          </Button>
+        </Card>
+      )}
+
+      {activeTab === 'life-areas' && (
+        <Card className="max-w-lg space-y-4">
+          <p className="text-sm text-on-surface-variant">Areas you're currently focused on. Others stay hidden from quick-add menus.</p>
+          <div className="flex flex-wrap gap-1.5">
+            {LIFE_AREAS.map((area) => {
+              const on = focusAreas.length === 0 || focusAreas.includes(area.id);
+              return (
+                <span
+                  key={area.id}
+                  className="text-xs px-2 py-1 rounded-sm"
+                  style={{
+                    color: on ? area.color : 'var(--color-on-surface-variant)',
+                    backgroundColor: on ? `${area.color}1a` : 'transparent',
+                    border: `1px solid ${on ? `${area.color}40` : 'rgba(255,255,255,0.08)'}`,
+                  }}
+                >
+                  {area.shortLabel}
+                </span>
+              );
+            })}
+          </div>
+          <Button variant="secondary" onClick={handleRerunOnboarding} className="w-full">
+            Re-run setup / edit focus areas
+          </Button>
+        </Card>
+      )}
+
+      {activeTab === 'data' && (
+        <Card className="max-w-lg space-y-3">
+          <div className="flex items-center gap-2 text-primary">
+            <span className="material-symbols-outlined text-[20px]">cloud_done</span>
+            <span className="text-sm font-medium text-on-surface">Auto-sync is on</span>
+          </div>
+          <p className="text-sm text-on-surface-variant">
+            Your data saves locally first and syncs to the cloud automatically — when the
+            app goes idle, when you switch tabs, or as soon as you're back online. There's
+            nothing to back up manually.
+          </p>
+        </Card>
+      )}
+
+      {activeTab === 'appearance' && (
+        <Card className="max-w-lg space-y-3">
+          <p className="text-sm text-on-surface-variant">
+            This app currently uses a single dark theme. More appearance options may be
+            added here in the future.
+          </p>
+        </Card>
+      )}
+
+      {activeTab === 'advanced' && (
+        <Card className="max-w-lg space-y-3">
+          <h3 className="text-sm font-medium text-on-surface">Clear local cache & re-sync</h3>
+          <p className="text-sm text-on-surface-variant">
+            Clears this device's offline cache and re-syncs from the server. Your account
+            data is not deleted.
+          </p>
+          <Button variant="secondary" onClick={handleClearLocalCache}>
+            Clear local cache & re-sync
+          </Button>
+        </Card>
+      )}
 
       {/* Logout */}
       <div className="flex justify-between items-center pt-4 border-t border-outline-variant/10">
-        <div className="font-mono text-[10px] text-outline">SYSTEM_VERSION: v2.0.0</div>
-        <button onClick={handleLogout} className="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors font-label text-xs uppercase tracking-wider" id="settings-logout">
+        <div className="text-xs text-on-surface-variant/50">Version 2.0.0</div>
+        <button onClick={handleLogout} className="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors text-sm" id="settings-logout">
           <span className="material-symbols-outlined text-[16px]">logout</span>
-          TERMINATE SESSION
+          Log out
         </button>
       </div>
-
-      {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[120] animate-fade-in" onClick={() => setShowClearConfirm(false)}>
-          <div className="bg-surface-container border border-outline-variant/30 rounded-md p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="material-symbols-outlined text-tertiary text-[20px]">cached</span>
-              <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">Clear local cache</h3>
-            </div>
-            <p className="font-body text-sm text-on-surface-variant mb-5">
-              This clears offline data stored on this device and re-pulls from the server. Unsynced offline changes will be lost.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowClearConfirm(false)} className="px-4 py-2 text-xs font-label uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleClearLocalCache} className="px-4 py-2 bg-tertiary text-on-tertiary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-colors">Clear Cache</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

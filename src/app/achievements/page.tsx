@@ -2,19 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
+import PageHeader from '@/components/ui/PageHeader';
 import AchievementCard from '@/components/achievements/AchievementCard';
 import AchievementToast from '@/components/achievements/AchievementToast';
 
 const CATEGORIES = ['ALL', 'STREAK', 'SCORE', 'WORSHIP', 'FOCUS', 'DISCIPLINE', 'COMPOUND'];
+const RARE_TIERS = new Set(['RARE', 'EPIC', 'LEGENDARY']);
 
-type FilterMode = 'ALL' | 'UNLOCKED' | 'LOCKED';
+type TabMode = 'ALL' | 'UNLOCKED' | 'LOCKED' | 'ALMOST' | 'RARE';
+
+const TABS: { key: TabMode; label: string }[] = [
+  { key: 'ALL', label: 'All' },
+  { key: 'UNLOCKED', label: 'Unlocked' },
+  { key: 'LOCKED', label: 'Locked' },
+  { key: 'ALMOST', label: 'Almost there' },
+  { key: 'RARE', label: 'Rare' },
+];
 
 export default function AchievementsPage() {
   const { achievements, isAchievementsLoading, fetchAchievements, userStats, fetchUserStats, markAchievementsSeen } = useStore();
 
   const [selectedCat, setSelectedCat] = useState('ALL');
-  const [filterMode, setFilterMode] = useState<FilterMode>('ALL');
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(CATEGORIES));
+  const [tabMode, setTabMode] = useState<TabMode>('ALL');
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     void fetchAchievements();
@@ -22,10 +32,15 @@ export default function AchievementsPage() {
     markAchievementsSeen();
   }, [fetchAchievements, fetchUserStats, markAchievementsSeen]);
 
+  const isAlmostThere = (a: (typeof achievements)[number]) =>
+    !a.unlocked && !!a.progress && a.progress.target > 0 && a.progress.current / a.progress.target >= 0.5;
+
   const filtered = achievements.filter(a => {
     if (selectedCat !== 'ALL' && a.cat !== selectedCat) return false;
-    if (filterMode === 'UNLOCKED' && !a.unlocked) return false;
-    if (filterMode === 'LOCKED' && a.unlocked) return false;
+    if (tabMode === 'UNLOCKED' && !a.unlocked) return false;
+    if (tabMode === 'LOCKED' && a.unlocked) return false;
+    if (tabMode === 'ALMOST' && !isAlmostThere(a)) return false;
+    if (tabMode === 'RARE' && !RARE_TIERS.has(a.rarity)) return false;
     return true;
   });
 
@@ -63,20 +78,17 @@ export default function AchievementsPage() {
       <AchievementToast />
 
       {/* Header */}
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> system/achievements --unlock
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          Permanent milestones earned through consistent discipline.
-        </p>
-      </header>
+      <PageHeader
+        title="Achievements"
+        eyebrow="system/achievements"
+        description="Permanent milestones earned through consistent discipline."
+      />
 
       {/* Progress Banner */}
       <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-5">
         <div className="flex justify-between items-center mb-2">
-          <div className="font-mono text-xs uppercase tracking-widest text-on-surface-variant">&gt; UNLOCK_PROGRESS</div>
-          <div className="font-headline text-2xl font-black text-primary">
+          <div className="text-sm text-on-surface-variant">Unlock progress</div>
+          <div className="font-headline text-2xl font-bold text-primary">
             {unlockedCount}<span className="text-on-surface-variant text-lg font-normal">/{totalCount}</span>
           </div>
         </div>
@@ -86,7 +98,7 @@ export default function AchievementsPage() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-2 font-mono text-[10px] text-outline">
+        <div className="mt-2 text-xs text-on-surface-variant/70">
           {totalCount - unlockedCount} remaining · {progress.toFixed(1)}% complete
         </div>
       </div>
@@ -95,57 +107,52 @@ export default function AchievementsPage() {
       {userStats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'FOCUS_STREAK', value: `${userStats.focusStreak}d`, icon: 'psychology' },
-            { label: 'PRAYER_STREAK', value: `${userStats.prayerStreak}d`, icon: 'mosque' },
-            { label: 'NO_REELS', value: `${userStats.noReelsStreak}d`, icon: 'tv_off' },
-            { label: 'TOTAL_SCORE', value: `${userStats.totalScore}`, icon: 'grade' },
+            { label: 'Focus streak', value: `${userStats.focusStreak}d`, icon: 'psychology' },
+            { label: 'Prayer streak', value: `${userStats.prayerStreak}d`, icon: 'mosque' },
+            { label: 'No reels', value: `${userStats.noReelsStreak}d`, icon: 'tv_off' },
+            { label: 'Total score', value: `${userStats.totalScore}`, icon: 'grade' },
           ].map(item => (
             <div key={item.label} className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3 text-center">
               <span className="material-symbols-outlined text-primary text-[18px] block mb-1">{item.icon}</span>
-              <div className="font-headline text-xl font-black text-primary">{item.value}</div>
-              <div className="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mt-0.5">{item.label}</div>
+              <div className="font-headline text-xl font-bold text-primary">{item.value}</div>
+              <div className="text-xs text-on-surface-variant/70 mt-0.5">{item.label}</div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {/* Category filter */}
-        <div className="flex gap-1 flex-wrap">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCat(cat)}
-              className={`px-3 py-1 rounded-sm font-mono text-[10px] uppercase tracking-wider border transition-all ${
-                selectedCat === cat
-                  ? 'bg-primary/15 border-primary/40 text-primary'
-                  : 'bg-surface-container-lowest border-outline-variant/15 text-on-surface-variant hover:border-primary/30'
-              }`}
-            >
-              {cat === 'ALL' ? 'ALL' : `${CAT_ICONS[cat] ? '' : ''}${cat}`}
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-surface-container-lowest rounded-sm p-1 border border-outline-variant/15 flex-wrap">
+        {TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setTabMode(tab.key)}
+            className={`flex-1 min-w-fit px-3 py-2 rounded-sm font-label text-sm transition-all ${
+              tabMode === tab.key
+                ? 'bg-primary text-on-primary font-semibold'
+                : 'text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        <div className="flex-1" />
-
-        {/* Locked/Unlocked filter */}
-        <div className="flex gap-1">
-          {(['ALL', 'UNLOCKED', 'LOCKED'] as FilterMode[]).map(mode => (
-            <button
-              key={mode}
-              onClick={() => setFilterMode(mode)}
-              className={`px-3 py-1 rounded-sm font-mono text-[10px] uppercase tracking-wider border transition-all ${
-                filterMode === mode
-                  ? 'bg-primary/15 border-primary/40 text-primary'
-                  : 'bg-surface-container-lowest border-outline-variant/15 text-on-surface-variant hover:border-primary/30'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
+      {/* Category filter */}
+      <div className="flex gap-1.5 flex-wrap">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCat(cat)}
+            className={`px-3 py-1.5 rounded-sm text-xs border transition-all capitalize ${
+              selectedCat === cat
+                ? 'bg-primary/15 border-primary/40 text-primary'
+                : 'bg-surface-container-lowest border-outline-variant/15 text-on-surface-variant hover:border-primary/30'
+            }`}
+          >
+            {cat === 'ALL' ? 'All' : cat.toLowerCase()}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
@@ -182,8 +189,8 @@ export default function AchievementsPage() {
                     <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                       {CAT_ICONS[cat] || 'category'}
                     </span>
-                    <span className="font-headline text-sm font-bold uppercase tracking-wide text-on-surface">{cat}</span>
-                    <span className={`px-2 py-0.5 rounded-[2px] font-mono text-[9px] ${
+                    <span className="font-headline text-sm font-semibold text-on-surface capitalize">{cat.toLowerCase()}</span>
+                    <span className={`px-2 py-0.5 rounded-[2px] text-xs ${
                       unlockedInCat === items.length
                         ? 'bg-primary/15 text-primary'
                         : 'bg-surface-container-highest text-on-surface-variant'

@@ -6,6 +6,7 @@ import CreateJourney from './CreateJourney';
 import EditJourney from './EditJourney';
 import JourneyList from './JourneyList';
 import JourneyDetails from './JourneyDetails';
+import Button from '@/components/ui/Button';
 import type { JourneyCatalogResponse, JourneyDetailsResponse } from './types';
 
 const emptyCatalog: JourneyCatalogResponse = {
@@ -40,6 +41,8 @@ export default function CompetitiveMode() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasAutoExpandedRef = useRef(false);
 
   const request = useCallback(async <T,>(url: string, init?: RequestInit) => {
     const res = await fetch(url, {
@@ -106,6 +109,16 @@ export default function CompetitiveMode() {
       setIsCatalogLoading(false);
     });
   }, [loadCatalog]);
+
+  // Auto-expand once if the user already has joined journeys or pending invites.
+  useEffect(() => {
+    if (hasAutoExpandedRef.current) return;
+    if (catalog.journeys.length > 0 || catalog.pendingInvites.length > 0) {
+      hasAutoExpandedRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsExpanded(true);
+    }
+  }, [catalog]);
 
   useEffect(() => {
     if (!selectedJourneyId) return;
@@ -335,30 +348,42 @@ export default function CompetitiveMode() {
     }, 'Journey deleted.');
   };
 
+  const hasActivity = catalog.journeys.length > 0 || catalog.pendingInvites.length > 0;
+
   return (
     <section className="space-y-6">
-      <header className="flex flex-col md:flex-row md:justify-between md:items-start bg-surface-container-low p-6 md:p-8 rounded-xl border border-outline-variant/10 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10">
-          <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight text-on-surface flex items-center lg:gap-3">
-            <span className="text-primary hidden lg:inline">&gt;</span> 
-            <span className="bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">COMPETITIVE RECOVERY</span>
-          </h2>
-          <p className="font-body text-sm md:text-base text-on-surface-variant max-w-2xl mt-3 leading-relaxed">
+      <button
+        onClick={() => setIsExpanded((v) => !v)}
+        className="w-full flex items-center justify-between bg-surface-container-low p-5 rounded-md border border-outline-variant/15 hover:border-outline-variant/25 transition-colors"
+      >
+        <div className="text-left">
+          <h2 className="font-headline text-base font-semibold text-on-surface">Competitive recovery</h2>
+          <p className="text-sm text-on-surface-variant/80 mt-0.5">
+            {hasActivity
+              ? `${catalog.journeys.length} joined · ${catalog.pendingInvites.length} pending invite${catalog.pendingInvites.length !== 1 ? 's' : ''}`
+              : 'Team up with others and share accountability — optional, nothing set up yet.'}
+          </p>
+        </div>
+        <span className={`material-symbols-outlined text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+          expand_more
+        </span>
+      </button>
+
+      {isExpanded && (
+        <>
+      <header className="flex flex-col md:flex-row md:justify-between md:items-start bg-surface-container-low p-6 rounded-md border border-outline-variant/15">
+        <div>
+          <p className="font-body text-sm text-on-surface-variant max-w-2xl leading-relaxed">
             Assemble your team, define strict rules, and fight together. Shared journeys feature transparent failures, live rankings, automated consequences, and social accountability loops.
           </p>
         </div>
-        <button
+        <Button
+          variant={isCreating ? 'secondary' : 'primary'}
           onClick={() => setIsCreating(!isCreating)}
-          className={`mt-4 md:mt-0 relative z-10 px-5 py-3 rounded-lg font-headline font-bold text-xs md:text-sm uppercase tracking-wider transition-all duration-300 shadow-md flex items-center gap-2
-            ${isCreating 
-              ? 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/30' 
-              : 'bg-primary text-on-primary hover:bg-primary/90 hover:scale-[1.02]'
-            }
-          `}
+          className="mt-4 md:mt-0 flex-shrink-0"
         >
-          {isCreating ? 'Cancel Creation' : 'Forge New Arena'}
-        </button>
+          {isCreating ? 'Cancel creation' : 'Forge new arena'}
+        </Button>
       </header>
 
       {notice && (
@@ -424,6 +449,8 @@ export default function CompetitiveMode() {
           onDelete={handleDelete}
         />
       </div>
+        </>
+      )}
     </section>
   );
 }

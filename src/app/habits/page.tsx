@@ -69,7 +69,8 @@ export default function HabitsPage() {
   return (
     <div className="space-y-8 animate-page-enter">
         <PageHeader
-          title="system/config --habits"
+          title="Habits"
+          eyebrow="system/habits"
           description="Manage recurring behavioral protocols and track consistency streaks across system sectors."
         />
         {ConfirmDialog}

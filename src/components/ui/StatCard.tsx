@@ -23,19 +23,10 @@ export default function StatCard({ label, value, unit, subtitle, icon, variant =
   }[variant];
 
   return (
-    <div className={`glass rounded-md p-5 border ${borderColor} relative overflow-hidden group hover:translate-y-[-2px] hover:shadow-xl ${glowColor} transition-all duration-300 hover-border-glow`}>
-      {variant === 'primary' && (
-        <div className="absolute -right-8 -top-8 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors duration-500" />
-      )}
-      {variant === 'secondary' && (
-        <div className="absolute -right-8 -top-8 w-24 h-24 bg-secondary/5 rounded-full blur-2xl group-hover:bg-secondary/10 transition-colors duration-500" />
-      )}
-      {variant === 'warning' && (
-        <div className="absolute -right-8 -top-8 w-24 h-24 bg-tertiary/5 rounded-full blur-2xl group-hover:bg-tertiary/10 transition-colors duration-500" />
-      )}
+    <div className={`bg-surface-container-low rounded-md p-5 border ${borderColor} relative overflow-hidden group hover:translate-y-[-1px] hover:shadow-lg ${glowColor} transition-all duration-200`}>
       <div className="flex justify-between items-start mb-3">
-        <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-          &gt; {label}
+        <span className="font-label text-xs text-on-surface-variant/80">
+          {label}
         </span>
         {icon && (
           <span className="material-symbols-outlined text-[18px] text-on-surface-variant/50 group-hover:text-on-surface-variant transition-colors duration-300">
@@ -44,11 +35,11 @@ export default function StatCard({ label, value, unit, subtitle, icon, variant =
         )}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="font-headline text-4xl font-black text-on-surface tracking-tighter animate-count" style={{ letterSpacing: '-0.02em' }}>
+        <span className="font-headline text-3xl font-bold text-on-surface tracking-tight">
           {value}
         </span>
         {unit && (
-          <span className="font-label text-sm text-on-surface-variant uppercase">
+          <span className="font-label text-sm text-on-surface-variant">
             {unit}
           </span>
         )}

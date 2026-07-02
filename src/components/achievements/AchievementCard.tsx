@@ -35,8 +35,8 @@ export default function AchievementCard({
           {unlocked ? 'workspace_premium' : 'lock'}
         </span>
         <div className="min-w-0">
-          <div className={`font-headline text-xs font-bold uppercase truncate ${unlocked ? s.text : 'text-on-surface-variant'}`}>{name}</div>
-          <div className="font-mono text-[9px] text-on-surface-variant truncate">{desc}</div>
+          <div className={`font-headline text-xs font-semibold truncate ${unlocked ? s.text : 'text-on-surface-variant'}`}>{name}</div>
+          <div className="text-[11px] text-on-surface-variant/70 truncate">{desc}</div>
         </div>
       </div>
     );
@@ -66,11 +66,11 @@ export default function AchievementCard({
           {/* Text */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className={`font-headline text-sm font-bold uppercase ${unlocked ? s.text : 'text-on-surface-variant'}`}>
+              <span className={`font-headline text-sm font-semibold ${unlocked ? s.text : 'text-on-surface-variant'}`}>
                 {name}
               </span>
-              <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[8px] uppercase tracking-wider ${s.badgeBg} ${s.text}`}>
-                {rarity}
+              <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[11px] capitalize ${s.badgeBg} ${s.text}`}>
+                {rarity.toLowerCase()}
               </span>
             </div>
             <p className="font-body text-xs text-on-surface-variant">{desc}</p>
@@ -79,8 +79,8 @@ export default function AchievementCard({
             {!unlocked && progress && (
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between">
-                  <span className="font-mono text-[9px] text-on-surface-variant uppercase">PROGRESS</span>
-                  <span className="font-mono text-[9px] text-on-surface-variant">{progress.current}/{progress.target}</span>
+                  <span className="text-[11px] text-on-surface-variant/70">Progress</span>
+                  <span className="text-[11px] text-on-surface-variant/70">{progress.current}/{progress.target}</span>
                 </div>
                 <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
                   <div
@@ -92,8 +92,8 @@ export default function AchievementCard({
             )}
 
             {unlocked && unlockedAt && (
-              <div className="mt-1.5 font-mono text-[9px] text-outline uppercase tracking-wide">
-                unlocked: {new Date(unlockedAt).toLocaleDateString()}
+              <div className="mt-1.5 text-[11px] text-on-surface-variant/60">
+                Unlocked {new Date(unlockedAt).toLocaleDateString()}
               </div>
             )}
           </div>
@@ -101,8 +101,8 @@ export default function AchievementCard({
 
         {/* Unlocked badge */}
         {unlocked && (
-          <span className={`flex-shrink-0 text-[10px] font-label uppercase px-2 py-1 rounded-[2px] ${s.badgeBg} ${s.text}`}>
-            ✓ UNLOCKED
+          <span className={`flex-shrink-0 text-xs font-label px-2 py-1 rounded-[2px] ${s.badgeBg} ${s.text}`}>
+            ✓ Unlocked
           </span>
         )}
       </div>

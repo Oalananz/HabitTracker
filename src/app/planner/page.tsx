@@ -3,6 +3,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
+import { Select } from '@/components/ui/Input';
+import { useConfirm } from '@/components/ui/useConfirm';
 import PlanCard from '@/components/planner/PlanCard';
 import PlanForm from '@/components/planner/PlanForm';
 import DayTimeline from '@/components/planner/DayTimeline';
@@ -31,8 +35,8 @@ export default function PlannerPage() {
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [timelineDraft, setTimelineDraft] = useState<{ startTime: string; endTime: string } | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Derived week range (stable strings for deps)
   const weekStartStr = weekAnchor.startOf('week').format('YYYY-MM-DD');
@@ -88,9 +92,8 @@ export default function PlannerPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (deleteConfirm !== id) { setDeleteConfirm(id); return; }
+    if (!(await confirm({ title: 'Delete plan', message: 'This plan will be permanently removed. This action cannot be undone.' }))) return;
     await deletePlan(id);
-    setDeleteConfirm(null);
     loadData();
   };
 
@@ -170,43 +173,39 @@ export default function PlannerPage() {
   const goWeekToday = () => setWeekAnchor(dayjs().startOf('week'));
   const isCurrentWeek = weekStart.format('YYYY-MM-DD') === dayjs().startOf('week').format('YYYY-MM-DD');
 
+  const dateSubtitle =
+    view === 'daily' ? dayjs(plannerDate).format('dddd, MMM D') :
+    view === 'weekly' ? `${weekStart.format('MMM D')} – ${weekEnd.format('MMM D, YYYY')}` :
+    currentMonth.format('MMMM YYYY');
+
   return (
     <div className="space-y-6 animate-page-enter">
+      {ConfirmDialog}
 
       {/* ── Header ── */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tighter text-on-surface">
-            <span className="text-primary">&gt;</span> system/planner
-          </h1>
-          <p className="font-mono text-xs text-on-surface-variant mt-1">
-            {view === 'daily' && `-- date ${plannerDate}`}
-            {view === 'weekly' && `-- week ${weekStart.format('MMM D')} → ${weekEnd.format('MMM D, YYYY')}`}
-            {view === 'monthly' && `-- month ${currentMonth.format('MMMM YYYY')}`}
-          </p>
-        </div>
-        <button
-          onClick={() => { setShowForm(true); setEditingPlan(null); }}
-          className="flex items-center gap-2 px-4 py-2 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity tracking-wider"
-          id="new-plan-btn"
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          New Plan
-        </button>
-      </header>
+      <PageHeader
+        title="Planner"
+        eyebrow="system/planner"
+        description={dateSubtitle}
+        actions={
+          <Button variant="primary" icon="add" onClick={() => { setShowForm(true); setEditingPlan(null); }} id="new-plan-btn">
+            New plan
+          </Button>
+        }
+      />
 
       {/* ── Summary Stats ── */}
       {plansSummary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="TODAY" value={plansSummary.todayCount} subtitle={`${plansSummary.todayCompleted} done`} icon="today" variant="primary" />
-          <StatCard label="THIS_WEEK" value={plansSummary.weekCount} subtitle={`${plansSummary.weekCompleted} done`} icon="date_range" />
-          <StatCard label="THIS_MONTH" value={plansSummary.monthCount} subtitle={`${plansSummary.monthCompleted} done`} icon="calendar_month" />
-          <StatCard label="OVERDUE" value={plansSummary.overdueCount} subtitle={`${plansSummary.upcomingCount} upcoming`} icon="warning" variant="warning" />
+          <StatCard label="Today" value={plansSummary.todayCount} subtitle={`${plansSummary.todayCompleted} done`} icon="today" variant="primary" />
+          <StatCard label="This week" value={plansSummary.weekCount} subtitle={`${plansSummary.weekCompleted} done`} icon="date_range" />
+          <StatCard label="This month" value={plansSummary.monthCount} subtitle={`${plansSummary.monthCompleted} done`} icon="calendar_month" />
+          <StatCard label="Overdue" value={plansSummary.overdueCount} subtitle={`${plansSummary.upcomingCount} upcoming`} icon="warning" variant="warning" />
         </div>
       )}
 
       {/* ── Controls Bar ── */}
-      <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3 flex flex-wrap gap-3 items-center">
+      <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3 flex flex-wrap gap-4 items-center divide-x divide-outline-variant/10">
 
         {/* View Tabs */}
         <div className="flex gap-0.5 bg-surface-container-lowest rounded-sm p-0.5 border border-outline-variant/10">
@@ -214,9 +213,9 @@ export default function PlannerPage() {
             <button
               key={v}
               onClick={() => switchView(v)}
-              className={`px-3 py-1.5 text-[10px] font-label uppercase tracking-widest rounded-[2px] transition-all ${
+              className={`px-3 py-1.5 text-xs font-label capitalize rounded-[2px] transition-all ${
                 view === v
-                  ? 'bg-primary/20 text-primary font-bold'
+                  ? 'bg-primary/20 text-primary font-semibold'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
               id={`view-${v}`}
@@ -227,7 +226,7 @@ export default function PlannerPage() {
         </div>
 
         {/* Date / Week / Month Navigation */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 pl-4">
           {view === 'daily' && (
             <>
               <button onClick={() => setPlannerDate(dayjs(plannerDate).subtract(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
@@ -243,7 +242,7 @@ export default function PlannerPage() {
                 <span className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
               {plannerDate !== today && (
-                <button onClick={() => setPlannerDate(today)} className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                <button onClick={() => setPlannerDate(today)} className="text-xs text-on-surface-variant hover:text-primary transition-colors">
                   Today
                 </button>
               )}
@@ -255,14 +254,14 @@ export default function PlannerPage() {
               <button onClick={goWeekPrev} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-prev">
                 <span className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
-              <span className="font-headline text-xs font-bold text-on-surface min-w-[160px] text-center uppercase tracking-wide">
+              <span className="font-headline text-xs font-semibold text-on-surface min-w-[160px] text-center">
                 {weekStart.format('MMM D')} – {weekEnd.format('MMM D')}
               </span>
               <button onClick={goWeekNext} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-next">
                 <span className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
               {!isCurrentWeek && (
-                <button onClick={goWeekToday} className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                <button onClick={goWeekToday} className="text-xs text-on-surface-variant hover:text-primary transition-colors">
                   This week
                 </button>
               )}
@@ -274,7 +273,7 @@ export default function PlannerPage() {
               <button onClick={() => setCurrentMonth(m => m.subtract(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
                 <span className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
-              <span className="font-headline text-xs font-bold text-on-surface min-w-[120px] text-center uppercase tracking-wide">
+              <span className="font-headline text-xs font-semibold text-on-surface min-w-[120px] text-center">
                 {currentMonth.format('MMM YYYY')}
               </span>
               <button onClick={() => setCurrentMonth(m => m.add(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
@@ -285,7 +284,7 @@ export default function PlannerPage() {
         </div>
 
         {/* Search + Status Filter */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto pl-4">
           <div className="relative flex-1 min-w-[180px]">
             <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-outline">search</span>
             <input
@@ -296,17 +295,17 @@ export default function PlannerPage() {
               className="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-sm pl-7 pr-3 py-1.5 text-xs font-body text-on-surface placeholder:text-outline focus:border-primary/50 transition-colors"
             />
           </div>
-          <select
+          <Select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-2 py-1.5 text-[10px] font-label text-on-surface-variant uppercase tracking-widest cursor-pointer focus:border-primary/50 transition-colors"
+            className="w-auto py-1.5 text-xs"
           >
-            <option value="all">ALL</option>
-            <option value="planned">PLANNED</option>
-            <option value="in_progress">IN PROG</option>
-            <option value="completed">DONE</option>
-            <option value="cancelled">CANCELLED</option>
-          </select>
+            <option value="all">All statuses</option>
+            <option value="planned">Planned</option>
+            <option value="in_progress">In progress</option>
+            <option value="completed">Done</option>
+            <option value="cancelled">Cancelled</option>
+          </Select>
         </div>
       </div>
 
@@ -358,10 +357,10 @@ export default function PlannerPage() {
             <div className="space-y-4">
               {/* Timeline header */}
               <div className="flex items-center justify-between">
-                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-                  <span className="text-primary">&gt;</span> Timeline — {dayjs(plannerDate).format('ddd, MMM D YYYY')}
+                <span className="text-sm font-medium text-on-surface">
+                  Timeline — {dayjs(plannerDate).format('ddd, MMM D YYYY')}
                 </span>
-                <span className="font-mono text-[10px] text-outline">
+                <span className="text-xs text-on-surface-variant/70">
                   {filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''} · drag to add
                 </span>
               </div>
@@ -380,9 +379,7 @@ export default function PlannerPage() {
               {/* Plan cards list below timeline */}
               {filteredPlans.length > 0 && (
                 <div className="space-y-2">
-                  <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-                    <span className="text-primary">&gt;</span> Plan list
-                  </span>
+                  <span className="text-sm font-medium text-on-surface">Plan list</span>
                   <div className="flex flex-col gap-2">
                     {filteredPlans.map(plan => (
                       <PlanCard
@@ -404,10 +401,10 @@ export default function PlannerPage() {
             <div className="space-y-3">
               {/* Week summary bar */}
               <div className="flex items-center justify-between">
-                <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-                  <span className="text-primary">&gt;</span> Week {weekStart.isoWeek()} — {weekStart.format('MMM D')} to {weekEnd.format('MMM D, YYYY')}
+                <span className="text-sm font-medium text-on-surface">
+                  Week {weekStart.isoWeek()} — {weekStart.format('MMM D')} to {weekEnd.format('MMM D, YYYY')}
                 </span>
-                <span className="font-mono text-[10px] text-outline">{filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}</span>
+                <span className="text-xs text-on-surface-variant/70">{filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}</span>
               </div>
 
               {/* 7-day grid */}
@@ -436,12 +433,12 @@ export default function PlannerPage() {
                         }`}
                         title={`View ${day.format('ddd D')}`}
                       >
-                        <span className={`font-label text-[10px] uppercase tracking-widest font-bold ${isToday ? 'text-primary' : 'text-on-surface-variant'}`}>
+                        <span className={`font-label text-xs font-semibold ${isToday ? 'text-primary' : 'text-on-surface-variant'}`}>
                           {DAY_NAMES[i]}
                         </span>
                         <div className="flex items-center gap-1.5">
                           {dayPlans.length > 0 && (
-                            <span className="font-mono text-[9px] text-outline">{completedCount}/{dayPlans.length}</span>
+                            <span className="text-xs text-on-surface-variant/60">{completedCount}/{dayPlans.length}</span>
                           )}
                           <span className={`font-headline text-xs font-semibold ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                             {day.format('D')}
@@ -452,7 +449,7 @@ export default function PlannerPage() {
                       {/* Plans list */}
                       <div className="flex flex-col gap-1 p-2 flex-1">
                         {dayPlans.length === 0 ? (
-                          <span className="font-mono text-[9px] text-outline/70 text-center mt-6">+</span>
+                          <span className="text-xs text-on-surface-variant/40 text-center mt-6">Nothing planned</span>
                         ) : (
                           dayPlans.map(plan => (
                             <PlanCard
@@ -470,7 +467,7 @@ export default function PlannerPage() {
                       {/* Quick-add for this day */}
                       <button
                         onClick={() => { setPlannerDate(dayStr); setShowForm(true); setEditingPlan(null); }}
-                        className="flex items-center justify-center gap-1 py-1.5 text-[9px] font-label uppercase tracking-widest text-outline hover:text-primary hover:bg-surface-container-low/30 transition-colors rounded-b-md border-t border-outline-variant/10"
+                        className="flex items-center justify-center gap-1 py-1.5 text-xs font-label text-on-surface-variant/60 hover:text-primary hover:bg-surface-container-low/30 transition-colors rounded-b-md border-t border-outline-variant/10"
                         title={`Add plan for ${day.format('ddd D')}`}
                       >
                         <span className="material-symbols-outlined text-[12px]">add</span>
@@ -486,20 +483,20 @@ export default function PlannerPage() {
           {/* MONTHLY VIEW */}
           {view === 'monthly' && (
             <div className="space-y-3">
-              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-                <span className="text-primary">&gt;</span> {currentMonth.format('MMMM YYYY')} — {filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}
+              <span className="text-sm font-medium text-on-surface">
+                {currentMonth.format('MMMM YYYY')} — {filteredPlans.length} plan{filteredPlans.length !== 1 ? 's' : ''}
               </span>
               <div className="bg-surface-container-lowest rounded-md border border-outline-variant/15 overflow-hidden">
                 {/* Day headers */}
                 <div className="grid grid-cols-7 border-b border-outline-variant/15">
                   {DAY_NAMES.map(d => (
-                    <div key={d} className="py-2.5 text-center font-label text-[10px] uppercase tracking-widest text-on-surface-variant">{d}</div>
+                    <div key={d} className="py-2.5 text-center font-label text-xs text-on-surface-variant/70">{d}</div>
                   ))}
                 </div>
                 {/* Day cells */}
                 <div className="grid grid-cols-7">
                   {Array.from({ length: currentMonth.startOf('month').day() }).map((_, i) => (
-                    <div key={`e-${i}`} className="border-b border-r border-outline-variant/10 min-h-[80px]" />
+                    <div key={`e-${i}`} className="border-b border-r border-outline-variant/15 min-h-[80px]" />
                   ))}
                   {Array.from({ length: currentMonth.daysInMonth() }).map((_, i) => {
                     const day = currentMonth.date(i + 1);
@@ -511,7 +508,7 @@ export default function PlannerPage() {
                       <button
                         key={dateStr}
                         onClick={() => { setPlannerDate(dateStr); setWeekAnchor(day.startOf('week')); switchView('daily'); }}
-                        className={`border-b border-r border-outline-variant/10 min-h-[80px] p-1.5 text-left flex flex-col transition-colors hover:bg-surface-container-low ${
+                        className={`border-b border-r border-outline-variant/15 min-h-[80px] p-1.5 text-left flex flex-col transition-colors hover:bg-surface-container-low ${
                           isToday ? 'bg-primary/8 ring-1 ring-inset ring-primary/30' : ''
                         }`}
                       >
@@ -541,31 +538,6 @@ export default function PlannerPage() {
             </div>
           )}
         </>
-      )}
-
-      {/* ── Delete Confirmation Modal ── */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-fade-in" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-surface-container border border-outline-variant/20 rounded-md p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="material-symbols-outlined text-error text-[20px]">warning</span>
-              <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-                Confirm Delete
-              </h3>
-            </div>
-            <p className="font-body text-sm text-on-surface-variant mb-5">
-              This plan will be permanently removed. This action cannot be undone.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-xs font-label uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 bg-error/90 text-on-error text-xs font-label uppercase font-bold rounded-sm hover:bg-error transition-colors">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

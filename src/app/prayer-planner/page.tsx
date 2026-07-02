@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import PlanCard from '@/components/planner/PlanCard';
 import PlanForm from '@/components/planner/PlanForm';
+import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
 import dayjs from 'dayjs';
 
 const PRAYER_ORDER = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
@@ -17,11 +19,11 @@ const PRAYER_META: Record<string, { icon: string; gradient: string; accent: stri
 };
 
 const PRAYER_LABELS: Record<string, string> = {
-  fajr: 'FAJR',
-  dhuhr: 'DHUHR',
-  asr: 'ASR',
-  maghrib: 'MAGHRIB',
-  isha: 'ISHA',
+  fajr: 'Fajr',
+  dhuhr: 'Dhuhr',
+  asr: 'Asr',
+  maghrib: 'Maghrib',
+  isha: 'Isha',
 };
 
 export default function PrayerPlannerPage() {
@@ -203,20 +205,17 @@ export default function PrayerPlannerPage() {
   return (
     <div className="space-y-6 animate-page-enter">
       {/* Header */}
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-          <span className="text-primary">&gt;</span> system/prayer-planner
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          Structure your day around the five daily prayers.
-        </p>
-      </header>
+      <PageHeader
+        title="Prayer Planner"
+        eyebrow="system/prayer-planner"
+        description="Structure your day around the five daily prayers."
+      />
 
       {/* All Prayers Complete Banner */}
       {isToday && allPrayersPerformed && (
         <div className="border border-primary/40 bg-primary/5 rounded-sm px-4 py-3 flex items-center gap-2 animate-fade-in">
           <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>mosque</span>
-          <span className="font-mono text-xs text-primary uppercase tracking-widest font-bold">ALL PRAYERS COMPLETE ✓ — WORSHIP LAYER SECURED</span>
+          <span className="text-sm text-primary font-medium">All prayers complete — worship layer secured ✓</span>
         </div>
       )}
 
@@ -228,10 +227,10 @@ export default function PrayerPlannerPage() {
             <span className="material-symbols-outlined text-[20px]">chevron_left</span>
           </button>
           <div className="text-center">
-            <div className="font-headline text-sm font-bold uppercase tracking-wider text-on-surface">
+            <div className="font-headline text-sm font-semibold text-on-surface">
               {dayjs(plannerDate).format('dddd')}
             </div>
-            <div className="font-mono text-xs text-on-surface-variant">
+            <div className="text-xs text-on-surface-variant/70">
               {dayjs(plannerDate).format('MMMM D, YYYY')}
             </div>
           </div>
@@ -240,7 +239,7 @@ export default function PrayerPlannerPage() {
           </button>
           <button
             onClick={() => setPlannerDate(dayjs().format('YYYY-MM-DD'))}
-            className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors ml-2"
+            className="text-xs text-on-surface-variant hover:text-primary transition-colors ml-2"
           >
             Today
           </button>
@@ -250,21 +249,21 @@ export default function PrayerPlannerPage() {
         <div className="flex items-center gap-4">
           {nextPrayer && (
             <div className="text-right">
-              <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">NEXT_PRAYER</div>
-              <div className="font-headline text-sm font-bold text-primary">
-                {PRAYER_LABELS[nextPrayer.name]} <span className="font-mono text-xs text-on-surface-variant">{nextPrayer.time}</span>
+              <div className="text-xs text-on-surface-variant/70">Next prayer</div>
+              <div className="font-headline text-sm font-semibold text-primary">
+                {PRAYER_LABELS[nextPrayer.name]} <span className="text-xs text-on-surface-variant">{nextPrayer.time}</span>
               </div>
             </div>
           )}
           <div className="text-right">
-            <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">COMPLETION</div>
-            <div className="font-headline text-sm font-bold text-on-surface">
+            <div className="text-xs text-on-surface-variant/70">Completion</div>
+            <div className="font-headline text-sm font-semibold text-on-surface">
               {completedPlans}<span className="text-on-surface-variant">/{totalPlans}</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant">SOURCE</div>
-            <div className="font-mono text-[10px] flex items-center gap-1 justify-end">
+            <div className="text-xs text-on-surface-variant/70">Source</div>
+            <div className="text-xs flex items-center gap-1 justify-end">
               {isPrayerTimesLoading ? (
                 <><span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" /><span className="text-tertiary">Locating...</span></>
               ) : prayerTimes?.source === 'api' ? (
@@ -301,13 +300,12 @@ export default function PrayerPlannerPage() {
       {showTimeEditor && (
         <div className="bg-surface-container-lowest border border-outline-variant/15 rounded-md p-5 animate-fade-in">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-primary font-headline">&gt;</span>
-            <span className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">PRAYER_TIMES_CONFIG</span>
+            <span className="font-headline text-sm font-semibold text-on-surface">Prayer times</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {PRAYER_ORDER.map(prayer => (
               <div key={prayer}>
-                <label className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">
+                <label className="text-xs text-on-surface-variant/80 block mb-1">
                   {PRAYER_LABELS[prayer]}
                 </label>
                 <input
@@ -320,12 +318,8 @@ export default function PrayerPlannerPage() {
             ))}
           </div>
           <div className="flex gap-2 justify-end mt-4">
-            <button onClick={() => setShowTimeEditor(false)} className="px-3 py-1.5 text-xs font-label uppercase text-on-surface-variant hover:text-on-surface transition-colors">
-              Cancel
-            </button>
-            <button onClick={handleSaveTimes} className="px-4 py-1.5 bg-scanline-gradient text-on-primary text-xs font-label uppercase font-bold rounded-sm hover:opacity-90 transition-opacity">
-              Save Times
-            </button>
+            <Button variant="ghost" onClick={() => setShowTimeEditor(false)}>Cancel</Button>
+            <Button variant="primary" onClick={handleSaveTimes}>Save times</Button>
           </div>
         </div>
       )}
@@ -381,28 +375,28 @@ export default function PrayerPlannerPage() {
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-headline text-sm font-bold uppercase tracking-wider text-on-surface">
+                        <h3 className="font-headline text-sm font-semibold text-on-surface">
                           {PRAYER_LABELS[prayer]}
                         </h3>
                         {isActive && (
-                          <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/20 font-label text-[8px] text-primary uppercase tracking-wider animate-pulse">
-                            ACTIVE
+                          <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/20 text-[10px] text-primary font-medium">
+                            Active
                           </span>
                         )}
                       </div>
-                      <span className="font-mono text-xs text-on-surface-variant">{prayerTime}</span>
+                      <span className="text-xs text-on-surface-variant/80">{prayerTime}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">
+                    <span className="text-xs text-on-surface-variant/70">
                       {completed}/{prayerPlans.length} done
                     </span>
                     {/* Prayer Performed toggle (syncs with day_record) */}
                     {dayRecord && prayerToField[prayer] !== undefined && (
                       <button
                         onClick={() => handlePrayerPerformed(prayer, !Boolean(dayRecord[prayerToField[prayer]]))}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-sm border font-mono text-[9px] uppercase tracking-wider transition-all ${
+                        className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-xs transition-all ${
                           dayRecord[prayerToField[prayer]]
                             ? 'border-primary/40 bg-primary/10 text-primary'
                             : 'border-outline-variant/20 bg-transparent text-on-surface-variant hover:border-primary/30'
@@ -412,7 +406,7 @@ export default function PrayerPlannerPage() {
                         <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: dayRecord[prayerToField[prayer]] ? "'FILL' 1" : "'FILL' 0" }}>
                           mosque
                         </span>
-                        {dayRecord[prayerToField[prayer]] ? 'PERFORMED ✓' : 'MARK DONE'}
+                        {dayRecord[prayerToField[prayer]] ? 'Performed ✓' : 'Mark done'}
                       </button>
                     )}
                     <button
@@ -436,12 +430,13 @@ export default function PrayerPlannerPage() {
                 )}
 
                 {/* Plans list */}
-                <div className="p-3 bg-surface-container-lowest min-h-[60px]">
+                <div className="bg-surface-container-lowest">
                   {prayerPlans.length === 0 ? (
-                    <div className="text-center py-4">
-                      <span className="font-mono text-[10px] text-outline">No plans assigned to this prayer block</span>
+                    <div className="px-4 py-2.5">
+                      <span className="text-xs text-on-surface-variant/50">No plans yet — use + to add one.</span>
                     </div>
                   ) : (
+                    <div className="p-3">
                     <div className="flex flex-col gap-2">
                       {prayerPlans.map(plan => (
                         <div key={plan.id} className="group/item relative">
@@ -467,7 +462,7 @@ export default function PrayerPlannerPage() {
                             <select
                               value={plan.prayerBlock || ''}
                               onChange={(e) => handleMovePrayer(plan.id, e.target.value || null)}
-                              className="bg-surface-container-high border border-outline-variant/15 rounded-sm px-1 py-0.5 text-[8px] font-label text-on-surface-variant uppercase cursor-pointer"
+                              className="bg-surface-container-high border border-outline-variant/15 rounded-sm px-1 py-0.5 text-xs font-label text-on-surface-variant cursor-pointer"
                             >
                               <option value="">Unassign</option>
                               {PRAYER_ORDER.map(p => (
@@ -477,6 +472,7 @@ export default function PrayerPlannerPage() {
                           </div>
                         </div>
                       ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -491,13 +487,13 @@ export default function PrayerPlannerPage() {
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-[22px] text-outline">event_note</span>
                   <div>
-                    <h3 className="font-headline text-sm font-bold uppercase tracking-wider text-on-surface-variant">
-                      UNASSIGNED
+                    <h3 className="font-headline text-sm font-semibold text-on-surface-variant">
+                      Unassigned
                     </h3>
-                    <span className="font-mono text-xs text-outline">No prayer block</span>
+                    <span className="text-xs text-on-surface-variant/60">No prayer block</span>
                   </div>
                 </div>
-                <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">
+                <span className="text-xs text-on-surface-variant/70">
                   {plansByPrayer.unassigned.length} plans
                 </span>
               </div>
@@ -525,7 +521,7 @@ export default function PrayerPlannerPage() {
                         <select
                           value=""
                           onChange={(e) => handleMovePrayer(plan.id, e.target.value || null)}
-                          className="bg-surface-container-high border border-outline-variant/15 rounded-sm px-1 py-0.5 text-[8px] font-label text-on-surface-variant uppercase cursor-pointer"
+                          className="bg-surface-container-high border border-outline-variant/15 rounded-sm px-1 py-0.5 text-xs font-label text-on-surface-variant cursor-pointer"
                         >
                           <option value="">Assign to...</option>
                           {PRAYER_ORDER.map(p => (

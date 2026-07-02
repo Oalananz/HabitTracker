@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
 import PageHeader from '@/components/ui/PageHeader';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Card from '@/components/ui/Card';
 import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
 import ChartWidgets from '@/components/dashboard/ChartWidgets';
 import StreakMatrix from '@/components/dashboard/StreakMatrix';
@@ -66,7 +68,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 animate-page-enter">
         <PageHeader
-          title="system/analytics --verbose"
+          title="Dashboard"
+          eyebrow="system/analytics"
           description="Diagnostic overview of habit adherence, goals, and recovery journeys."
         />
 
@@ -94,28 +97,28 @@ export default function DashboardPage() {
             {/* Stat Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                label="CURRENT STREAK"
+                label="Current streak"
                 value={metrics.currentStreak}
-                unit="DAYS"
+                unit="days"
                 icon="local_fire_department"
                 variant="primary"
               />
               <StatCard
-                label="LONGEST STREAK"
+                label="Longest streak"
                 value={metrics.longestStreak}
-                unit="DAYS"
+                unit="days"
                 subtitle="Historical max"
                 icon="emoji_events"
               />
               <StatCard
-                label="TOTAL COMPLETED"
+                label="Total completed"
                 value={metrics.totalCompleted.toLocaleString()}
-                unit="TASKS"
-                subtitle="Since sys.init()"
+                unit="tasks"
+                subtitle="All time"
                 icon="task_alt"
               />
               <StatCard
-                label="COMPLETION RATE"
+                label="Completion rate"
                 value={metrics.completionRate}
                 unit="%"
                 subtitle="Trailing 30 days"
@@ -123,7 +126,7 @@ export default function DashboardPage() {
               />
               {moneyCard && (
                 <StatCard
-                  label="MONEY BALANCE"
+                  label="Money balance"
                   value={moneyCard.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   unit={moneyCard.currency}
                   subtitle="Net this month"
@@ -132,9 +135,9 @@ export default function DashboardPage() {
               )}
               {studyTimeCard != null && (
                 <StatCard
-                  label="STUDY TIME"
+                  label="Study time"
                   value={Math.round((studyTimeCard / 60) * 10) / 10}
-                  unit="HRS"
+                  unit="hrs"
                   subtitle="This week"
                   icon="menu_book"
                 />
@@ -142,13 +145,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Life Areas snapshot */}
-            <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-                  <span className="text-primary">&gt;</span> LIFE_AREAS
-                </h3>
-                <Link href="/life-areas" className="font-mono text-[10px] text-primary hover:underline uppercase tracking-wider">VIEW ALL →</Link>
-              </div>
+            <Card>
+              <SectionHeader
+                title="Life areas"
+                rightContent={<Link href="/life-areas" className="text-primary hover:underline">View all →</Link>}
+              />
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {LIFE_AREAS.map((area) => {
                   const g = goals.filter((x) => x.lifeArea === area.id).length;
@@ -161,13 +162,13 @@ export default function DashboardPage() {
                       style={{ borderColor: `${area.color}33` }}
                     >
                       <span className="material-symbols-outlined text-[20px]" style={{ color: area.color }}>{area.icon}</span>
-                      <div className="font-headline text-xs font-bold text-on-surface mt-1 truncate">{area.shortLabel}</div>
-                      <div className="font-mono text-[9px] text-on-surface-variant">{g}g · {h}h</div>
+                      <div className="font-headline text-xs font-semibold text-on-surface mt-1 truncate">{area.shortLabel}</div>
+                      <div className="text-xs text-on-surface-variant/80">{g} goals · {h} habits</div>
                     </Link>
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Heatmap */}
             <ContributionHeatmap data={metrics.heatmapData} />
@@ -178,10 +179,8 @@ export default function DashboardPage() {
 
               {/* Goals Summary */}
               {goalsSummary && (
-                <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-                  <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-                    <span className="text-primary">&gt;</span> GOALS_STATUS
-                  </h3>
+                <Card>
+                  <SectionHeader title="Goals status" />
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="font-body text-sm text-on-surface-variant">Active Goals</span>
@@ -213,20 +212,18 @@ export default function DashboardPage() {
                         style={{ width: `${Math.min(goalsSummary.completionRate, 100)}%` }}
                       />
                     </div>
-                    <div className="font-mono text-[10px] text-outline text-right">
-                      GOAL_COMPLETION: {goalsSummary.completionRate}%
+                    <div className="text-xs text-on-surface-variant/70 text-right">
+                      Goal completion: {goalsSummary.completionRate}%
                     </div>
                   </div>
-                </div>
+                </Card>
               )}
             </div>
 
             {/* Recovery Journeys Overview */}
             {journeys.length > 0 && (
-              <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-                <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-                  <span className="text-primary">&gt;</span> RECOVERY_JOURNEYS
-                </h3>
+              <Card>
+                <SectionHeader title="Recovery journeys" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {journeys.map((j) => {
                     const days = now.diff(dayjs(j.startTime), 'day');
@@ -246,11 +243,11 @@ export default function DashboardPage() {
                             <div className="font-headline text-3xl font-black text-primary tracking-tighter">
                               {days}
                             </div>
-                            <div className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">days clean</div>
+                            <div className="text-xs text-on-surface-variant/80">days clean</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-mono text-xs text-error">{j.failureCount} fails</div>
-                            <div className="font-mono text-[10px] text-outline mt-0.5">
+                            <div className="text-xs text-error">{j.failureCount} fails</div>
+                            <div className="text-xs text-on-surface-variant/60 mt-0.5">
                               since {dayjs(j.createdAt).format('MMM D')}
                             </div>
                           </div>
@@ -259,16 +256,14 @@ export default function DashboardPage() {
                     );
                   })}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Legacy Recovery Summary (if no journeys) */}
             {journeys.length === 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-                  <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide mb-4">
-                    <span className="text-primary">&gt;</span> RECOVERY_STATUS
-                  </h3>
+                <Card>
+                  <SectionHeader title="Recovery status" />
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="font-body text-sm text-on-surface-variant">Current Recovery</span>
@@ -283,7 +278,7 @@ export default function DashboardPage() {
                       <span className="font-headline text-lg font-bold text-secondary">{metrics.weeklyRate}%</span>
                     </div>
                   </div>
-                </div>
+                </Card>
               </div>
             )}
 
@@ -300,15 +295,11 @@ export default function DashboardPage() {
 
             {/* Achievements Preview */}
             {achievements.filter(a => a.unlocked).length > 0 && (
-              <div className="bg-surface-container-lowest border border-outline-variant/15 rounded-md p-5">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-                    &gt; RECENT_ACHIEVEMENTS
-                  </div>
-                  <Link href="/achievements" className="font-mono text-[10px] text-primary hover:underline uppercase tracking-wider">
-                    VIEW ALL →
-                  </Link>
-                </div>
+              <Card>
+                <SectionHeader
+                  title="Recent achievements"
+                  rightContent={<Link href="/achievements" className="text-primary hover:underline">View all →</Link>}
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {achievements
                     .filter(a => a.unlocked)
@@ -318,13 +309,13 @@ export default function DashboardPage() {
                       <div key={a.key} className="bg-surface-container-low border border-outline-variant/15 rounded-sm p-3 flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
                         <div className="min-w-0">
-                          <div className="font-headline text-xs font-bold text-on-surface truncate uppercase">{a.name}</div>
-                          <div className="font-mono text-[9px] text-on-surface-variant">{a.rarity}</div>
+                          <div className="font-headline text-xs font-semibold text-on-surface truncate">{a.name}</div>
+                          <div className="text-xs text-on-surface-variant/70 capitalize">{a.rarity}</div>
                         </div>
                       </div>
                     ))}
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         )}
