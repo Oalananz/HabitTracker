@@ -364,6 +364,8 @@ interface AppState {
   setSelectedDate: (date: string) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -1063,4 +1065,9 @@ export const useStore = create<AppState>((set, get) => ({
   setSelectedDate: (date) => set({ selectedDate: date }),
   sidebarOpen: false,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  sidebarCollapsed: typeof window !== 'undefined' && localStorage.getItem('sidebarCollapsed') === '1',
+  setSidebarCollapsed: (collapsed) => {
+    try { localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0'); } catch { /* ignore */ }
+    set({ sidebarCollapsed: collapsed });
+  },
 }));

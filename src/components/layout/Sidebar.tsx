@@ -50,11 +50,32 @@ const navGroups = [
   },
 ];
 
+const COLLAPSED_GROUPS_KEY = 'sidebarCollapsedGroups';
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout, sidebarOpen, setSidebarOpen, pendingSyncCount, refreshPendingCount, newAchievementCount } = useStore();
+  const {
+    user, logout, sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed,
+    pendingSyncCount, refreshPendingCount, newAchievementCount,
+  } = useStore();
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_GROUPS_KEY);
+      if (saved) setCollapsedGroups(JSON.parse(saved));
+    } catch { /* ignore */ }
+  }, []);
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try { localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -122,75 +143,97 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col py-6 z-50 transition-transform duration-200 ${
+        className={`fixed left-0 top-0 h-screen w-64 ${sidebarCollapsed ? 'md:w-16' : 'md:w-64'} bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col py-6 z-50 transition-transform duration-200 md:transition-[width] ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
         {/* User Section */}
-        <div className="px-6 mb-6">
-          <div className="font-headline text-lg font-bold text-primary tracking-tighter">
-            &gt; {user?.username || 'system/user'}
+        <div className={`mb-6 flex items-center justify-between ${sidebarCollapsed ? 'md:px-3' : 'px-6'}`}>
+          <div className={sidebarCollapsed ? 'md:hidden' : ''}>
+            <div className="font-headline text-lg font-bold text-primary tracking-tighter">
+              &gt; {user?.username || 'system/user'}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'} ${isSyncing ? 'animate-pulse' : ''}`} />
+              <span className="text-xs text-on-surface-variant font-body">
+                {isSyncing ? 'Syncing...' : `Status: ${isOnline ? 'Online' : 'Offline'}`}
+                {!isSyncing && pendingSyncCount > 0 && ` (${pendingSyncCount} pending)`}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'} ${isSyncing ? 'animate-pulse' : ''}`} />
-            <span className="text-xs text-on-surface-variant font-body">
-              {isSyncing ? 'Syncing...' : `Status: ${isOnline ? 'Online' : 'Offline'}`}
-              {!isSyncing && pendingSyncCount > 0 && ` (${pendingSyncCount} pending)`}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden md:flex text-on-surface-variant/50 hover:text-primary transition-colors flex-shrink-0"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {sidebarCollapsed ? 'menu' : 'left_panel_close'}
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 mt-2 overflow-y-auto">
-          {navGroups.map((group) => (
-            <div key={group.label} className="mb-3">
-              <div className="px-5 mb-1 font-label text-[10px] uppercase tracking-widest text-on-surface-variant/40">
-                {group.label}
-              </div>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${
-                        isActive
-                          ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
-                          : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
-                      }`}
-                    >
-                      <span
-                        className="material-symbols-outlined text-[20px] transition-all duration-200"
-                        aria-hidden="true"
-                        style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+        <nav className="flex-1 mt-2 overflow-y-auto overflow-x-hidden">
+          {navGroups.map((group) => {
+            const groupCollapsed = !!collapsedGroups[group.label];
+            return (
+              <div key={group.label} className="mb-3">
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className={`w-full flex items-center justify-between px-5 mb-1 font-label text-[10px] uppercase tracking-widest text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors ${sidebarCollapsed ? 'md:hidden' : ''}`}
+                >
+                  {group.label}
+                  <span className="material-symbols-outlined text-[14px] transition-transform duration-150" style={{ transform: groupCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                    expand_more
+                  </span>
+                </button>
+                <div className={`space-y-0.5 ${groupCollapsed ? 'md:hidden hidden' : ''}`}>
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        title={sidebarCollapsed ? item.label : undefined}
+                        className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''} ${
+                          isActive
+                            ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
+                            : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
+                        }`}
                       >
-                        {item.icon}
-                      </span>
-                      {item.label}
-                      {/* Achievement badge */}
-                      {item.href === '/achievements' && newAchievementCount > 0 && (
-                        <span className="ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center">
-                          {newAchievementCount}
+                        <span
+                          className="material-symbols-outlined text-[20px] transition-all duration-200 flex-shrink-0"
+                          aria-hidden="true"
+                          style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                        >
+                          {item.icon}
                         </span>
-                      )}
-                    </Link>
-                  );
-                })}
+                        <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
+                        {/* Achievement badge */}
+                        {item.href === '/achievements' && newAchievementCount > 0 && (
+                          <span className={`ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                            {newAchievementCount}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* Bottom Links */}
         <div className="space-y-0.5 border-t border-outline-variant/10 pt-2">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full text-on-surface-variant/60 hover:text-error pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-colors"
+            title={sidebarCollapsed ? 'Logout' : undefined}
+            className={`flex items-center gap-3 w-full text-on-surface-variant/60 hover:text-error pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
           >
             <span className="material-symbols-outlined text-[20px]" aria-hidden="true">logout</span>
-            Logout
+            <span className={sidebarCollapsed ? 'md:hidden' : ''}>Logout</span>
           </button>
         </div>
       </aside>
