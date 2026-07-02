@@ -285,6 +285,53 @@ async function updateLocalIdMapping(
   }
 }
 
+/**
+ * Fire-and-forget auto-sync: runs performBackup() if there's anything
+ * pending and we're online. Safe to call opportunistically.
+ */
+export function scheduleAutoSync(): void {
+  if (typeof window === 'undefined') return;
+  if (isSyncing || !networkStatus.isOnline) return;
+
+  getPendingSyncCount().then((count) => {
+    if (count > 0) {
+      performBackup().catch((err) => console.error('[syncManager] auto-sync failed:', err));
+    }
+  });
+}
+
+let autoSyncInitialized = false;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+const IDLE_SYNC_MS = 5 * 60 * 1000;
+
+/**
+ * Wire up automatic sync triggers: idle timeout, tab hidden/close, and
+ * network reconnect. Safe to call multiple times — only initializes once.
+ */
+export function initAutoSync(): void {
+  if (typeof window === 'undefined' || autoSyncInitialized) return;
+  autoSyncInitialized = true;
+
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(scheduleAutoSync, IDLE_SYNC_MS);
+  };
+
+  ['pointerdown', 'keydown', 'scroll'].forEach((evt) => {
+    window.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+  resetIdleTimer();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') scheduleAutoSync();
+  });
+  window.addEventListener('pagehide', scheduleAutoSync);
+
+  networkStatus.subscribe((online) => {
+    if (online) scheduleAutoSync();
+  });
+}
+
 /** Get the current sync status for display in the UI */
 export async function getSyncStatus(): Promise<{
   pendingCount: number;

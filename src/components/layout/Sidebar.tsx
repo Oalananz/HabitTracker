@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
-import { performBackup, onSyncProgress, isSyncInProgress, type SyncResult } from '@/lib/offline/syncManager';
+import { onSyncProgress, initAutoSync } from '@/lib/offline/syncManager';
 
 const navItems = [
   { href: '/today', label: 'Today', icon: 'terminal' },
@@ -29,9 +29,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, sidebarOpen, setSidebarOpen, pendingSyncCount, refreshPendingCount, newAchievementCount } = useStore();
   const [isOnline, setIsOnline] = useState(true);
-  const [isBacking, setIsBacking] = useState(false);
-  const [syncMessage, setSyncMessage] = useState('');
-  const [syncProgress, setSyncProgress] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -46,38 +44,21 @@ export default function Sidebar() {
   }, []);
 
   useEffect(() => {
+    initAutoSync();
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSyncProgress((p) => {
+      setIsSyncing(p.phase !== 'done' && p.phase !== 'error');
+      if (p.phase === 'done' || p.phase === 'error') refreshPendingCount();
+    });
+    return unsub;
+  }, [refreshPendingCount]);
+
+  useEffect(() => {
     refreshPendingCount();
     const interval = setInterval(refreshPendingCount, 10000);
     return () => clearInterval(interval);
-  }, [refreshPendingCount]);
-
-  const handleBackup = useCallback(async () => {
-    if (isSyncInProgress()) return;
-    setIsBacking(true);
-    setSyncMessage('Starting backup...');
-    setSyncProgress(0);
-
-    const unsub = onSyncProgress((p) => {
-      setSyncMessage(p.message);
-      if (p.total > 0) setSyncProgress(Math.round((p.current / p.total) * 100));
-    });
-
-    try {
-      const result: SyncResult = await performBackup();
-      await refreshPendingCount();
-      if (result.success) {
-        setSyncMessage(`✓ ${result.pushed} changes synced`);
-      } else {
-        setSyncMessage(`⚠ ${result.failed} failed, ${result.pushed} synced`);
-      }
-      setTimeout(() => { setSyncMessage(''); setSyncProgress(0); }, 4000);
-    } catch {
-      setSyncMessage('Backup failed');
-      setTimeout(() => setSyncMessage(''), 3000);
-    } finally {
-      setIsBacking(false);
-      unsub();
-    }
   }, [refreshPendingCount]);
 
   const handleLogout = async () => {
@@ -126,9 +107,10 @@ export default function Sidebar() {
             &gt; {user?.username || 'system/user'}
           </div>
           <div className="flex items-center gap-1.5 mt-1">
-            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-primary' : 'bg-error'} ${isSyncing ? 'animate-pulse' : ''}`} />
             <span className="text-xs text-on-surface-variant font-body">
-              Status: {isOnline ? 'Online' : 'Offline'}
+              {isSyncing ? 'Syncing...' : `Status: ${isOnline ? 'Online' : 'Offline'}`}
+              {!isSyncing && pendingSyncCount > 0 && ` (${pendingSyncCount} pending)`}
             </span>
           </div>
         </div>
@@ -166,41 +148,6 @@ export default function Sidebar() {
             );
           })}
         </nav>
-
-        {/* Backup Button */}
-        <div className="px-4 mb-2">
-          <button
-            onClick={handleBackup}
-            disabled={isBacking || !isOnline}
-            className="w-full relative overflow-hidden bg-surface-container border border-outline-variant/20 text-on-surface font-headline font-bold py-3 px-4 rounded-sm hover:border-primary/40 transition-all disabled:opacity-40 uppercase tracking-wider text-xs flex items-center justify-center gap-2 group"
-            id="backup-data-btn"
-          >
-            {isBacking ? (
-              <>
-                <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
-                <span className="truncate">{syncMessage || 'Syncing...'}</span>
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-[18px] text-primary group-hover:scale-110 transition-transform">cloud_upload</span>
-                <span>Backup Data</span>
-                {pendingSyncCount > 0 && (
-                  <span className="ml-auto w-5 h-5 rounded-full bg-tertiary text-on-tertiary text-[10px] font-bold flex items-center justify-center animate-pulse-glow">
-                    {pendingSyncCount}
-                  </span>
-                )}
-              </>
-            )}
-            {isBacking && syncProgress > 0 && (
-              <div className="absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300" style={{ width: `${syncProgress}%` }} />
-            )}
-          </button>
-          {syncMessage && !isBacking && (
-            <div className="text-[10px] font-mono text-center mt-1 text-on-surface-variant animate-fade-in">
-              {syncMessage}
-            </div>
-          )}
-        </div>
 
         {/* Bottom Links */}
         <div className="space-y-0.5 border-t border-outline-variant/10 pt-2">

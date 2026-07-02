@@ -10,7 +10,7 @@ export { enqueueSync, getPendingOperations, getSyncQueueSummary, compactQueue, r
 
 export { persistSession, getPersistedSession, clearPersistedSession, hasPersistedSession } from './authPersistence';
 
-export { performBackup, getSyncStatus, onSyncProgress, isSyncInProgress, type SyncResult } from './syncManager';
+export { performBackup, getSyncStatus, onSyncProgress, isSyncInProgress, scheduleAutoSync, initAutoSync, type SyncResult } from './syncManager';
 
 export {
   // Tasks
