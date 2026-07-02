@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import SectionHeader from '@/components/ui/SectionHeader';
+import PageHeader from '@/components/ui/PageHeader';
 import TaskItem from '@/components/ui/TaskItem';
 import EmptyState from '@/components/ui/EmptyState';
+import SkeletonPulse from '@/components/ui/SkeletonPulse';
 import DailyProgressBar from '@/components/today/DailyProgressBar';
 import TodaySummaryCards from '@/components/today/TodaySummaryCards';
 import TopPrioritiesCard from '@/components/today/TopPrioritiesCard';
@@ -168,15 +170,7 @@ export default function TodayPage() {
       <OnboardingPrompt />
 
       {/* Header */}
-      <header>
-        <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-1">
-          Today
-        </h1>
-        <p className="font-body text-on-surface-variant">
-          Your daily command center.
-        </p>
-        <p className="font-mono text-[10px] text-outline mt-1">/system/today</p>
-      </header>
+      <PageHeader title="system/today" description="Your daily command center." />
 
       {/* Daily Summary Cards */}
       <TodaySummaryCards dayRecord={dayRecord} date={today} />
@@ -197,9 +191,9 @@ export default function TodayPage() {
         {/* ── Left: Worship, Focus, Tasks, Recovery, Sleep, Review ─── */}
         <div className="lg:col-span-2 space-y-6">
           {isDayRecordLoading && !dayRecord ? (
-            <div className="bg-surface-container-low rounded-md p-8 flex items-center justify-center">
-              <span className="animate-blink text-primary font-mono text-sm">▊</span>
-              <span className="font-mono text-sm text-on-surface-variant ml-2">Loading today&apos;s record...</span>
+            <div className="space-y-6">
+              <SkeletonPulse variant="card" className="h-48" />
+              <SkeletonPulse variant="card" className="h-32" />
             </div>
           ) : dayRecord ? (
             <>

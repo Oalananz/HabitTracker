@@ -374,6 +374,18 @@ input:focus, select:focus, textarea:focus {
   box-shadow: none;
 }
 
+/* Visible focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #6cdd81;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #6cdd81;
+  outline-offset: 1px;
+}
+
 /* Override react-big-calendar for dark mode */
 .rbc-calendar {
   color: #dfe2eb;

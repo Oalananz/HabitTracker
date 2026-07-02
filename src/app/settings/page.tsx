@@ -6,6 +6,7 @@ import { useStore } from '@/store/useStore';
 import { clearAllLocalData } from '@/lib/offline/db';
 import { LIFE_AREAS } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
+import PageHeader from '@/components/ui/PageHeader';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -92,11 +93,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
-      <header>
-        <div className="font-label text-xs uppercase tracking-widest text-primary mb-2">&gt; TERMINAL_CONFIG</div>
-        <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tighter text-on-surface uppercase">Configuration</h1>
-        <p className="font-body text-on-surface-variant mt-2">Adjust your profile, goals, focus areas, and local data.</p>
-      </header>
+      <PageHeader
+        title="system/settings"
+        description="Adjust your profile, goals, focus areas, and local data."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Profile */}

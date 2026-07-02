@@ -5,6 +5,7 @@ import { useStore } from '@/store/useStore';
 import TimerDisplay from '@/components/recovery/TimerDisplay';
 import CompetitiveMode from '@/components/recovery/competitive/CompetitiveMode';
 import FailureLogList from '@/components/recovery/FailureLogList';
+import { useConfirm } from '@/components/ui/useConfirm';
 import dayjs from 'dayjs';
 
 export default function RecoveryPage() {
@@ -24,6 +25,7 @@ export default function RecoveryPage() {
   const [confirmFail, setConfirmFail] = useState<string | null>(null);
   const [expandedJourney, setExpandedJourney] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     fetchJourneys();
@@ -77,6 +79,7 @@ export default function RecoveryPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
+        {ConfirmDialog}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
@@ -333,7 +336,7 @@ export default function RecoveryPage() {
                             Reset + Clear
                           </button>
                           <button
-                            onClick={() => { if (confirm('Delete this journey?')) deleteJourney(journey.id); }}
+                            onClick={async () => { if (await confirm({ message: 'Delete this journey?' })) deleteJourney(journey.id); }}
                             className="px-4 py-2 bg-surface-container-lowest border border-error/20 text-error font-label text-xs uppercase rounded-sm hover:bg-error-container/20 transition-colors ml-auto"
                           >
                             <span className="material-symbols-outlined text-[16px]">delete</span>

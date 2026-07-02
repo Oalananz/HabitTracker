@@ -10,6 +10,7 @@ import SavingsGoalForm from '@/components/money/SavingsGoalForm';
 import DebtForm from '@/components/money/DebtForm';
 import SubscriptionForm from '@/components/money/SubscriptionForm';
 import ExpenseBreakdownChart from '@/components/money/ExpenseBreakdownChart';
+import { useConfirm } from '@/components/ui/useConfirm';
 import {
   calculateSavingsProgress,
   calculateDebtProgress,
@@ -52,6 +53,7 @@ export default function MoneyPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Filters
   const [rangeMode, setRangeMode] = useState<DateRangeMode>('this_month');
@@ -151,7 +153,7 @@ export default function MoneyPage() {
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    if (!confirm('Delete this transaction?')) return;
+    if (!(await confirm({ message: 'Delete this transaction?' }))) return;
     await fetch('/api/money/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -195,7 +197,7 @@ export default function MoneyPage() {
   };
 
   const handleDeleteSavingsGoal = async (goalId: string) => {
-    if (!confirm('Delete this savings goal?')) return;
+    if (!(await confirm({ message: 'Delete this savings goal?' }))) return;
     await fetch('/api/money/savings-goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -228,7 +230,7 @@ export default function MoneyPage() {
   };
 
   const handleDeleteDebt = async (debtId: string) => {
-    if (!confirm('Delete this debt?')) return;
+    if (!(await confirm({ message: 'Delete this debt?' }))) return;
     await fetch('/api/money/debts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -248,7 +250,7 @@ export default function MoneyPage() {
   };
 
   const handleDeleteSubscription = async (subscriptionId: string) => {
-    if (!confirm('Delete this subscription?')) return;
+    if (!(await confirm({ message: 'Delete this subscription?' }))) return;
     await fetch('/api/money/subscriptions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -274,6 +276,7 @@ export default function MoneyPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
+      {ConfirmDialog}
       <header>
         <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
           <span className="text-primary">&gt;</span> Money

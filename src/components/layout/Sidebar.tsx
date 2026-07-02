@@ -7,22 +7,47 @@ import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
 import { onSyncProgress, initAutoSync } from '@/lib/offline/syncManager';
 
-const navItems = [
-  { href: '/today', label: 'Today', icon: 'terminal' },
-  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
-  { href: '/planner', label: 'Planner', icon: 'event_note' },
-  { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
-  { href: '/recovery', label: 'Recovery', icon: 'healing' },
-  { href: '/goals', label: 'Goals', icon: 'flag' },
-  { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
-  { href: '/learning', label: 'Learning', icon: 'menu_book' },
-  { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
-  { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
-  { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
-  { href: '/habits', label: 'Habits', icon: 'cached' },
-  { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
-  { href: '/settings', label: 'Settings', icon: 'settings' },
+const navGroups = [
+  {
+    label: 'Daily',
+    items: [
+      { href: '/today', label: 'Today', icon: 'terminal' },
+      { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { href: '/calendar', label: 'Calendar', icon: 'calendar_today' },
+    ],
+  },
+  {
+    label: 'Plan',
+    items: [
+      { href: '/planner', label: 'Planner', icon: 'event_note' },
+      { href: '/prayer-planner', label: 'Prayer Planner', icon: 'mosque' },
+      { href: '/goals', label: 'Goals', icon: 'flag' },
+      { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
+    ],
+  },
+  {
+    label: 'Life',
+    items: [
+      { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
+      { href: '/habits', label: 'Habits', icon: 'cached' },
+      { href: '/recovery', label: 'Recovery', icon: 'healing' },
+      { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
+      { href: '/learning', label: 'Learning', icon: 'menu_book' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
+      { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/settings', label: 'Settings', icon: 'settings' },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -116,37 +141,46 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-0.5 mt-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${
-                  isActive
-                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
-                    : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
-                }`}
-              >
-                <span
-                  className="material-symbols-outlined text-[20px] transition-all duration-200"
-                  aria-hidden="true"
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                >
-                  {item.icon}
-                </span>
-                {item.label}
-                {/* Achievement badge */}
-                {item.href === '/achievements' && newAchievementCount > 0 && (
-                  <span className="ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center animate-pulse">
-                    {newAchievementCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 mt-2 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-3">
+              <div className="px-5 mb-1 font-label text-[10px] uppercase tracking-widest text-on-surface-variant/40">
+                {group.label}
+              </div>
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label uppercase tracking-wide transition-all duration-200 nav-glow ${
+                        isActive
+                          ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low/50 nav-indicator-active'
+                          : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
+                      }`}
+                    >
+                      <span
+                        className="material-symbols-outlined text-[20px] transition-all duration-200"
+                        aria-hidden="true"
+                        style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                      >
+                        {item.icon}
+                      </span>
+                      {item.label}
+                      {/* Achievement badge */}
+                      {item.href === '/achievements' && newAchievementCount > 0 && (
+                        <span className="ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center">
+                          {newAchievementCount}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Bottom Links */}

@@ -7,6 +7,9 @@ import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 import AiGoalBreaker from '@/components/ai/AiGoalBreaker';
+import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 type GoalTab = 'all' | 'weekly' | 'dated' | 'open';
 
@@ -27,6 +30,7 @@ export default function GoalsPage() {
   const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
   const [showArchived, setShowArchived] = useState(false);
   const [showBreaker, setShowBreaker] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
@@ -98,33 +102,21 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-              <span className="text-primary">&gt;</span> Goals
-            </h1>
-            <p className="font-body text-on-surface-variant">
-              Set targets. Track progress. Achieve milestones.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowBreaker((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-primary/40 bg-primary/10 text-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-primary/15 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-              AI Breaker
-            </button>
-            <button
-              onClick={() => setShowCreate(!showCreate)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
-              id="create-goal-btn"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              New Goal
-            </button>
-          </div>
-        </header>
+        {ConfirmDialog}
+        <PageHeader
+          title="Goals"
+          description="Set targets. Track progress. Achieve milestones."
+          actions={
+            <>
+              <Button variant="tertiary" icon="auto_awesome" onClick={() => setShowBreaker((v) => !v)}>
+                AI Breaker
+              </Button>
+              <Button variant="primary" icon="add" onClick={() => setShowCreate(!showCreate)} id="create-goal-btn">
+                New Goal
+              </Button>
+            </>
+          }
+        />
 
         {/* AI Goal Breaker (toggle) */}
         {showBreaker && (
@@ -418,7 +410,7 @@ export default function GoalsPage() {
                         <span className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
                       </button>
                       <button
-                        onClick={() => { if (confirm('Delete this goal?')) deleteGoal(goal.id); }}
+                        onClick={async () => { if (await confirm({ message: 'Delete this goal?' })) deleteGoal(goal.id); }}
                         className="text-outline hover:text-error transition-colors"
                       >
                         <span className="material-symbols-outlined text-[16px]">close</span>

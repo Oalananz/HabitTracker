@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import HabitForm from '@/components/habits/HabitForm';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
+import PageHeader from '@/components/ui/PageHeader';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
 
 const REPEAT_LABELS: Record<string, string> = {
@@ -24,6 +26,7 @@ export default function HabitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     fetchHabits();
@@ -53,7 +56,7 @@ export default function HabitsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this habit and all future task generation?')) {
+    if (await confirm({ message: 'Delete this habit and all future task generation?' })) {
       await deleteHabit(id);
     }
   };
@@ -65,14 +68,11 @@ export default function HabitsPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
-        <header>
-          <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-            <span className="text-primary">&gt;</span> system/config --habits
-          </h1>
-          <p className="font-body text-on-surface-variant">
-            Manage recurring behavioral protocols and track consistency streaks across system sectors.
-          </p>
-        </header>
+        <PageHeader
+          title="system/config --habits"
+          description="Manage recurring behavioral protocols and track consistency streaks across system sectors."
+        />
+        {ConfirmDialog}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Habits List */}

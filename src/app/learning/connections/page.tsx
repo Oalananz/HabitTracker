@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import EmptyState from '@/components/ui/EmptyState';
 import ManualCourseLinkForm from '@/components/learning/ManualCourseLinkForm';
 import { useToast } from '@/store/useToast';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 interface LearningProvider {
   id: string;
@@ -44,6 +45,7 @@ function parseCsv(text: string): CsvRow[] {
 
 export default function LearningConnectionsPage() {
   const { addToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [providers, setProviders] = useState<LearningProvider[]>([]);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +96,7 @@ export default function LearningConnectionsPage() {
   };
 
   const handleDisconnect = async (accountId: string) => {
-    if (!confirm('Disconnect this account? Any synced tokens will be cleared.')) return;
+    if (!(await confirm({ message: 'Disconnect this account? Any synced tokens will be cleared.' }))) return;
     await fetch('/api/learning/connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -137,6 +139,7 @@ export default function LearningConnectionsPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
+      {ConfirmDialog}
       <header>
         <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
           <span className="text-primary">&gt;</span> Learning Connections

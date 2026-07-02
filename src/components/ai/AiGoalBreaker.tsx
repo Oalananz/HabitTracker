@@ -7,6 +7,7 @@ import type { GoalBreakerOutput } from '@/lib/ai/schemas';
 import { LIFE_AREAS, lifeAreaLabelToId, type LifeAreaId } from '@/lib/lifeAreas';
 import { AiGenerateButton, AiLoadingState, AiErrorState, AiResultCard } from './AiPrimitives';
 import AiGoalBreakdownPreview from './AiGoalBreakdownPreview';
+import { useConfirm } from '@/components/ui/useConfirm';
 import dayjs from 'dayjs';
 
 const PRIORITY_MAP: Record<string, string> = { high: 'critical', medium: 'nominal', low: 'low' };
@@ -20,6 +21,7 @@ export default function AiGoalBreaker({
 }) {
   const { createTask, createHabit } = useStore();
   const { addToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
@@ -65,7 +67,7 @@ export default function AiGoalBreaker({
   // Confirmed creation only — nothing is created until the user clicks these.
   const addTasks = async () => {
     if (!result) return;
-    if (!confirm('Add all milestone tasks to today\'s task list?')) return;
+    if (!(await confirm({ message: "Add all milestone tasks to today's task list?", danger: false, confirmLabel: 'Add' }))) return;
     setAddingTasks(true);
     try {
       const areaId = lifeAreaLabelToId(result.lifeArea) || (lifeArea || null);
@@ -90,7 +92,7 @@ export default function AiGoalBreaker({
 
   const addHabits = async () => {
     if (!result) return;
-    if (!confirm('Add the suggested habits?')) return;
+    if (!(await confirm({ message: 'Add the suggested habits?', danger: false, confirmLabel: 'Add' }))) return;
     setAddingHabits(true);
     try {
       let count = 0;
@@ -124,6 +126,7 @@ export default function AiGoalBreaker({
 
   return (
     <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-5 space-y-4">
+      {ConfirmDialog}
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
         <h3 className="font-headline text-sm font-bold text-on-surface uppercase tracking-wide">AI Goal Breaker</h3>

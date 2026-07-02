@@ -11,6 +11,7 @@ import StudySessionForm from '@/components/learning/StudySessionForm';
 import CertificateForm from '@/components/learning/CertificateForm';
 import ResourceForm from '@/components/learning/ResourceForm';
 import { useToast } from '@/store/useToast';
+import { useConfirm } from '@/components/ui/useConfirm';
 import {
   calculateCourseProgress,
   getActiveCourses,
@@ -36,6 +37,7 @@ type ActiveForm = 'course' | 'skill' | 'session' | 'certificate' | 'resource' | 
 
 export default function LearningPage() {
   const { addToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [summary, setSummary] = useState<LearningSummary | null>(null);
   const [courses, setCourses] = useState<LearningCourse[]>([]);
@@ -98,7 +100,7 @@ export default function LearningPage() {
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm('Delete this course?')) return;
+    if (!(await confirm({ message: 'Delete this course?' }))) return;
     await fetch('/api/learning/courses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -118,7 +120,7 @@ export default function LearningPage() {
   };
 
   const handleDeleteSkill = async (skillId: string) => {
-    if (!confirm('Delete this skill?')) return;
+    if (!(await confirm({ message: 'Delete this skill?' }))) return;
     await fetch('/api/learning/skills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -138,7 +140,7 @@ export default function LearningPage() {
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (!confirm('Delete this study session?')) return;
+    if (!(await confirm({ message: 'Delete this study session?' }))) return;
     await fetch('/api/learning/study-sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -158,7 +160,7 @@ export default function LearningPage() {
   };
 
   const handleDeleteCertificate = async (certificateId: string) => {
-    if (!confirm('Delete this certificate?')) return;
+    if (!(await confirm({ message: 'Delete this certificate?' }))) return;
     await fetch('/api/learning/certificates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -178,7 +180,7 @@ export default function LearningPage() {
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    if (!confirm('Delete this resource?')) return;
+    if (!(await confirm({ message: 'Delete this resource?' }))) return;
     await fetch('/api/learning/resources', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -210,6 +212,7 @@ export default function LearningPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
+      {ConfirmDialog}
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">

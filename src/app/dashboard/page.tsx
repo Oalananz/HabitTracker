@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import StatCard from '@/components/ui/StatCard';
+import PageHeader from '@/components/ui/PageHeader';
 import ContributionHeatmap from '@/components/dashboard/ContributionHeatmap';
 import ChartWidgets from '@/components/dashboard/ChartWidgets';
 import StreakMatrix from '@/components/dashboard/StreakMatrix';
@@ -64,14 +65,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
-        <header>
-          <h1 className="font-headline text-3xl md:text-5xl font-bold tracking-tighter text-on-surface mb-2">
-            <span className="text-primary">&gt;</span> system/analytics --verbose
-          </h1>
-          <p className="font-body text-on-surface-variant">
-            Diagnostic overview of habit adherence, goals, and recovery journeys.
-          </p>
-        </header>
+        <PageHeader
+          title="system/analytics --verbose"
+          description="Diagnostic overview of habit adherence, goals, and recovery journeys."
+        />
 
         <WeeklyReviewNudge />
 
