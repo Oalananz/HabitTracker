@@ -2,26 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import SectionHeader from '@/components/ui/SectionHeader';
-import PageHeader from '@/components/ui/PageHeader';
 import TaskItem from '@/components/ui/TaskItem';
-import EmptyState from '@/components/ui/EmptyState';
-import SkeletonPulse from '@/components/ui/SkeletonPulse';
+
 import Button from '@/components/ui/Button';
 import { Select, Textarea } from '@/components/ui/Input';
 import DailyProgressBar from '@/components/today/DailyProgressBar';
-import TodaySummaryCards from '@/components/today/TodaySummaryCards';
 import TopPrioritiesCard from '@/components/today/TopPrioritiesCard';
-import WorshipCard from '@/components/today/WorshipCard';
-import FocusTimeCard from '@/components/today/FocusTimeCard';
-import RecoveryTodayCard from '@/components/today/RecoveryTodayCard';
-import SleepCard from '@/components/today/SleepCard';
-import EveningReviewCard from '@/components/today/EveningReviewCard';
-import TodaySidePanel from '@/components/today/TodaySidePanel';
 import HabitsSection from '@/components/today/HabitsSection';
-import OnboardingPrompt from '@/components/today/OnboardingPrompt';
-import AiDailyPlanner from '@/components/ai/AiDailyPlanner';
+import EveningReviewCard from '@/components/today/EveningReviewCard';
+import DailyTrackingGrid from '@/components/today/DailyTrackingGrid';
+import NextActionCard from '@/components/today/NextActionCard';
 import AchievementToast from '@/components/achievements/AchievementToast';
+import OnboardingPrompt from '@/components/today/OnboardingPrompt';
 import { useToast } from '@/store/useToast';
 import { pullTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import dayjs from 'dayjs';
@@ -39,6 +31,7 @@ export default function TodayPage() {
     fetchJourneys, fetchFailures,
     fetchPrayerTimes,
     fetchHabits, generateTodayTasks,
+    habits,
   } = useStore();
 
   const { addToast } = useToast();
@@ -49,10 +42,10 @@ export default function TodayPage() {
   const [newCategory, setNewCategory] = useState('General');
   const [newPriority, setNewPriority] = useState('nominal');
   const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | ''>('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const today = dayjs().format('YYYY-MM-DD');
+  const dateLabel = dayjs().format('dddd, MMMM D');
 
   useEffect(() => {
     setSelectedDate(today);
@@ -63,11 +56,7 @@ export default function TodayPage() {
     void fetchFailures();
     void fetchPrayerTimes(today);
     void fetchHabits();
-    // Auto-add today's habits: ensure habit-due tasks for today exist, then
-    // load the task list (falls back to a plain fetch if generation fails).
     void generateTodayTasks(today).catch(() => fetchTasks(today));
-    // Sync Today's saved extras (priorities, evening review, AI plan) from the
-    // DB, then tell the cards to re-read their now-hydrated localStorage.
     void pullTodayState(today).then(changed => {
       if (changed) window.dispatchEvent(new CustomEvent(TODAY_STATE_HYDRATED, { detail: { date: today } }));
     });
@@ -75,8 +64,7 @@ export default function TodayPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep the day-record tasks bonus in sync: all of today's tasks/habits
-  // complete credits the score's TASKS_DONE point.
+  // Keep the day-record tasks bonus in sync
   useEffect(() => {
     if (!dayRecord) return;
     const allTasksDone = tasks.length > 0 && tasks.every(t => t.completed);
@@ -146,234 +134,297 @@ export default function TodayPage() {
     }
   };
 
-  // Today's Tasks shows manual tasks/plans only — habit-generated tasks live
-  // in the "Today's Habits" section, not here.
+  // Manual (non-habit) tasks only
   const manualTasks = tasks.filter(t => t.sourceType !== 'habit');
+  const pendingTasks = manualTasks.filter(t => !t.completed);
+  const completedTasks = manualTasks.filter(t => t.completed);
 
-  const filteredTasks = manualTasks.filter(t => {
-    if (filterStatus === 'pending' && t.completed) return false;
-    if (filterStatus === 'completed' && !t.completed) return false;
-    if (filterCategory !== 'all' && (t.category?.toLowerCase() || '') !== filterCategory.toLowerCase()) return false;
-    return true;
-  });
+  // Unified completion count across tasks + habits
+  const activeHabits = habits.filter(h => h.isActive);
+  const dueHabits = activeHabits.filter(h => tasks.some(t => t.habitId === h.id && t.date === today));
+  const doneHabits = dueHabits.filter(h => tasks.find(t => t.habitId === h.id && t.date === today)?.completed);
+  const prayersDone = dayRecord
+    ? (['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).filter(k => dayRecord[k]).length
+    : 0;
 
-  const pendingTasks = filteredTasks.filter(t => !t.completed);
-  const completedTasks = filteredTasks.filter(t => t.completed);
-  const uniqueCategories = Array.from(new Set(manualTasks.map(t => t.category || 'General')));
-  const activePendingCount = manualTasks.filter(t => !t.completed).length;
-  const activeCompletedCount = manualTasks.filter(t => t.completed).length;
+  // Total completable items and done count for unified progress
+  const totalItems = manualTasks.length + dueHabits.length + 5; // 5 prayers
+  const completedItemsCount = completedTasks.length + doneHabits.length + prayersDone;
 
   return (
-    <div className="space-y-6 animate-page-enter">
-      {/* Achievement Toast (global) */}
+    <div className="space-y-5 animate-page-enter">
+      {/* Global toasts */}
       <AchievementToast />
 
-      {/* Life Areas onboarding nudge (dismissible, non-blocking) */}
+      {/* Onboarding nudge */}
       <OnboardingPrompt />
 
-      {/* Header */}
-      <PageHeader title="Today" eyebrow="system/today" description="Your daily command center." />
-
-      {/* Daily Summary Cards */}
-      <TodaySummaryCards dayRecord={dayRecord} date={today} />
-
-      {/* Daily Progress */}
-      {dayRecord && <DailyProgressBar score={dayRecord.dailyScore} />}
-
-      {/* AI Daily Plan */}
-      <div>
-        <SectionHeader title="AI Daily Plan" />
-        <AiDailyPlanner date={today} />
-      </div>
-
-      {/* Top 3 Priorities */}
-      <TopPrioritiesCard date={today} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ── Left: Worship, Focus, Tasks, Recovery, Sleep, Review ─── */}
-        <div className="lg:col-span-2 space-y-6">
-          {isDayRecordLoading && !dayRecord ? (
-            <div className="space-y-6">
-              <SkeletonPulse variant="card" className="h-48" />
-              <SkeletonPulse variant="card" className="h-32" />
-            </div>
-          ) : dayRecord ? (
-            <>
-              <WorshipCard dayRecord={dayRecord} date={today} />
-              <FocusTimeCard dayRecord={dayRecord} date={today} />
-            </>
-          ) : (
-            <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
-              <span className="font-mono text-sm text-outline">Could not load today&apos;s record. Try refreshing.</span>
+      {/* ── TODAY HEADER ─────────────────────────────────────────────── */}
+      <header>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant/50 mb-1">
+              system/today
+            </p>
+            <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-on-surface">
+              Today
+            </h1>
+            <p className="font-body text-sm text-on-surface-variant mt-1">{dateLabel}</p>
+          </div>
+          {/* Score badge — single occurrence */}
+          {dayRecord && (
+            <div className="flex-shrink-0 flex flex-col items-end gap-1">
+              <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Daily Score</span>
+              <span className={`font-headline text-3xl font-black tracking-tight ${
+                dayRecord.dailyScore >= 8 ? 'text-primary' : dayRecord.dailyScore >= 4 ? 'text-tertiary' : 'text-on-surface-variant'
+              }`}>
+                {dayRecord.dailyScore}
+                <span className="text-base text-on-surface-variant/40 font-normal">/10</span>
+              </span>
             </div>
           )}
-
-          {/* TASK LIST */}
-          <div>
-            <SectionHeader
-              title="Today's Tasks"
-              rightContent={`${activePendingCount} Pending / ${activeCompletedCount} Completed`}
-            />
-
-            {manualTasks.length > 0 && (
-              <div className="flex flex-wrap gap-3 items-center bg-surface-container-lowest p-3 rounded-md border border-outline-variant/15 -mt-2 mb-4">
-                <span className="text-xs text-on-surface-variant/70">Filter</span>
-                <Select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'completed')}
-                  className="w-auto py-1.5 text-xs"
-                >
-                  <option value="all">All status</option>
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                </Select>
-                <Select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-auto py-1.5 text-xs"
-                >
-                  <option value="all">All categories</option>
-                  {uniqueCategories.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </Select>
-              </div>
-            )}
-
-            {isTasksLoading ? (
-              <div className="flex flex-col gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-surface-container-low rounded-md p-4 flex gap-4 items-start">
-                    <div className="w-5 h-5 animate-shimmer rounded-[2px] flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-3/4 animate-shimmer rounded-md" />
-                      <div className="h-3 w-1/2 animate-shimmer rounded-md" />
-                    </div>
-                    <div className="h-5 w-16 animate-shimmer rounded-[2px] flex-shrink-0" />
-                  </div>
-                ))}
-              </div>
-            ) : manualTasks.length === 0 ? (
-              <EmptyState title="No tasks planned for today" description="Add one task or generate a plan." icon="task_alt" />
-            ) : filteredTasks.length === 0 ? (
-              <EmptyState title="No tasks match filter" description="Adjust your filters to see tasks." icon="filter_list_off" />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {pendingTasks.map((task, i) => (
-                  <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                    <TaskItem
-                      id={task.id}
-                      title={task.title}
-                      description={task.description}
-                      category={task.category}
-                      priority={task.priority}
-                      completed={task.completed}
-                      sourceType={task.sourceType}
-                      lifeArea={task.lifeArea}
-                      onToggle={handleToggle}
-                      onDelete={handleDelete}
-                      onEdit={handleEdit}
-                    />
-                  </div>
-                ))}
-                {completedTasks.map((task, i) => (
-                  <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${(pendingTasks.length + i) * 50}ms` }}>
-                    <TaskItem
-                      id={task.id}
-                      title={task.title}
-                      description={task.description}
-                      category={task.category}
-                      priority={task.priority}
-                      completed={task.completed}
-                      sourceType={task.sourceType}
-                      lifeArea={task.lifeArea}
-                      onToggle={handleToggle}
-                      onDelete={handleDelete}
-                      onEdit={handleEdit}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Quick Add */}
-            {!showAddForm ? (
-              <div className="mt-4 bg-surface-container-lowest rounded-md p-3 flex items-center gap-3 border border-outline-variant/15 focus-within:border-primary/50 transition-colors">
-                <span className="text-primary font-headline text-lg">&gt;</span>
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newTaskTitle.trim()) {
-                      if (e.shiftKey) { setShowAddForm(true); }
-                      else { handleQuickAdd(e); }
-                    }
-                  }}
-                  className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0"
-                  placeholder="Add task, habit, goal, or note... (Enter to add, Shift+Enter for details)"
-                  id="quick-add-task"
-                />
-                <button
-                  onClick={() => { if (newTaskTitle.trim()) setShowAddForm(true); }}
-                  className="text-on-surface-variant hover:text-primary transition-colors"
-                >
-                  <span className="material-symbols-outlined">add_circle</span>
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleQuickAdd} className="mt-4 bg-surface-container-lowest rounded-md p-4 border border-outline-variant/15 space-y-3 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <span className="text-primary font-headline">&gt;</span>
-                  <input
-                    type="text"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="w-full bg-transparent text-on-surface font-headline font-semibold border-none p-0 focus:ring-0"
-                    placeholder="Task title"
-                    autoFocus
-                  />
-                </div>
-                <Textarea
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  placeholder="Description (optional)"
-                  rows={2}
-                />
-                <div className="flex gap-2 flex-wrap">
-                  <Select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-auto py-1.5 text-xs">
-                    {['General', 'Health', 'Work', 'Learning', 'Personal', 'Admin'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </Select>
-                  <Select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-auto py-1.5 text-xs">
-                    <option value="low">Low</option>
-                    <option value="nominal">Nominal</option>
-                    <option value="critical">Critical</option>
-                  </Select>
-                  <Select value={newLifeArea} onChange={(e) => setNewLifeArea(e.target.value as LifeAreaId | '')} className="w-auto py-1.5 text-xs">
-                    <option value="">No life area</option>
-                    {LIFE_AREAS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-                  </Select>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" onClick={() => { setShowAddForm(false); setNewTaskTitle(''); }}>Cancel</Button>
-                  <Button type="submit" variant="primary">Add task</Button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {dayRecord && <RecoveryTodayCard dayRecord={dayRecord} date={today} />}
-          {dayRecord && <SleepCard dayRecord={dayRecord} date={today} />}
-
-          <EveningReviewCard date={today} />
         </div>
 
-        {/* ── Right: compact side panel ───────────────────────────── */}
-        <TodaySidePanel dayRecord={dayRecord} date={today} />
-      </div>
+        {/* Compact progress bar */}
+        <div className="mt-4">
+          {isDayRecordLoading && !dayRecord ? (
+            <div className="h-8 bg-surface-container-lowest rounded-sm animate-shimmer" />
+          ) : dayRecord ? (
+            <DailyProgressBar
+              score={dayRecord.dailyScore}
+              maxScore={10}
+              completedItems={completedItemsCount}
+              totalItems={totalItems}
+            />
+          ) : null}
+        </div>
+      </header>
 
-      {/* ── Habits due today (collapsible, last on page) ─────────── */}
+      {/* ── NEXT ACTION ──────────────────────────────────────────────── */}
+      <NextActionCard dayRecord={dayRecord} date={today} />
+
+      {/* ── TOP 3 PRIORITIES ─────────────────────────────────────────── */}
+      <TopPrioritiesCard date={today} />
+
+      {/* ── HABITS DUE TODAY ─────────────────────────────────────────── */}
       <HabitsSection date={today} />
+
+      {/* ── TODAY'S TASKS ────────────────────────────────────────────── */}
+      <section aria-labelledby="tasks-heading">
+        <div className="flex items-center justify-between mb-3">
+          <h2 id="tasks-heading" className="font-headline text-base font-bold text-on-surface">
+            <span className="text-primary">&gt;</span> Today&apos;s Tasks
+          </h2>
+          <span className="font-mono text-[10px] text-on-surface-variant">
+            <span className="text-primary font-bold">{completedTasks.length}</span>/{manualTasks.length}
+          </span>
+        </div>
+
+        {/* Loading state */}
+        {isTasksLoading && manualTasks.length === 0 ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-surface-container-low rounded-md p-4 flex gap-4 items-start">
+                <div className="w-5 h-5 animate-shimmer rounded-[2px] flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 animate-shimmer rounded-md" />
+                  <div className="h-3 w-1/2 animate-shimmer rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : manualTasks.length === 0 ? (
+          /* Compact empty state */
+          <div className="bg-surface-container-low border border-outline-variant/15 rounded-md px-4 py-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-body text-sm text-on-surface-variant">No tasks planned for today.</p>
+              <p className="font-body text-xs text-outline mt-0.5">Add a task or generate a plan.</p>
+            </div>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex-shrink-0 px-3 py-1.5 bg-primary/10 border border-primary/30 hover:border-primary/60 rounded-sm font-label text-xs text-primary transition-all"
+            >
+              + Add Task
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {/* Pending tasks */}
+            {pendingTasks.map((task, i) => (
+              <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${i * 40}ms` }}>
+                <TaskItem
+                  id={task.id}
+                  title={task.title}
+                  description={task.description}
+                  category={task.category}
+                  priority={task.priority}
+                  completed={task.completed}
+                  sourceType={task.sourceType}
+                  lifeArea={task.lifeArea}
+                  onToggle={handleToggle}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                />
+              </div>
+            ))}
+
+            {/* Completed tasks — collapsed */}
+            {completedTasks.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowCompleted(v => !v)}
+                  aria-expanded={showCompleted}
+                  aria-controls="completed-tasks"
+                  className="flex items-center gap-2 w-full text-left py-1.5 px-1 text-on-surface-variant hover:text-on-surface transition-colors"
+                >
+                  <span className={`material-symbols-outlined text-[16px] transition-transform ${showCompleted ? 'rotate-180' : ''}`}>
+                    expand_more
+                  </span>
+                  <span className="font-label text-xs">
+                    {completedTasks.length} completed
+                  </span>
+                </button>
+                {showCompleted && (
+                  <div id="completed-tasks" className="flex flex-col gap-2 animate-fade-in">
+                    {completedTasks.map((task, i) => (
+                      <div key={task.id} className="animate-slide-up" style={{ animationDelay: `${i * 30}ms` }}>
+                        <TaskItem
+                          id={task.id}
+                          title={task.title}
+                          description={task.description}
+                          category={task.category}
+                          priority={task.priority}
+                          completed={task.completed}
+                          sourceType={task.sourceType}
+                          lifeArea={task.lifeArea}
+                          onToggle={handleToggle}
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Add — always visible */}
+        {!showAddForm ? (
+          <div className="mt-3 bg-surface-container-lowest rounded-md p-3 flex items-center gap-3 border border-outline-variant/15 focus-within:border-primary/50 transition-colors">
+            <span className="text-primary font-headline text-lg" aria-hidden="true">&gt;</span>
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTaskTitle.trim()) {
+                  if (e.shiftKey) { setShowAddForm(true); }
+                  else { void handleQuickAdd(e); }
+                }
+              }}
+              className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0"
+              placeholder="Add task… (Enter to add, Shift+Enter for details)"
+              id="quick-add-task"
+              aria-label="Quick add task"
+            />
+            <button
+              onClick={() => { if (newTaskTitle.trim()) setShowAddForm(true); }}
+              aria-label="Expand task form"
+              className="text-on-surface-variant hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined">add_circle</span>
+            </button>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleQuickAdd}
+            className="mt-3 bg-surface-container-lowest rounded-md p-4 border border-outline-variant/15 space-y-3 animate-fade-in"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-primary font-headline" aria-hidden="true">&gt;</span>
+              <input
+                type="text"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                className="w-full bg-transparent text-on-surface font-headline font-semibold border-none p-0 focus:ring-0"
+                placeholder="Task title"
+                autoFocus
+                aria-label="Task title"
+              />
+            </div>
+            <Textarea
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+              placeholder="Description (optional)"
+              rows={2}
+              aria-label="Task description"
+            />
+            <div className="flex gap-2 flex-wrap">
+              <Select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="w-auto py-1.5 text-xs"
+                aria-label="Category"
+              >
+                {['General', 'Health', 'Work', 'Learning', 'Personal', 'Admin'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </Select>
+              <Select
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value)}
+                className="w-auto py-1.5 text-xs"
+                aria-label="Priority"
+              >
+                <option value="low">Low</option>
+                <option value="nominal">Nominal</option>
+                <option value="critical">Critical</option>
+              </Select>
+              <Select
+                value={newLifeArea}
+                onChange={(e) => setNewLifeArea(e.target.value as LifeAreaId | '')}
+                className="w-auto py-1.5 text-xs"
+                aria-label="Life area"
+              >
+                <option value="">No life area</option>
+                {LIFE_AREAS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+              </Select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => { setShowAddForm(false); setNewTaskTitle(''); }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">Add task</Button>
+            </div>
+          </form>
+        )}
+      </section>
+
+      {/* ── DAILY TRACKING ───────────────────────────────────────────── */}
+      {isDayRecordLoading && !dayRecord ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-16 animate-shimmer rounded-md" />
+          ))}
+        </div>
+      ) : dayRecord ? (
+        <DailyTrackingGrid dayRecord={dayRecord} date={today} />
+      ) : (
+        <div className="bg-surface-container-low rounded-md p-6 border border-outline-variant/15">
+          <span className="font-mono text-sm text-outline">
+            Could not load today&apos;s record. Try refreshing.
+          </span>
+        </div>
+      )}
+
+      {/* ── EVENING REVIEW ───────────────────────────────────────────── */}
+      <EveningReviewCard date={today} />
     </div>
   );
 }
