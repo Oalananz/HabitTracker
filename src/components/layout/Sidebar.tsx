@@ -6,6 +6,17 @@ import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
 import { onSyncProgress, initAutoSync } from '@/lib/offline/syncManager';
+import { LIFE_AREAS } from '@/lib/lifeAreas';
+
+/** href → page slug that has a dedicated page (not /life-areas/[id]) */
+const LIFE_AREA_DEDICATED: Record<string, string> = {
+  money: '/money',
+  learning: '/learning',
+};
+
+function lifeAreaHref(id: string): string {
+  return LIFE_AREA_DEDICATED[id] ?? `/life-areas/${id}`;
+}
 
 const navItems = [
   { href: '/today', label: 'Today', icon: 'terminal' },
@@ -13,10 +24,8 @@ const navItems = [
   { href: '/habits', label: 'Habits', icon: 'cached' },
   { href: '/planner', label: 'Planner', icon: 'event_note' },
   { href: '/goals', label: 'Goals', icon: 'flag' },
-  { href: '/life-areas', label: 'Life Areas', icon: 'grid_view' },
+  { href: '/life-areas', label: 'Life Areas', icon: 'grid_view', hasChildren: true },
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
-  { href: '/learning', label: 'Learning', icon: 'menu_book' },
-  { href: '/money', label: 'Money', icon: 'account_balance_wallet' },
   { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
   { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
   { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
@@ -31,6 +40,14 @@ export default function Sidebar() {
   } = useStore();
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Life Areas sub-menu: auto-open when on any life-area route
+  const isOnLifeArea = pathname === '/life-areas' || pathname.startsWith('/life-areas/');
+  const [lifeAreasOpen, setLifeAreasOpen] = useState(isOnLifeArea);
+
+  useEffect(() => {
+    if (isOnLifeArea) setLifeAreasOpen(true);
+  }, [isOnLifeArea]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -134,6 +151,99 @@ export default function Sidebar() {
         <nav className="flex-1 mt-1 overflow-y-auto overflow-x-hidden space-y-0.5">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
+            const isLifeAreaParent = item.hasChildren;
+            // For life areas parent: active when on /life-areas or any sub-page
+            const isParentActive = isLifeAreaParent
+              ? (pathname === item.href || pathname.startsWith('/life-areas/'))
+              : isActive;
+
+            if (isLifeAreaParent) {
+              return (
+                <div key={item.href}>
+                  {/* Life Areas row — click toggles sub-list, link navigates */}
+                  <div
+                    className={`flex items-center gap-3 w-full pl-5 pr-2 py-2.5 text-sm font-label transition-all duration-200 nav-glow ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''} ${
+                      isParentActive
+                        ? 'text-primary font-semibold border-l-2 border-primary bg-surface-container-low/60'
+                        : 'text-on-surface-variant/75 hover:text-on-surface hover:bg-surface-container-low/30 border-l-2 border-transparent'
+                    }`}
+                  >
+                    <Link
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      aria-current={isParentActive ? 'page' : undefined}
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                      title={sidebarCollapsed ? item.label : undefined}
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[20px] transition-all duration-200 flex-shrink-0 ${isParentActive ? 'text-primary' : ''}`}
+                        aria-hidden="true"
+                        style={isParentActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
+                    </Link>
+                    {/* Chevron toggle — hidden in collapsed mode */}
+                    <button
+                      onClick={() => setLifeAreasOpen((o) => !o)}
+                      aria-label={lifeAreasOpen ? 'Collapse life areas' : 'Expand life areas'}
+                      className={`flex-shrink-0 text-on-surface-variant/50 hover:text-primary transition-all duration-200 ${sidebarCollapsed ? 'md:hidden' : ''}`}
+                    >
+                      <span
+                        className="material-symbols-outlined text-[18px] transition-transform duration-200"
+                        style={{ transform: lifeAreasOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                        aria-hidden="true"
+                      >
+                        expand_more
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Sub-list */}
+                  <div
+                    className={`overflow-hidden transition-all duration-200 ${sidebarCollapsed ? 'md:hidden' : ''}`}
+                    style={{ maxHeight: lifeAreasOpen ? `${LIFE_AREAS.length * 44}px` : '0px' }}
+                  >
+                    {LIFE_AREAS.map((area) => {
+                      const href = lifeAreaHref(area.id);
+                      const subActive = pathname === href || pathname === `/life-areas/${area.id}`;
+                      return (
+                        <Link
+                          key={area.id}
+                          href={href}
+                          onClick={() => setSidebarOpen(false)}
+                          aria-current={subActive ? 'page' : undefined}
+                          className={`flex items-center gap-2.5 w-full pl-11 pr-4 py-2 text-xs font-label transition-all duration-150 ${
+                            subActive
+                              ? 'text-on-surface font-semibold bg-surface-container-low/40'
+                              : 'text-on-surface-variant/65 hover:text-on-surface hover:bg-surface-container-low/20'
+                          }`}
+                        >
+                          <span
+                            className="material-symbols-outlined text-[15px] flex-shrink-0"
+                            aria-hidden="true"
+                            style={{ color: area.color }}
+                          >
+                            {area.icon}
+                          </span>
+                          <span style={subActive ? { color: area.color } : undefined}>
+                            {area.shortLabel}
+                          </span>
+                          {subActive && (
+                            <span
+                              className="ml-auto w-1 h-1 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: area.color }}
+                            />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.href}
