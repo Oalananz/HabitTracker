@@ -14,7 +14,6 @@ export interface Database {
           id: string;
           email: string;
           username: string;
-          password: string;
           status_message: string | null;
           created_at: string;
         };
@@ -22,7 +21,6 @@ export interface Database {
           id?: string;
           email: string;
           username: string;
-          password?: string;
           status_message?: string | null;
           created_at?: string;
         };
@@ -30,7 +28,6 @@ export interface Database {
           id?: string;
           email?: string;
           username?: string;
-          password?: string;
           status_message?: string | null;
           created_at?: string;
         };

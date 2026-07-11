@@ -176,7 +176,7 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
       try {
         const { data: inserted, error: insertError } = await supabase
           .from('task_instances')
-          .upsert(toInsert, { onConflict: 'user_id,habit_id,date' })
+          .upsert(toInsert, { onConflict: 'habit_id,date', ignoreDuplicates: true })
           .select('*');
 
         if (insertError) throw insertError;
