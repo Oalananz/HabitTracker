@@ -16,11 +16,13 @@ interface BudgetFormProps {
   onSubmit: (data: { month: number; year: number; categoryId: string | null; amount: number; currency: string }) => void;
   onCancel: () => void;
   initial?: BudgetFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const now = new Date();
 
-export default function BudgetForm({ categories, onSubmit, onCancel, initial }: BudgetFormProps) {
+export default function BudgetForm({ categories, onSubmit, onCancel, initial, editing }: BudgetFormProps) {
   const initialMonthStr =
     initial?.month && initial?.year
       ? `${initial.year}-${String(initial.month).padStart(2, '0')}`
@@ -48,7 +50,7 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_BUDGET' : 'NEW_BUDGET'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_BUDGET' : 'NEW_BUDGET'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,7 +128,7 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
           disabled={!amount}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD BUDGET'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD BUDGET'} &#8629;
         </button>
         <button
           onClick={onCancel}

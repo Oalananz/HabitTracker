@@ -14,9 +14,11 @@ interface SavingsGoalFormProps {
   onSubmit: (data: { title: string; targetAmount: number; currentAmount: number; currency: string; targetDate: string }) => void;
   onCancel: () => void;
   initial?: SavingsGoalFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
-export default function SavingsGoalForm({ onSubmit, onCancel, initial }: SavingsGoalFormProps) {
+export default function SavingsGoalForm({ onSubmit, onCancel, initial, editing }: SavingsGoalFormProps) {
   const [title, setTitle] = useState(initial?.title || '');
   const [targetAmount, setTargetAmount] = useState(initial?.targetAmount?.toString() || '');
   const [currentAmount, setCurrentAmount] = useState(initial?.currentAmount?.toString() || '0');
@@ -37,7 +39,7 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_SAVINGS_GOAL' : 'NEW_SAVINGS_GOAL'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_SAVINGS_GOAL' : 'NEW_SAVINGS_GOAL'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -131,7 +133,7 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
           disabled={!title.trim() || !targetAmount}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD GOAL'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD GOAL'} &#8629;
         </button>
         <button
           onClick={onCancel}

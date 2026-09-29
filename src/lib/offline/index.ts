@@ -20,7 +20,7 @@ export {
   // Goals
   getLocalGoals, cacheGoalsFromServer, localCreateGoal, localUpdateGoal, localToggleGoalComplete, localIncrementGoal, localDeleteGoal,
   // Journeys
-  getLocalJourneys, getLocalRecoveryState, getLocalFailures, cacheJourneysFromServer, cacheFailuresFromServer,
+  getLocalJourneys, getLocalRecoveryState, getLocalFailures, cacheJourneysFromServer, cacheFailuresFromServer, removeCachedFailure,
   localCreateJourney, localUpdateJourney, localDeleteJourney, localRecordJourneyFailure, localResetJourney,
   // Plans
   getLocalPlans, getLocalPlansByRange, cachePlansFromServer, localCreatePlan, localUpdatePlan, localDeletePlan, localAssignPlanToPrayerBlock,

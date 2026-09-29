@@ -6,6 +6,8 @@ import TimerDisplay from '@/components/recovery/TimerDisplay';
 import CompetitiveMode from '@/components/recovery/competitive/CompetitiveMode';
 import FailureLogList from '@/components/recovery/FailureLogList';
 import { useConfirm } from '@/components/ui/useConfirm';
+import { useToast } from '@/store/useToast';
+import { removeCachedFailure } from '@/lib/offline';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
@@ -30,6 +32,24 @@ export default function RecoveryPage() {
   const [expandedJourney, setExpandedJourney] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const { confirm, ConfirmDialog } = useConfirm();
+  const { addToast } = useToast();
+
+  const handleDeleteSlip = async (id: string) => {
+    if (!(await confirm({ message: 'Remove this slip? Use this for slips logged by mistake.' }))) return;
+    try {
+      const res = await fetch('/api/failures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      if (!res.ok) throw new Error();
+      await removeCachedFailure(id);
+      await fetchFailures();
+      addToast('Slip removed', 'success', 2000);
+    } catch {
+      addToast('Could not remove the slip. Check your connection and try again.', 'error');
+    }
+  };
 
   useEffect(() => {
     fetchJourneys();
@@ -246,6 +266,7 @@ export default function RecoveryPage() {
                           <FailureLogList
                             failures={failures.filter(f => f.journeyId === journey.id)}
                             startTime={journey.startTime}
+                            onDelete={handleDeleteSlip}
                           />
                         </div>
 

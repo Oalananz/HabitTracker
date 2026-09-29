@@ -53,6 +53,7 @@ services:
       TZ: ${TZ:-UTC}
       SITE_URL: ${SITE_URL:-http://localhost:3000}
       PRAYER_CALC_METHOD: ${PRAYER_CALC_METHOD:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
     ports:
       - "${APP_PORT:-3000}:3000"
 

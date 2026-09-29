@@ -14,6 +14,7 @@ import SavingsGoalForm from '@/components/money/SavingsGoalForm';
 import DebtForm from '@/components/money/DebtForm';
 import SubscriptionForm from '@/components/money/SubscriptionForm';
 import ExpenseBreakdownChart from '@/components/money/ExpenseBreakdownChart';
+import RowActions from '@/components/ui/RowActions';
 import { useConfirm } from '@/components/ui/useConfirm';
 import { useToast } from '@/store/useToast';
 import { downloadCsv } from '@/lib/csvExport';
@@ -58,6 +59,22 @@ type BudgetData = Parameters<ComponentProps<typeof BudgetForm>['onSubmit']>[0];
 type SavingsGoalData = Parameters<ComponentProps<typeof SavingsGoalForm>['onSubmit']>[0];
 type DebtData = Parameters<ComponentProps<typeof DebtForm>['onSubmit']>[0];
 type SubscriptionData = Parameters<ComponentProps<typeof SubscriptionForm>['onSubmit']>[0];
+
+type Editing =
+  | { kind: 'transaction'; item: MoneyTransaction }
+  | { kind: 'budget'; item: Budget }
+  | { kind: 'savings'; item: SavingsGoal }
+  | { kind: 'debt'; item: Debt }
+  | { kind: 'subscription'; item: Subscription };
+
+// Update endpoint and id field per item kind.
+const UPDATE_TARGETS: Record<Editing['kind'], { url: string; idField: string; noun: string }> = {
+  transaction: { url: '/api/money/transactions', idField: 'transactionId', noun: 'transaction' },
+  budget: { url: '/api/money/budgets', idField: 'budgetId', noun: 'budget' },
+  savings: { url: '/api/money/savings-goals', idField: 'goalId', noun: 'savings goal' },
+  debt: { url: '/api/money/debts', idField: 'debtId', noun: 'debt' },
+  subscription: { url: '/api/money/subscriptions', idField: 'subscriptionId', noun: 'subscription' },
+};
 
 const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -218,7 +235,41 @@ export default function MoneyPage() {
     }
   }, []);
 
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const isEditing = (kind: Editing['kind'], id: string) => editing?.kind === kind && editing.item.id === id;
+  const startEdit = (next: Editing) => {
+    setActiveForm(null);
+    setEditing(next);
+  };
+  const cancelEdit = () => setEditing(null);
+
   const closeForm = () => setActiveForm(null);
+  const openForm = (form: ActiveForm) => {
+    setEditing(null);
+    setActiveForm(activeForm === form ? null : form);
+  };
+
+  const handleUpdate = async (data: Record<string, unknown>) => {
+    if (!editing) return;
+    const target = UPDATE_TARGETS[editing.kind];
+    const ok = await postAction(
+      target.url,
+      { action: 'update', [target.idField]: editing.item.id, ...data },
+      addToast,
+      `Failed to update ${target.noun}`
+    );
+    if (!ok) return;
+    if (editing.kind === 'transaction') fetchTransactions();
+    setEditing(null);
+    fetchAll();
+    addToast(`${target.noun[0].toUpperCase()}${target.noun.slice(1)} updated`, 'success', 2000);
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    if (!(await confirm({ message: 'Delete this budget?' }))) return;
+    const ok = await postAction('/api/money/budgets', { action: 'delete', budgetId }, addToast, 'Failed to delete budget');
+    if (ok) fetchAll();
+  };
 
   const handleCreateTransaction = async (data: TransactionData) => {
     const ok = await postAction('/api/money/transactions', { action: 'create', ...data }, addToast, 'Failed to save transaction');
@@ -386,22 +437,22 @@ export default function MoneyPage() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" icon="add" onClick={() => setActiveForm(activeForm === 'income' ? null : 'income')}>
+        <Button variant="primary" icon="add" onClick={() => openForm('income')}>
           Add income
         </Button>
-        <Button variant="secondary" icon="add" onClick={() => setActiveForm(activeForm === 'expense' ? null : 'expense')}>
+        <Button variant="secondary" icon="add" onClick={() => openForm('expense')}>
           Add expense
         </Button>
-        <Button variant="secondary" icon="pie_chart" onClick={() => setActiveForm(activeForm === 'budget' ? null : 'budget')}>
+        <Button variant="secondary" icon="pie_chart" onClick={() => openForm('budget')}>
           Add budget
         </Button>
-        <Button variant="secondary" icon="savings" onClick={() => setActiveForm(activeForm === 'savings' ? null : 'savings')}>
+        <Button variant="secondary" icon="savings" onClick={() => openForm('savings')}>
           Add savings goal
         </Button>
-        <Button variant="secondary" icon="credit_card" onClick={() => setActiveForm(activeForm === 'debt' ? null : 'debt')}>
+        <Button variant="secondary" icon="credit_card" onClick={() => openForm('debt')}>
           Add debt
         </Button>
-        <Button variant="secondary" icon="receipt_long" onClick={() => setActiveForm(activeForm === 'subscription' ? null : 'subscription')}>
+        <Button variant="secondary" icon="receipt_long" onClick={() => openForm('subscription')}>
           Add subscription
         </Button>
       </div>
@@ -508,7 +559,16 @@ export default function MoneyPage() {
           <EmptyState compact title="No transactions" description="Add an income or expense to get started." />
         ) : (
           <div className="space-y-2">
-            {recentTransactions.map((t) => (
+            {recentTransactions.map((t) => isEditing('transaction', t.id) ? (
+              <TransactionForm
+                key={t.id}
+                editing
+                categories={categories}
+                initial={t}
+                onSubmit={handleUpdate}
+                onCancel={cancelEdit}
+              />
+            ) : (
               <div
                 key={t.id}
                 className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors"
@@ -535,15 +595,60 @@ export default function MoneyPage() {
                     {t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}
                     {fmt(t.amount)} {t.currency}
                   </span>
-                  <button aria-label="Close"
-                    onClick={() => handleDeleteTransaction(t.id)}
-                    className="text-outline hover:text-error transition-colors"
-                  >
-                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
+                  <RowActions
+                    itemLabel={`transaction ${t.title}`}
+                    onEdit={() => startEdit({ kind: 'transaction', item: t })}
+                    onDelete={() => handleDeleteTransaction(t.id)}
+                  />
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Budgets */}
+      <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
+        <SectionHeader title="Budgets" rightContent="This month" />
+        {budgets.length === 0 ? (
+          <EmptyState compact title="No budgets" description="Set a monthly limit, overall or per category." />
+        ) : (
+          <div className="space-y-3">
+            {budgets.map((budget) => {
+              if (isEditing('budget', budget.id)) {
+                return (
+                  <BudgetForm key={budget.id} editing categories={categories} initial={budget} onSubmit={handleUpdate} onCancel={cancelEdit} />
+                );
+              }
+              const usage = calculateBudgetUsage(budget, transactions);
+              const name = budget.categoryId
+                ? categories.find((c) => c.id === budget.categoryId)?.name || 'Category'
+                : 'Overall';
+              return (
+                <div key={budget.id} className="bg-surface-container-lowest rounded-sm border border-outline-variant/10 p-4">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div>
+                      <p className="font-headline text-sm font-bold text-on-surface">{name}</p>
+                      <p className="font-mono text-[10px] text-outline mt-0.5">
+                        {fmt(usage.spentAmount)} spent of {fmt(budget.amount)} {budget.currency}
+                      </p>
+                    </div>
+                    <RowActions
+                      itemLabel={`budget ${name}`}
+                      onEdit={() => startEdit({ kind: 'budget', item: budget })}
+                      onDelete={() => handleDeleteBudget(budget.id)}
+                    />
+                  </div>
+                  <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${usage.percentage > 90 ? 'bg-error' : 'bg-scanline-gradient'}`}
+                      style={{ width: `${Math.min(100, usage.percentage)}%` }}
+                    />
+                  </div>
+                  <p className="font-mono text-[10px] text-on-surface-variant mt-1">{usage.percentage}% used</p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -557,6 +662,9 @@ export default function MoneyPage() {
           <div className="space-y-3">
             {savingsGoals.map((goal) => {
               const progress = calculateSavingsProgress(goal);
+              if (isEditing('savings', goal.id)) {
+                return <SavingsGoalForm key={goal.id} editing initial={goal} onSubmit={handleUpdate} onCancel={cancelEdit} />;
+              }
               return (
                 <div key={goal.id} className="bg-surface-container-lowest rounded-sm border border-outline-variant/10 p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -575,12 +683,11 @@ export default function MoneyPage() {
                       >
                         <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
                       </button>
-                      <button aria-label="Close"
-                        onClick={() => handleDeleteSavingsGoal(goal.id)}
-                        className="text-outline hover:text-error transition-colors"
-                      >
-                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                      </button>
+                      <RowActions
+                        itemLabel={`savings goal ${goal.title}`}
+                        onEdit={() => startEdit({ kind: 'savings', item: goal })}
+                        onDelete={() => handleDeleteSavingsGoal(goal.id)}
+                      />
                     </div>
                   </div>
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
@@ -603,6 +710,9 @@ export default function MoneyPage() {
           <div className="space-y-3">
             {debts.map((debt) => {
               const progress = calculateDebtProgress(debt);
+              if (isEditing('debt', debt.id)) {
+                return <DebtForm key={debt.id} editing initial={debt} onSubmit={handleUpdate} onCancel={cancelEdit} />;
+              }
               return (
                 <div key={debt.id} className="bg-surface-container-lowest rounded-sm border border-outline-variant/10 p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -621,12 +731,11 @@ export default function MoneyPage() {
                       >
                         <span aria-hidden="true" className="material-symbols-outlined text-[16px]">payments</span>
                       </button>
-                      <button aria-label="Close"
-                        onClick={() => handleDeleteDebt(debt.id)}
-                        className="text-outline hover:text-error transition-colors"
-                      >
-                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                      </button>
+                      <RowActions
+                        itemLabel={`debt ${debt.title}`}
+                        onEdit={() => startEdit({ kind: 'debt', item: debt })}
+                        onDelete={() => handleDeleteDebt(debt.id)}
+                      />
                     </div>
                   </div>
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
@@ -649,6 +758,11 @@ export default function MoneyPage() {
           <div className="space-y-2">
             {subscriptions.map((sub) => {
               const isUpcoming = upcomingBills.some((b) => b.id === sub.id);
+              if (isEditing('subscription', sub.id)) {
+                return (
+                  <SubscriptionForm key={sub.id} editing categories={categories} initial={sub} onSubmit={handleUpdate} onCancel={cancelEdit} />
+                );
+              }
               return (
                 <div
                   key={sub.id}
@@ -672,12 +786,11 @@ export default function MoneyPage() {
                     <span className="font-mono text-sm text-on-surface-variant whitespace-nowrap">
                       {fmt(sub.amount ?? 0)} {sub.currency}
                     </span>
-                    <button aria-label="Close"
-                      onClick={() => handleDeleteSubscription(sub.id)}
-                      className="text-outline hover:text-error transition-colors"
-                    >
-                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
+                    <RowActions
+                      itemLabel={`subscription ${sub.title}`}
+                      onEdit={() => startEdit({ kind: 'subscription', item: sub })}
+                      onDelete={() => handleDeleteSubscription(sub.id)}
+                    />
                   </div>
                 </div>
               );

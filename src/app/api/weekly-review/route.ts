@@ -87,3 +87,22 @@ export async function POST(request: NextRequest) {
   if (error) return errorResponse(new Error(error.message), 'POST /api/weekly-review');
   return NextResponse.json({ review: mapReview(data) });
 }
+
+export async function DELETE(request: NextRequest) {
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+
+  const { data, error } = await db
+    .from('weekly_reviews')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select('id');
+
+  if (error) return errorResponse(new Error(error.message), 'DELETE /api/weekly-review');
+  if (!data || data.length === 0) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+  return NextResponse.json({ success: true });
+}

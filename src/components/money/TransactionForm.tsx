@@ -31,11 +31,13 @@ interface TransactionFormProps {
   }) => void;
   onCancel: () => void;
   initial?: TransactionFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const todayStr = () => dayjs().format('YYYY-MM-DD');
 
-export default function TransactionForm({ categories, onSubmit, onCancel, initial }: TransactionFormProps) {
+export default function TransactionForm({ categories, onSubmit, onCancel, initial, editing }: TransactionFormProps) {
   const [type, setType] = useState<MoneyTransactionType>(initial?.type || 'expense');
   const [title, setTitle] = useState(initial?.title || '');
   const [amount, setAmount] = useState(initial?.amount?.toString() || '');
@@ -66,7 +68,7 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_TRANSACTION' : 'NEW_TRANSACTION'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_TRANSACTION' : 'NEW_TRANSACTION'}
       </h3>
 
       <div>
@@ -222,7 +224,7 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
           disabled={!title.trim() || !amount}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD TRANSACTION'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD TRANSACTION'} &#8629;
         </button>
         <button
           onClick={onCancel}

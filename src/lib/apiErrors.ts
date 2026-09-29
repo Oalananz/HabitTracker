@@ -43,6 +43,9 @@ export function errorResponse(error: unknown, context: string) {
   if (message === 'Unauthorized') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (message === 'Forbidden') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
   if (error instanceof ValidationError) {
     return NextResponse.json({ error: message }, { status: 400 });
   }

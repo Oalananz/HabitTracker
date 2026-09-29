@@ -8,7 +8,8 @@ import { SESSION_COOKIE } from '@/lib/sessionCookie';
  * Keeping this out of the page lets "/" be static and cacheable.
  */
 export function proxy(request: NextRequest) {
-  if (request.cookies.has(SESSION_COOKIE)) {
+  // ?preview lets signed-in admins view the landing page they are editing.
+  if (request.cookies.has(SESSION_COOKIE) && !request.nextUrl.searchParams.has('preview')) {
     return NextResponse.redirect(new URL('/today', request.url));
   }
   return NextResponse.next();

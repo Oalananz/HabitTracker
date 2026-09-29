@@ -284,6 +284,18 @@ export default function Sidebar() {
 
         {/* Bottom Links */}
         <div className="space-y-0.5 border-t border-outline-variant/10 pt-2">
+          {user?.isAdmin && (
+            <Link
+              href="/admin/landing"
+              onClick={() => setSidebarOpen(false)}
+              title={sidebarCollapsed ? 'Landing page editor' : undefined}
+              aria-current={pathname === '/admin/landing' ? 'page' : undefined}
+              className={`flex items-center gap-3 w-full pl-5 pr-4 py-2.5 text-sm font-label transition-colors ${pathname === '/admin/landing' ? 'text-primary' : 'text-on-surface-variant/75 hover:text-on-surface'} ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
+            >
+              <span className="material-symbols-outlined text-[20px]" aria-hidden="true">web</span>
+              <span className={sidebarCollapsed ? 'md:hidden' : ''}>Landing page</span>
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             title={sidebarCollapsed ? 'Logout' : undefined}

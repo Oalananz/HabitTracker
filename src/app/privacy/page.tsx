@@ -112,8 +112,17 @@ export default function PrivacyPage() {
 
         <Section title="Deleting your data">
           <p>
-            To have your account and everything in it deleted, contact <Contact />. Deleting your account
-            removes your records from the database; shared journeys you created are removed with it.
+            You can delete your account yourself, any time, under{' '}
+            <strong className="text-on-surface">Settings → Account &amp; security</strong>. It permanently removes
+            your account and everything in it from the database, including shared journeys you created and
+            invites addressed to you. It can&apos;t be undone.
+          </p>
+          <p>
+            Want a copy first? <strong className="text-on-surface">Settings → Data &amp; Backup → Download my data</strong>{' '}
+            gives you everything you&apos;ve logged as a single JSON file.
+          </p>
+          <p>
+            If you can&apos;t sign in any more, contact <Contact /> to have your data deleted.
           </p>
         </Section>
 

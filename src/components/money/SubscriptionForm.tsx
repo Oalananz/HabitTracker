@@ -24,9 +24,11 @@ interface SubscriptionFormProps {
   }) => void;
   onCancel: () => void;
   initial?: SubscriptionFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
-export default function SubscriptionForm({ categories, onSubmit, onCancel, initial }: SubscriptionFormProps) {
+export default function SubscriptionForm({ categories, onSubmit, onCancel, initial, editing }: SubscriptionFormProps) {
   const [title, setTitle] = useState(initial?.title || '');
   const [amount, setAmount] = useState(initial?.amount?.toString() || '');
   const [currency, setCurrency] = useState(initial?.currency || 'JOD');
@@ -51,7 +53,7 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_SUBSCRIPTION' : 'NEW_SUBSCRIPTION'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_SUBSCRIPTION' : 'NEW_SUBSCRIPTION'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,7 +163,7 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
           disabled={!title.trim() || !amount}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD SUBSCRIPTION'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD SUBSCRIPTION'} &#8629;
         </button>
         <button
           onClick={onCancel}

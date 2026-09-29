@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSession, hashPassword, isSecureRequest, USERNAME_RE } from '@/lib/auth';
+import { createSession, EMAIL_RE, hashPassword, isSecureRequest, MIN_PASSWORD_LENGTH, USERNAME_RE } from '@/lib/auth';
 import { pool } from '@/lib/db';
 import { errorResponse } from '@/lib/apiErrors';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
 
 export async function POST(request: NextRequest) {
   try {

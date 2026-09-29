@@ -320,6 +320,39 @@ export async function createStudySession(
   return mapStudySession(session);
 }
 
+export async function updateStudySession(
+  sessionId: string,
+  userId: string,
+  data: {
+    courseId?: string | null;
+    skillId?: string | null;
+    title?: string | null;
+    durationMinutes?: number;
+    date?: string;
+    notes?: string | null;
+  }
+): Promise<StudySession> {
+  const updateData: Record<string, unknown> = {};
+  if (data.courseId !== undefined) updateData.course_id = data.courseId || null;
+  if (data.skillId !== undefined) updateData.skill_id = data.skillId || null;
+  if (data.title !== undefined) updateData.title = data.title || null;
+  if (data.durationMinutes !== undefined) updateData.duration_minutes = data.durationMinutes;
+  if (data.date !== undefined) updateData.date = data.date;
+  if (data.notes !== undefined) updateData.notes = data.notes || null;
+  updateData.updated_at = new Date().toISOString();
+
+  const { data: session, error } = await db
+    .from('study_sessions')
+    .update(updateData)
+    .eq('id', sessionId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapStudySession(session);
+}
+
 export async function deleteStudySession(sessionId: string, userId: string): Promise<void> {
   const { error } = await db
     .from('study_sessions')
@@ -430,6 +463,31 @@ export async function createCertificate(
       certificate_url: data.certificateUrl || null,
       file_url: data.fileUrl || null,
     })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapCertificate(cert);
+}
+
+export async function updateCertificate(
+  certificateId: string,
+  userId: string,
+  data: { title?: string; provider?: string | null; issueDate?: string | null; certificateUrl?: string | null; fileUrl?: string | null }
+): Promise<Certificate> {
+  const updateData: Record<string, unknown> = {};
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.provider !== undefined) updateData.provider = data.provider || null;
+  if (data.issueDate !== undefined) updateData.issue_date = data.issueDate || null;
+  if (data.certificateUrl !== undefined) updateData.certificate_url = data.certificateUrl || null;
+  if (data.fileUrl !== undefined) updateData.file_url = data.fileUrl || null;
+  updateData.updated_at = new Date().toISOString();
+
+  const { data: cert, error } = await db
+    .from('certificates')
+    .update(updateData)
+    .eq('id', certificateId)
+    .eq('user_id', userId)
     .select()
     .single();
 

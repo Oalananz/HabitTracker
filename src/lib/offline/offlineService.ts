@@ -348,6 +348,11 @@ export async function cacheFailuresFromServer(failures: LocalFailure[]): Promise
   }
 }
 
+/** Drop a slip from the device cache after the server has deleted it. */
+export async function removeCachedFailure(id: string): Promise<void> {
+  await offlineDB.failures.delete(id);
+}
+
 export async function localCreateJourney(data: {
   title: string;
   description?: string;

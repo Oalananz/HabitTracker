@@ -11,15 +11,18 @@ interface CertificateFormProps {
     certificateUrl: string;
   }) => void;
   onCancel: () => void;
+  initial?: { title?: string; provider?: string | null; issueDate?: string | null; certificateUrl?: string | null };
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const todayStr = () => dayjs().format('YYYY-MM-DD');
 
-export default function CertificateForm({ onSubmit, onCancel }: CertificateFormProps) {
-  const [title, setTitle] = useState('');
-  const [provider, setProvider] = useState('');
-  const [issueDate, setIssueDate] = useState(todayStr());
-  const [certificateUrl, setCertificateUrl] = useState('');
+export default function CertificateForm({ onSubmit, onCancel, initial, editing }: CertificateFormProps) {
+  const [title, setTitle] = useState(initial?.title || '');
+  const [provider, setProvider] = useState(initial?.provider || '');
+  const [issueDate, setIssueDate] = useState(initial?.issueDate || todayStr());
+  const [certificateUrl, setCertificateUrl] = useState(initial?.certificateUrl || '');
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -34,7 +37,7 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> NEW_CERTIFICATE
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_CERTIFICATE' : 'NEW_CERTIFICATE'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,7 +111,7 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
           disabled={!title.trim()}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          ADD CERTIFICATE &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD CERTIFICATE'} &#8629;
         </button>
         <button
           onClick={onCancel}

@@ -12,17 +12,20 @@ interface ResourceFormProps {
     status: ResourceStatus;
   }) => void;
   onCancel: () => void;
+  initial?: { title?: string; url?: string | null; type?: ResourceType; provider?: string | null; status?: ResourceStatus };
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const TYPES: ResourceType[] = ['course', 'video', 'article', 'book', 'documentation', 'other'];
 const STATUSES: ResourceStatus[] = ['saved', 'in_progress', 'completed'];
 
-export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) {
-  const [title, setTitle] = useState('');
-  const [url, setUrl] = useState('');
-  const [type, setType] = useState<ResourceType>('other');
-  const [provider, setProvider] = useState('');
-  const [status, setStatus] = useState<ResourceStatus>('saved');
+export default function ResourceForm({ onSubmit, onCancel, initial, editing }: ResourceFormProps) {
+  const [title, setTitle] = useState(initial?.title || '');
+  const [url, setUrl] = useState(initial?.url || '');
+  const [type, setType] = useState<ResourceType>(initial?.type || 'other');
+  const [provider, setProvider] = useState(initial?.provider || '');
+  const [status, setStatus] = useState<ResourceStatus>(initial?.status || 'saved');
 
   const handleSubmit = () => {
     if (!title.trim() || !url.trim()) return;
@@ -32,7 +35,7 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> NEW_RESOURCE
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_RESOURCE' : 'NEW_RESOURCE'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,7 +128,7 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
           disabled={!title.trim() || !url.trim()}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          ADD RESOURCE &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD RESOURCE'} &#8629;
         </button>
         <button
           onClick={onCancel}

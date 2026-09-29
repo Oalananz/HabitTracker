@@ -6,6 +6,8 @@ import { LIFE_AREAS } from '@/lib/lifeAreas';
 import { useToast } from '@/store/useToast';
 import AiWeeklyReview from '@/components/ai/AiWeeklyReview';
 import PageHeader from '@/components/ui/PageHeader';
+import RowActions from '@/components/ui/RowActions';
+import { useConfirm } from '@/components/ui/useConfirm';
 import Button from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
 import SkeletonPulse from '@/components/ui/SkeletonPulse';
@@ -120,6 +122,7 @@ async function fetchStudyMinutes(): Promise<number | null> {
 export default function WeeklyReviewPage() {
   const { goals, fetchGoals, habits, fetchHabits } = useStore();
   const { addToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const today = dayjs();
   const [weekStart, setWeekStart] = useState(today.startOf('week'));
@@ -200,6 +203,21 @@ export default function WeeklyReviewPage() {
     return { best, weakest, tasksCompleted, habitsTotal, habitRate, goalsCompleted, overdue };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [breakdown, goals, habits, tasks]);
+
+  const handleDeleteReview = async (review: SavedReview) => {
+    const range = `${dayjs(review.weekStartDate).format('MMM D')} – ${dayjs(review.weekEndDate).format('MMM D')}`;
+    if (!(await confirm({ message: `Delete your review for ${range}? This can't be undone.` }))) return;
+    try {
+      const res = await fetch(`/api/weekly-review?id=${encodeURIComponent(review.id)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      // If it was the week on screen, clear the form too.
+      if (dayjs(review.weekStartDate).isSame(weekStart, 'day')) setForm(EMPTY);
+      await loadReviews();
+      addToast('Review deleted', 'success', 2000);
+    } catch {
+      addToast('Could not delete the review. Try again.', 'error');
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -288,6 +306,7 @@ export default function WeeklyReviewPage() {
 
   return (
     <div className="space-y-8 animate-page-enter">
+      {ConfirmDialog}
       <PageHeader
         title="Weekly Review"
         description="Reflect on your week across the six life areas."
@@ -423,10 +442,14 @@ export default function WeeklyReviewPage() {
         ) : (
           <div className="space-y-2">
             {reviews.map((r) => (
-              <button
+              <div
                 key={r.id}
+                className="bg-surface-container-low border border-outline-variant/15 rounded-md hover:border-primary/30 transition-colors flex items-center gap-2 pr-2"
+              >
+              <button
                 onClick={() => setWeekStart(dayjs(r.weekStartDate).startOf('week'))}
-                className="w-full text-left bg-surface-container-low border border-outline-variant/15 rounded-md p-3 hover:border-primary/30 transition-colors flex items-center justify-between gap-3"
+                aria-label={`Open review for ${dayjs(r.weekStartDate).format('MMM D')} – ${dayjs(r.weekEndDate).format('MMM D, YYYY')}`}
+                className="flex-1 min-w-0 text-left p-3 flex items-center justify-between gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
               >
                 <div className="min-w-0">
                   <div className="text-sm text-on-surface">{dayjs(r.weekStartDate).format('MMM D')} – {dayjs(r.weekEndDate).format('MMM D, YYYY')}</div>
@@ -434,9 +457,14 @@ export default function WeeklyReviewPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs text-on-surface-variant/50">{dayjs(r.createdAt).format('MMM D')}</span>
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-on-surface-variant">edit</span>
                 </div>
               </button>
+              <RowActions
+                itemLabel={`review for ${dayjs(r.weekStartDate).format('MMM D')} – ${dayjs(r.weekEndDate).format('MMM D')}`}
+                onEdit={() => setWeekStart(dayjs(r.weekStartDate).startOf('week'))}
+                onDelete={() => handleDeleteReview(r)}
+              />
+              </div>
             ))}
           </div>
         )}

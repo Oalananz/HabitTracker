@@ -11,11 +11,13 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useConfirm } from '@/components/ui/useConfirm';
+import AccountSettings from '@/components/settings/AccountSettings';
 
-type SettingsTab = 'profile' | 'preferences' | 'life-areas' | 'data' | 'appearance' | 'advanced';
+type SettingsTab = 'profile' | 'account' | 'preferences' | 'life-areas' | 'data' | 'appearance' | 'advanced';
 
 const TABS: { key: SettingsTab; label: string; icon: string }[] = [
   { key: 'profile', label: 'Profile', icon: 'person' },
+  { key: 'account', label: 'Account & security', icon: 'shield_person' },
   { key: 'preferences', label: 'Preferences', icon: 'tune' },
   { key: 'life-areas', label: 'Life Areas', icon: 'grid_view' },
   { key: 'data', label: 'Data & Backup', icon: 'cloud_done' },
@@ -154,6 +156,8 @@ export default function SettingsPage() {
         </Card>
       )}
 
+      {activeTab === 'account' && <AccountSettings key={user?.id ?? 'anon'} />}
+
       {activeTab === 'preferences' && !userPreferences && (
         <Card className="max-w-lg space-y-3">
           <div className="h-4 w-32 animate-shimmer rounded-md" />
@@ -225,6 +229,20 @@ export default function SettingsPage() {
             app goes idle, when you switch tabs, or as soon as you&apos;re back online. There&apos;s
             nothing to back up manually.
           </p>
+          <div className="pt-3 border-t border-outline-variant/10 space-y-2">
+            <h3 className="text-sm font-medium text-on-surface">Download my data</h3>
+            <p className="text-sm text-on-surface-variant">
+              Everything you&apos;ve logged, as a single JSON file.
+            </p>
+            <a
+              href="/api/export"
+              download
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm text-sm font-label bg-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest border border-outline-variant/20 transition-all"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">download</span>
+              Download my data
+            </a>
+          </div>
         </Card>
       )}
 

@@ -42,6 +42,8 @@ function createPool() {
   return new Pool({
     connectionString: process.env.DATABASE_URL,
     max: Number(process.env.DATABASE_POOL_SIZE || 10),
+    // Fail fast rather than hang when the database is unreachable (e.g. at build time).
+    connectionTimeoutMillis: 5000,
     // Keep SQL date math (NOW()::date etc.) on the same calendar as the app.
     options: `-c timezone=${DB_TIMEZONE}`,
   });

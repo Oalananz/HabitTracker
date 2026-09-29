@@ -21,11 +21,13 @@ interface SkillFormProps {
   }) => void;
   onCancel: () => void;
   initial?: SkillFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
 
-export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProps) {
+export default function SkillForm({ onSubmit, onCancel, initial, editing }: SkillFormProps) {
   const [name, setName] = useState(initial?.name || '');
   const [category, setCategory] = useState(initial?.category || '');
   const [level, setLevel] = useState<SkillLevel>(initial?.level || 'beginner');
@@ -48,7 +50,7 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_SKILL' : 'NEW_SKILL'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_SKILL' : 'NEW_SKILL'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -142,7 +144,7 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
           disabled={!name.trim()}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD SKILL'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD SKILL'} &#8629;
         </button>
         <button
           onClick={onCancel}

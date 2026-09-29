@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, type ComponentProps } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
+import RowActions from '@/components/ui/RowActions';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -98,6 +99,21 @@ async function loadLearningData(): Promise<LearningData> {
   };
 }
 
+type Editing =
+  | { kind: 'course'; item: LearningCourse }
+  | { kind: 'skill'; item: Skill }
+  | { kind: 'session'; item: StudySession }
+  | { kind: 'certificate'; item: Certificate }
+  | { kind: 'resource'; item: LearningResource };
+
+const UPDATE_TARGETS: Record<Editing['kind'], { url: string; idField: string; noun: string }> = {
+  course: { url: '/api/learning/courses', idField: 'courseId', noun: 'course' },
+  skill: { url: '/api/learning/skills', idField: 'skillId', noun: 'skill' },
+  session: { url: '/api/learning/study-sessions', idField: 'sessionId', noun: 'study session' },
+  certificate: { url: '/api/learning/certificates', idField: 'certificateId', noun: 'certificate' },
+  resource: { url: '/api/learning/resources', idField: 'resourceId', noun: 'resource' },
+};
+
 export default function LearningPage() {
   const { addToast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -144,7 +160,34 @@ export default function LearningPage() {
     return () => { active = false; };
   }, [addToast, applyLearningData]);
 
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const isEditing = (kind: Editing['kind'], id: string) => editing?.kind === kind && editing.item.id === id;
+  const startEdit = (next: Editing) => {
+    setActiveForm(null);
+    setEditing(next);
+  };
+  const cancelEdit = () => setEditing(null);
+
   const closeForm = () => setActiveForm(null);
+  const openForm = (form: ActiveForm) => {
+    setEditing(null);
+    setActiveForm(activeForm === form ? null : form);
+  };
+
+  const handleUpdate = async (data: Record<string, unknown>) => {
+    if (!editing) return;
+    const target = UPDATE_TARGETS[editing.kind];
+    const ok = await postAction(
+      target.url,
+      { action: 'update', [target.idField]: editing.item.id, ...data },
+      addToast,
+      `Failed to update ${target.noun}`
+    );
+    if (!ok) return;
+    setEditing(null);
+    fetchAll();
+    addToast(`${target.noun[0].toUpperCase()}${target.noun.slice(1)} updated`, 'success', 2000);
+  };
 
   const handleCreateCourse = async (data: CourseData) => {
     const ok = await postAction('/api/learning/courses', { action: 'create', ...data }, addToast, 'Failed to save course');
@@ -283,19 +326,19 @@ export default function LearningPage() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" icon="add" onClick={() => setActiveForm(activeForm === 'course' ? null : 'course')}>
+        <Button variant="primary" icon="add" onClick={() => openForm('course')}>
           Add course
         </Button>
-        <Button variant="secondary" icon="psychology" onClick={() => setActiveForm(activeForm === 'skill' ? null : 'skill')}>
+        <Button variant="secondary" icon="psychology" onClick={() => openForm('skill')}>
           Add skill
         </Button>
-        <Button variant="secondary" icon="schedule" onClick={() => setActiveForm(activeForm === 'session' ? null : 'session')}>
+        <Button variant="secondary" icon="schedule" onClick={() => openForm('session')}>
           Log study session
         </Button>
-        <Button variant="secondary" icon="military_tech" onClick={() => setActiveForm(activeForm === 'certificate' ? null : 'certificate')}>
+        <Button variant="secondary" icon="military_tech" onClick={() => openForm('certificate')}>
           Add certificate
         </Button>
-        <Button variant="secondary" icon="bookmark_add" onClick={() => setActiveForm(activeForm === 'resource' ? null : 'resource')}>
+        <Button variant="secondary" icon="bookmark_add" onClick={() => openForm('resource')}>
           Add resource
         </Button>
       </div>
@@ -318,6 +361,26 @@ export default function LearningPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {courses.map((course) => {
               const progress = calculateCourseProgress(course, []);
+              if (isEditing('course', course.id)) {
+                return (
+                  <div key={course.id} className="md:col-span-2">
+                    <CourseForm
+                      editing
+                      initial={{
+                        title: course.title,
+                        provider: course.provider ?? undefined,
+                        courseUrl: course.courseUrl ?? undefined,
+                        description: course.description ?? undefined,
+                        status: course.status,
+                        targetCompletionDate: course.targetCompletionDate ?? undefined,
+                        progressPercentage: course.progressPercentage,
+                      }}
+                      onSubmit={handleUpdate}
+                      onCancel={cancelEdit}
+                    />
+                  </div>
+                );
+              }
               return (
                 <div key={course.id} className="bg-surface-container-lowest rounded-sm border border-outline-variant/10 p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
@@ -328,12 +391,11 @@ export default function LearningPage() {
                         {course.targetCompletionDate && ` · due ${dayjs(course.targetCompletionDate).format('MMM D, YYYY')}`}
                       </p>
                     </div>
-                    <button aria-label="Close"
-                      onClick={() => handleDeleteCourse(course.id)}
-                      className="text-outline hover:text-error transition-colors flex-shrink-0"
-                    >
-                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
+                    <RowActions
+                      itemLabel={`course ${course.title}`}
+                      onEdit={() => startEdit({ kind: 'course', item: course })}
+                      onDelete={() => handleDeleteCourse(course.id)}
+                    />
                   </div>
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                     <div className="h-full bg-scanline-gradient rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
@@ -353,7 +415,22 @@ export default function LearningPage() {
           <EmptyState compact title="No skills tracked" description="Add a skill to monitor your growth over time." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {skills.map((skill) => (
+            {skills.map((skill) => isEditing('skill', skill.id) ? (
+              <div key={skill.id} className="md:col-span-2">
+                <SkillForm
+                  editing
+                  initial={{
+                    name: skill.name,
+                    category: skill.category ?? undefined,
+                    level: skill.level,
+                    targetLevel: skill.targetLevel ?? undefined,
+                    progressPercentage: skill.progressPercentage,
+                  }}
+                  onSubmit={handleUpdate}
+                  onCancel={cancelEdit}
+                />
+              </div>
+            ) : (
               <div key={skill.id} className="bg-surface-container-lowest rounded-sm border border-outline-variant/10 p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="min-w-0">
@@ -362,12 +439,11 @@ export default function LearningPage() {
                       {skill.level}{skill.targetLevel && ` → ${skill.targetLevel}`}
                     </p>
                   </div>
-                  <button aria-label="Close"
-                    onClick={() => handleDeleteSkill(skill.id)}
-                    className="text-outline hover:text-error transition-colors flex-shrink-0"
-                  >
-                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
+                  <RowActions
+                    itemLabel={`skill ${skill.name}`}
+                    onEdit={() => startEdit({ kind: 'skill', item: skill })}
+                    onDelete={() => handleDeleteSkill(skill.id)}
+                  />
                 </div>
                 <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                   <div className="h-full bg-scanline-gradient rounded-full transition-all duration-500" style={{ width: `${skill.progressPercentage}%` }} />
@@ -386,7 +462,17 @@ export default function LearningPage() {
           <EmptyState compact title="No study sessions logged" description="Log a session after you study to build your streak." />
         ) : (
           <div className="space-y-2">
-            {sessions.map((s) => (
+            {sessions.map((s) => isEditing('session', s.id) ? (
+              <StudySessionForm
+                key={s.id}
+                editing
+                courses={courses}
+                skills={skills}
+                initial={s}
+                onSubmit={handleUpdate}
+                onCancel={cancelEdit}
+              />
+            ) : (
               <div key={s.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">schedule</span>
@@ -397,9 +483,11 @@ export default function LearningPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="font-mono text-sm text-on-surface-variant whitespace-nowrap">{s.durationMinutes} min</span>
-                  <button aria-label="Close" onClick={() => handleDeleteSession(s.id)} className="text-outline hover:text-error transition-colors">
-                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
+                  <RowActions
+                    itemLabel={`study session ${s.title || dayjs(s.date).format('MMM D')}`}
+                    onEdit={() => startEdit({ kind: 'session', item: s })}
+                    onDelete={() => handleDeleteSession(s.id)}
+                  />
                 </div>
               </div>
             ))}
@@ -414,7 +502,9 @@ export default function LearningPage() {
           <EmptyState compact title="No certificates yet" description="Add a certificate once you complete a course." />
         ) : (
           <div className="space-y-2">
-            {certificates.map((c) => (
+            {certificates.map((c) => isEditing('certificate', c.id) ? (
+              <CertificateForm key={c.id} editing initial={c} onSubmit={handleUpdate} onCancel={cancelEdit} />
+            ) : (
               <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-tertiary flex-shrink-0">military_tech</span>
@@ -425,9 +515,11 @@ export default function LearningPage() {
                     </p>
                   </div>
                 </div>
-                <button aria-label="Close" onClick={() => handleDeleteCertificate(c.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                </button>
+                <RowActions
+                  itemLabel={`certificate ${c.title}`}
+                  onEdit={() => startEdit({ kind: 'certificate', item: c })}
+                  onDelete={() => handleDeleteCertificate(c.id)}
+                />
               </div>
             ))}
           </div>
@@ -441,7 +533,9 @@ export default function LearningPage() {
           <EmptyState compact title="No saved resources" description="Save articles, videos, or docs you want to come back to." />
         ) : (
           <div className="space-y-2">
-            {resources.map((r) => (
+            {resources.map((r) => isEditing('resource', r.id) ? (
+              <ResourceForm key={r.id} editing initial={r} onSubmit={handleUpdate} onCancel={cancelEdit} />
+            ) : (
               <div key={r.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">bookmark</span>
@@ -450,9 +544,11 @@ export default function LearningPage() {
                     <p className="font-mono text-[10px] text-outline">{r.type} · {r.status.replace('_', ' ')}</p>
                   </div>
                 </div>
-                <button aria-label="Close" onClick={() => handleDeleteResource(r.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
-                </button>
+                <RowActions
+                  itemLabel={`resource ${r.title}`}
+                  onEdit={() => startEdit({ kind: 'resource', item: r })}
+                  onDelete={() => handleDeleteResource(r.id)}
+                />
               </div>
             ))}
           </div>

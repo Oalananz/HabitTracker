@@ -25,11 +25,13 @@ interface CourseFormProps {
   }) => void;
   onCancel: () => void;
   initial?: CourseFormInitial;
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const STATUSES: CourseStatus[] = ['not_started', 'in_progress', 'completed', 'paused'];
 
-export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormProps) {
+export default function CourseForm({ onSubmit, onCancel, initial, editing }: CourseFormProps) {
   const [title, setTitle] = useState(initial?.title || '');
   const [provider, setProvider] = useState(initial?.provider || '');
   const [courseUrl, setCourseUrl] = useState(initial?.courseUrl || '');
@@ -56,7 +58,7 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> {initial ? 'EDIT_COURSE' : 'NEW_COURSE'}
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_COURSE' : 'NEW_COURSE'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,7 +182,7 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
           disabled={!title.trim()}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {initial ? 'SAVE CHANGES' : 'ADD COURSE'} &#8629;
+          {editing ? 'SAVE CHANGES' : 'ADD COURSE'} &#8629;
         </button>
         <button
           onClick={onCancel}

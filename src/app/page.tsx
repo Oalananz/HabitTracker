@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Landing from '@/components/landing/Landing';
+import { getLandingContent } from '@/lib/landingContent.server';
 
 export const metadata: Metadata = {
   title: 'HabitTerminal — Every day gets a score',
@@ -15,7 +16,11 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
 };
 
-// Static and cacheable. Signed-in visitors are redirected by src/proxy.ts.
-export default function Home() {
-  return <Landing />;
+// Static and cacheable; refreshed every 5 minutes and immediately when an admin
+// saves the copy (see /api/admin/landing). Signed-in visitors are redirected by
+// src/proxy.ts.
+export const revalidate = 300;
+
+export default async function Home() {
+  return <Landing content={await getLandingContent()} />;
 }

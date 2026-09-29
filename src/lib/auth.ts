@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import { cookies } from 'next/headers';
 import { db, pool } from '@/lib/db';
 import { SESSION_COOKIE } from '@/lib/sessionCookie';
+import { isAdminEmail } from '@/lib/adminEmails';
 
 export { SESSION_COOKIE };
 export const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
@@ -112,6 +113,7 @@ export interface AuthUser {
   username: string;
   statusMessage: string | null;
   createdAt: string;
+  isAdmin: boolean;
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -133,6 +135,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     username: profile.username,
     statusMessage: profile.status_message,
     createdAt: profile.created_at,
+    isAdmin: isAdminEmail(profile.email),
   };
 }
 
@@ -161,4 +164,64 @@ export async function requireAuthId() {
 export function isSecureRequest(request: Request) {
   const forwarded = request.headers.get('x-forwarded-proto');
   return (forwarded ?? new URL(request.url).protocol.replace(':', '')) === 'https';
+}
+
+// ─── Account management ──────────────────────────────────────────────
+
+export const MIN_PASSWORD_LENGTH = 6;
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Checks the signed-in user's password (for sensitive account changes). */
+export async function verifyUserPassword(userId: string, password: string): Promise<boolean> {
+  const { rows } = await pool.query<{ password_hash: string }>('SELECT password_hash FROM users WHERE id = $1', [userId]);
+  return verifyPassword(password, rows[0]?.password_hash);
+}
+
+/** Hash of the session token on the current request, if any. */
+export async function currentSessionHash(): Promise<string | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? hashToken(token) : null;
+}
+
+/** Ends every session of a user except (optionally) the one making the request. */
+export async function revokeSessions(userId: string, keepTokenHash: string | null) {
+  await pool.query('DELETE FROM sessions WHERE user_id = $1 AND token_hash IS DISTINCT FROM $2', [userId, keepTokenHash]);
+  for (const [key, entry] of authIdCache) {
+    if (entry.userId === userId && key !== keepTokenHash) authIdCache.delete(key);
+  }
+}
+
+/**
+ * Permanently deletes a user and everything they own (every table cascades on
+ * users.id). Invites others sent to this user are removed too, since they would
+ * otherwise keep the user's email address after the account is gone.
+ */
+export async function deleteUserAccount(userId: string) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `DELETE FROM journey_invites
+        WHERE invitee_user_id = $1
+           OR lower(invitee_email) = (SELECT lower(email) FROM users WHERE id = $1)`,
+      [userId]
+    );
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  for (const [key, entry] of authIdCache) {
+    if (entry.userId === userId) authIdCache.delete(key);
+  }
+}
+
+/** Signed-in admin, or throws Unauthorized / Forbidden. */
+export async function requireAdmin(): Promise<AuthUser> {
+  const user = await requireAuth();
+  if (!user.isAdmin) throw new Error('Forbidden');
+  return user;
 }

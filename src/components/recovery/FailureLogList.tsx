@@ -1,6 +1,7 @@
 'use client';
 
 import dayjs from 'dayjs';
+import RowActions from '@/components/ui/RowActions';
 
 interface FailureLog {
   id: string;
@@ -12,9 +13,11 @@ interface FailureLog {
 interface FailureLogListProps {
   failures: FailureLog[];
   startTime: string;
+  /** Remove a slip logged by mistake. */
+  onDelete?: (id: string) => void;
 }
 
-export default function FailureLogList({ failures, startTime }: FailureLogListProps) {
+export default function FailureLogList({ failures, startTime, onDelete }: FailureLogListProps) {
   // Calculate duration between failures
   const getFailureDuration = (index: number): string => {
     const current = dayjs(failures[index].timestamp);
@@ -69,23 +72,22 @@ export default function FailureLogList({ failures, startTime }: FailureLogListPr
                     Duration: {getFailureDuration(index)}
                   </div>
                 </div>
-                <span className="font-mono text-[11px] text-tertiary">
-                  {dayjs(failure.timestamp).format('YYYY-MM-DD')}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-tertiary">
+                    {dayjs(failure.timestamp).format('YYYY-MM-DD')}
+                  </span>
+                  {onDelete && (
+                    <RowActions
+                      itemLabel={`slip #${failures.length - index} from ${dayjs(failure.timestamp).format('MMM D')}`}
+                      onDelete={() => onDelete(failure.id)}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Footer */}
-      {failures.length > 0 && (
-        <div className="px-4 py-3 border-t border-outline-variant/10">
-          <button className="font-label text-xs uppercase tracking-widest text-primary hover:text-primary/80 transition-colors w-full text-center">
-            VIEW FULL ARCHIVE →
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -74,8 +74,13 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 ### 📅 Calendar / History
 - Planner month view with plans per day; dashboard heatmap and 7-day report for history
 
-### 🔐 Auth
+### 🔐 Account & data
 - Email + password (scrypt-hashed) with HTTP-only, database-backed sessions
+- Change email or password (signs out other devices), delete your account and all its data, and download everything as JSON — all from **Settings**
+
+### 🛠 Landing page editor (admins)
+- `/admin/landing` edits the public landing page copy: headlines, sections (show/hide), feature and fact lists (add, edit, reorder, delete). Saving updates the page immediately; "Reset to defaults" restores the built-in copy.
+- Admins are the accounts listed in `ADMIN_EMAILS`.
 
 ### 📡 Offline-first PWA
 - Local IndexedDB cache (Dexie), sync queue, and service worker
@@ -146,7 +151,7 @@ Migrations live in `db/migrations/`. On every `make up`, a one-shot `migrate` co
 ### Deploying publicly
 
 1. In `.env`: set `SITE_URL` to your public address (e.g. `https://habitterminal.example`) — it is baked into link previews, `robots.txt` and the sitemap at build time — and set a strong `POSTGRES_PASSWORD` **before the first `make up`** (see the note in `.env.example` for changing it later).
-   Also set `CONTACT_EMAIL`: it is shown on `/privacy` as the address for data and account-deletion requests. Review the privacy page against your own obligations before launch.
+   Also set `ADMIN_EMAILS` (who may edit the landing page at `/admin/landing`) and `CONTACT_EMAIL`: it is shown on `/privacy` as the address for data and account-deletion requests. Review the privacy page against your own obligations before launch.
 2. Put the app behind an HTTPS reverse proxy (Caddy, nginx, Traefik…) that forwards to port `APP_PORT`. The proxy must send `X-Forwarded-Proto` (session cookies are marked `Secure` when it says `https`) and `X-Forwarded-For` (used to rate-limit logins per client). Have the proxy add `Strict-Transport-Security`; the app already sends the other security headers.
 3. Keep Postgres private: `docker-compose.yml` binds it to `127.0.0.1` only — don't change that on a public server.
 4. Back up the `habittracker_db-data` volume; `make fclean` deletes it.

@@ -16,17 +16,27 @@ interface StudySessionFormProps {
     notes: string;
   }) => void;
   onCancel: () => void;
+  initial?: {
+    courseId?: string | null;
+    skillId?: string | null;
+    title?: string | null;
+    durationMinutes?: number;
+    date?: string;
+    notes?: string | null;
+  };
+  /** Editing an existing item (changes the title and submit label). */
+  editing?: boolean;
 }
 
 const todayStr = () => dayjs().format('YYYY-MM-DD');
 
-export default function StudySessionForm({ courses, skills, onSubmit, onCancel }: StudySessionFormProps) {
-  const [courseId, setCourseId] = useState('');
-  const [skillId, setSkillId] = useState('');
-  const [title, setTitle] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState('30');
-  const [date, setDate] = useState(todayStr());
-  const [notes, setNotes] = useState('');
+export default function StudySessionForm({ courses, skills, onSubmit, onCancel, initial, editing }: StudySessionFormProps) {
+  const [courseId, setCourseId] = useState(initial?.courseId || '');
+  const [skillId, setSkillId] = useState(initial?.skillId || '');
+  const [title, setTitle] = useState(initial?.title || '');
+  const [durationMinutes, setDurationMinutes] = useState(String(initial?.durationMinutes ?? 30));
+  const [date, setDate] = useState(initial?.date || todayStr());
+  const [notes, setNotes] = useState(initial?.notes || '');
 
   const handleSubmit = () => {
     const duration = parseInt(durationMinutes, 10);
@@ -44,7 +54,7 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5 animate-fade-in space-y-4">
       <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
-        <span className="text-primary">&gt;</span> LOG_STUDY_SESSION
+        <span className="text-primary">&gt;</span> {editing ? 'EDIT_STUDY_SESSION' : 'LOG_STUDY_SESSION'}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,7 +164,7 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
           disabled={!title.trim() || !durationMinutes}
           className="px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          LOG SESSION &#8629;
+          {editing ? 'SAVE CHANGES' : 'LOG SESSION'} &#8629;
         </button>
         <button
           onClick={onCancel}

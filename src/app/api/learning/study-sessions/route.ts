@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
-import { getStudySessions, createStudySession, deleteStudySession } from '@/lib/services/learningService';
+import { getStudySessions, createStudySession, deleteStudySession, updateStudySession } from '@/lib/services/learningService';
 import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
@@ -31,6 +31,17 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'create': {
         const session = await createStudySession(userId, {
+          courseId: body.courseId,
+          skillId: body.skillId,
+          title: body.title,
+          durationMinutes: body.durationMinutes,
+          date: body.date,
+          notes: body.notes,
+        });
+        return NextResponse.json({ session });
+      }
+      case 'update': {
+        const session = await updateStudySession(body.sessionId, userId, {
           courseId: body.courseId,
           skillId: body.skillId,
           title: body.title,

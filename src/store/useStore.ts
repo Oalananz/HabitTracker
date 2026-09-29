@@ -87,6 +87,7 @@ interface User {
   email: string;
   username: string;
   statusMessage?: string;
+  isAdmin?: boolean;
 }
 
 interface Task {

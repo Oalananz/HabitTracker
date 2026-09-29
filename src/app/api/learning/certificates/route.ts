@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
-import { getCertificates, createCertificate, deleteCertificate } from '@/lib/services/learningService';
+import { getCertificates, createCertificate, deleteCertificate, updateCertificate } from '@/lib/services/learningService';
 import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET() {
@@ -22,6 +22,16 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'create': {
         const certificate = await createCertificate(userId, {
+          title: body.title,
+          provider: body.provider,
+          issueDate: body.issueDate,
+          certificateUrl: body.certificateUrl,
+          fileUrl: body.fileUrl,
+        });
+        return NextResponse.json({ certificate });
+      }
+      case 'update': {
+        const certificate = await updateCertificate(body.certificateId, userId, {
           title: body.title,
           provider: body.provider,
           issueDate: body.issueDate,
