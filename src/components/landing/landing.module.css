@@ -1,0 +1,94 @@
+/*
+ * Landing page motion. Every animated element's resting style is its FINAL
+ * state; the keyframes only describe how it arrives (fill-mode: backwards).
+ * So with JS off or reduced motion on, visitors simply see the finished day.
+ * Timing comes from inline --delay / --duration custom properties.
+ */
+
+.reveal {
+  animation: reveal 420ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Score digits are stacked; each later value covers the one below. */
+.scoreStep {
+  animation: scoreStep 260ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes scoreStep {
+  from {
+    opacity: 0;
+    transform: translateY(18%);
+  }
+}
+
+.meterFill {
+  transform-origin: left center;
+  animation: meterFill 700ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--delay, 0s) backwards;
+}
+
+@keyframes meterFill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Category label brightens when its points land. */
+.earned {
+  animation: earned 500ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes earned {
+  from {
+    color: #889486;
+  }
+}
+
+/* The "now" cursor sweeps the 24h ruler over the whole replay. */
+.cursor {
+  animation: cursor var(--duration, 11s) linear backwards;
+}
+
+@keyframes cursor {
+  from {
+    left: var(--from, 0%);
+  }
+}
+
+.statusLayer {
+  animation: statusLayer 300ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes statusLayer {
+  from {
+    opacity: 0;
+  }
+}
+
+.caret {
+  animation: caret 1s steps(1) infinite;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .scoreStep,
+  .meterFill,
+  .earned,
+  .cursor,
+  .statusLayer,
+  .caret {
+    animation: none;
+  }
+}

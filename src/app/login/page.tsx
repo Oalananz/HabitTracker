@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
 import TerminalWindow from '@/components/ui/TerminalWindow';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, register } = useStore();
-  const [isRegister, setIsRegister] = useState(false);
+  // /login?mode=register opens straight into account creation.
+  const [isRegister, setIsRegister] = useState(searchParams.get('mode') === 'register');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -175,5 +177,13 @@ export default function LoginPage() {
           </div>
       </TerminalWindow>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

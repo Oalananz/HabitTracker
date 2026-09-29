@@ -1,47 +1,29 @@
-'use client';
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { getAuthUserId } from '@/lib/auth';
+import Landing from '@/components/landing/Landing';
 
-import { useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { useStore } from '@/store/useStore';
-import Logo from '@/components/ui/Logo';
+export const metadata: Metadata = {
+  title: 'HabitTerminal — Every day gets a score',
+  description:
+    'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks. Self-hosted, works offline.',
+  openGraph: {
+    title: 'HabitTerminal — Every day gets a score',
+    description:
+      'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks.',
+    images: ['/logo.png'],
+  },
+};
 
-function HomeContent() {
-  const router = useRouter();
-  const { checkAuth, user, isAuthLoading } = useStore();
+export default async function Home() {
+  // Signed-in visitors go straight to their day; everyone else sees the landing page.
+  let userId: string | null = null;
+  try {
+    userId = await getAuthUserId();
+  } catch {
+    // Database unreachable: still show the landing page.
+  }
+  if (userId) redirect('/today');
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (!isAuthLoading) {
-      if (user) {
-        router.replace('/today');
-      } else {
-        router.replace('/login');
-      }
-    }
-  }, [user, isAuthLoading, router]);
-
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center animate-fade-in flex flex-col items-center">
-        <div className="mb-8">
-          <Logo size="lg" />
-        </div>
-        <div className="flex items-center gap-2 text-on-surface-variant text-sm font-mono">
-          <span className="animate-blink text-primary">▊</span>
-          <span>Initializing system...</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center p-4 text-primary font-mono text-xs animate-pulse">Loading system protocols...</div>}>
-      <HomeContent />
-    </Suspense>
-  );
+  return <Landing />;
 }
