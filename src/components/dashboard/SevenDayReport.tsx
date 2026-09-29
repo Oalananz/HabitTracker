@@ -43,11 +43,11 @@ export default function SevenDayReport({ days }: SevenDayReportProps) {
           const dayName = DAY_LABELS[date.getDay()];
           return (
             <div key={d.date} className="text-center space-y-1" style={{ animationDelay: `${i * 60}ms` }}>
-              <div className="font-mono text-[8px] text-on-surface-variant uppercase">{dayName}</div>
+              <div className="font-mono text-[10px] text-on-surface-variant uppercase">{dayName}</div>
               <div className={`rounded-sm aspect-square flex items-center justify-center border ${scoreToColor(d.score)} ${scoreToBorderColor(d.score)} transition-all duration-300`}>
                 <span className="font-headline text-sm font-black">{d.score}</span>
               </div>
-              <div className="font-mono text-[8px] text-outline">{date.getDate()}</div>
+              <div className="font-mono text-[10px] text-outline">{date.getDate()}</div>
             </div>
           );
         })}

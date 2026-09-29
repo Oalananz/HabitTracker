@@ -16,7 +16,7 @@ export default function LifeAreaSelect({ value, onChange, label = 'LIFE_AREA', i
   return (
     <div className={className}>
       {label && (
-        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+        <label htmlFor={id} className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
           &gt; {label}
         </label>
       )}

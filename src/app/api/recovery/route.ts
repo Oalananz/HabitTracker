@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiErrors';
 import {
   getJourneys,
   getJourney,
@@ -31,11 +32,7 @@ export async function GET(request: NextRequest) {
     ]);
     return NextResponse.json({ journeys, recovery: legacyState });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/recovery error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/recovery');
   }
 }
 
@@ -78,10 +75,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/recovery error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/recovery');
   }
 }

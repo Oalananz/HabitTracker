@@ -11,19 +11,21 @@ interface ExpenseCategorySlice {
 
 interface ExpenseBreakdownChartProps {
   data: ExpenseCategorySlice[];
+  /** Human label for the period the data covers, e.g. "This month". */
+  periodLabel?: string;
 }
 
 const SLICE_COLORS = ['#6cdd81', '#5b9dff', '#fabc45', '#b18cff', '#ff9ec4', '#5fd6c9', '#ffb4ab', '#889486'];
 
-export default function ExpenseBreakdownChart({ data }: ExpenseBreakdownChartProps) {
+export default function ExpenseBreakdownChart({ data, periodLabel = 'This month' }: ExpenseBreakdownChartProps) {
   const hasData = data.length > 0;
 
   return (
     <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-5">
-      <SectionHeader title="Expense breakdown" rightContent="This month" />
+      <SectionHeader title="Expense breakdown" rightContent={periodLabel} />
       {!hasData ? (
         <div className="h-[120px] flex items-center justify-center text-xs text-on-surface-variant/50">
-          No expenses recorded this month.
+          No expenses recorded in this period.
         </div>
       ) : (
         <div className="h-[280px] w-full">

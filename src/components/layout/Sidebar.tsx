@@ -28,7 +28,7 @@ const navItems = [
   { href: '/recovery', label: 'Recovery', icon: 'healing' },
   { href: '/weekly-review', label: 'Weekly Review', icon: 'fact_check' },
   { href: '/achievements', label: 'Achievements', icon: 'workspace_premium' },
-  { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy' },
+  { href: '/ai-coach', label: 'AI Coach', icon: 'smart_toy', comingSoon: true },
   { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -44,10 +44,11 @@ export default function Sidebar() {
   // Life Areas sub-menu: auto-open when on any life-area route
   const isOnLifeArea = pathname === '/life-areas' || pathname.startsWith('/life-areas/');
   const [lifeAreasOpen, setLifeAreasOpen] = useState(isOnLifeArea);
-
-  useEffect(() => {
+  const [wasOnLifeArea, setWasOnLifeArea] = useState(isOnLifeArea);
+  if (wasOnLifeArea !== isOnLifeArea) {
+    setWasOnLifeArea(isOnLifeArea);
     if (isOnLifeArea) setLifeAreasOpen(true);
-  }, [isOnLifeArea]);
+  }
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -141,7 +142,7 @@ export default function Sidebar() {
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span aria-hidden="true" className="material-symbols-outlined text-[20px]">
               {sidebarCollapsed ? 'menu' : 'left_panel_close'}
             </span>
           </button>
@@ -265,9 +266,14 @@ export default function Sidebar() {
                   {item.icon}
                 </span>
                 <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
+                {item.comingSoon && (
+                  <span className={`ml-auto rounded-sm border border-outline-variant/30 px-1.5 py-px text-[10px] font-mono uppercase text-on-surface-variant/70 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                    Soon
+                  </span>
+                )}
                 {/* Achievement badge */}
                 {item.href === '/achievements' && newAchievementCount > 0 && (
-                  <span className={`ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[9px] font-bold flex items-center justify-center ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                  <span className={`ml-auto w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-bold flex items-center justify-center ${sidebarCollapsed ? 'md:hidden' : ''}`}>
                     {newAchievementCount}
                   </span>
                 )}

@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 
 export interface DayRecord {
   id: string;
@@ -65,7 +65,7 @@ function mapRow(row: Record<string, unknown>): DayRecord {
 }
 
 export async function getDayRecord(userId: string, date: string): Promise<DayRecord | null> {
-  const { data } = await supabase
+  const { data } = await db
     .from('day_records')
     .select('*')
     .eq('user_id', userId)
@@ -76,7 +76,7 @@ export async function getDayRecord(userId: string, date: string): Promise<DayRec
 }
 
 export async function getDayRecordsRange(userId: string, startDate: string, endDate: string): Promise<DayRecord[]> {
-  const { data } = await supabase
+  const { data } = await db
     .from('day_records')
     .select('*')
     .eq('user_id', userId)
@@ -114,8 +114,7 @@ export async function upsertDayRecord(
   if (fields.sleepGoal !== undefined) params.p_sleep_goal = fields.sleepGoal;
   if (fields.tasksDone !== undefined) params.p_tasks_done = fields.tasksDone;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc('upsert_day_record', params);
+  const { data, error } = await db.rpc('upsert_day_record', params);
   if (error) throw new Error(error.message);
 
   const result = data as { record: Record<string, unknown>; newAchievements: string[] };

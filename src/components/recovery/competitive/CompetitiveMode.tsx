@@ -364,7 +364,7 @@ export default function CompetitiveMode() {
               : 'Team up with others and share accountability — optional, nothing set up yet.'}
           </p>
         </div>
-        <span className={`material-symbols-outlined text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+        <span aria-hidden="true" className={`material-symbols-outlined text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
           expand_more
         </span>
       </button>

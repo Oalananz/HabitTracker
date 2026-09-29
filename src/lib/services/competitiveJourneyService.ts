@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import dayjs from 'dayjs';
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database, Json } from '../database.types';
 
 type JourneyRow = Database['public']['Tables']['competitive_journeys']['Row'];
@@ -52,7 +52,6 @@ export interface InviteUserInput {
 interface UserProfile {
   id: string;
   username: string;
-  email: string;
 }
 
 interface JourneyAccess {
@@ -168,7 +167,7 @@ function formatDuration(seconds: number) {
 }
 
 async function getJourneyRow(journeyId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('competitive_journeys')
     .select('*')
     .eq('id', journeyId)
@@ -183,7 +182,7 @@ async function getParticipantRow(
   userId: string,
   allowedStatuses?: ParticipantStatus[]
 ) {
-  let query = supabase
+  let query = db
     .from('journey_participants')
     .select('*')
     .eq('journey_id', journeyId)
@@ -202,17 +201,17 @@ async function getUsersByIds(userIds: string[]) {
   const unique = Array.from(new Set(userIds)).filter(Boolean);
   if (unique.length === 0) return new Map<string, UserProfile>();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('users')
-    .select('id, username, email')
+    .select('id, username')
     .in('id', unique);
 
   if (error) throw new Error(error.message);
 
   return new Map(
-    (data || []).map((row: Pick<UserRow, 'id' | 'username' | 'email'>) => [
+    (data || []).map((row: Pick<UserRow, 'id' | 'username'>) => [
       row.id,
-      { id: row.id, username: row.username, email: row.email },
+      { id: row.id, username: row.username },
     ])
   );
 }
@@ -231,7 +230,7 @@ async function getAccess(journeyId: string, userId: string): Promise<JourneyAcce
 
   const [membership, { data: inviteRows, error: inviteError }] = await Promise.all([
     getParticipantRow(journeyId, userId),
-    supabase
+    db
       .from('journey_invites')
       .select('id')
       .eq('journey_id', journeyId)
@@ -277,7 +276,7 @@ export async function createJourney(ownerId: string, data: CreateCompetitiveJour
     throw new Error('End date must be after start date');
   }
 
-  const { data: journey, error } = await supabase
+  const { data: journey, error } = await db
     .from('competitive_journeys')
     .insert({
       name: data.name.trim(),
@@ -298,7 +297,7 @@ export async function createJourney(ownerId: string, data: CreateCompetitiveJour
 
   if (error) throw new Error(error.message);
 
-  const { error: ownerMembershipError } = await supabase
+  const { error: ownerMembershipError } = await db
     .from('journey_participants')
     .insert({
       journey_id: journey.id,
@@ -318,7 +317,7 @@ export async function createJourney(ownerId: string, data: CreateCompetitiveJour
       journey_id: journey.id,
     }));
 
-    const { error: consequencesError } = await supabase
+    const { error: consequencesError } = await db
       .from('journey_consequences')
       .insert(payload);
 
@@ -337,7 +336,7 @@ export async function inviteUser(journeyId: string, ownerId: string, input: Invi
   let inviteeUserId: string | null = null;
 
   if (username) {
-    const { data: userByUsername, error: usernameError } = await supabase
+    const { data: userByUsername, error: usernameError } = await db
       .from('users')
       .select('id')
       .eq('username', username)
@@ -349,20 +348,21 @@ export async function inviteUser(journeyId: string, ownerId: string, input: Invi
   }
 
   if (!inviteeUserId && email) {
-    const { data: userByEmail, error: emailError } = await supabase
+    const { data: userByEmail, error: emailError } = await db
       .from('users')
       .select('id')
       .eq('email', email)
       .maybeSingle();
 
     if (emailError) throw new Error(emailError.message);
-    if (!userByEmail) throw new Error(`No user found with email "${email}"`);
-    inviteeUserId = userByEmail.id;
+    // Unknown emails still get a (link-based) invite, so the response never
+    // reveals whether an address has an account.
+    inviteeUserId = userByEmail?.id ?? null;
   }
 
   const token = randomUUID().replaceAll('-', '');
 
-  const { data: invite, error } = await supabase
+  const { data: invite, error } = await db
     .from('journey_invites')
     .insert({
       journey_id: journeyId,
@@ -388,7 +388,7 @@ export async function joinJourney(
   let invite: InviteRow | null = null;
 
   if (input?.token) {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('journey_invites')
       .select('*')
       .eq('journey_id', journeyId)
@@ -403,7 +403,7 @@ export async function joinJourney(
       throw new Error('Invite token is not valid for this user');
     }
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('journey_invites')
       .select('*')
       .eq('journey_id', journeyId)
@@ -420,7 +420,7 @@ export async function joinJourney(
   if (input?.decision === 'decline') {
     if (!invite) throw new Error('No pending invite found');
 
-    const { error: declineError } = await supabase
+    const { error: declineError } = await db
       .from('journey_invites')
       .update({ status: 'declined', responded_at: new Date().toISOString() })
       .eq('id', invite.id);
@@ -454,7 +454,7 @@ export async function joinJourney(
   let participant: ParticipantRow | null = null;
 
   if (existing) {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('journey_participants')
       .update({
         status: 'active',
@@ -467,7 +467,7 @@ export async function joinJourney(
     if (error) throw new Error(error.message);
     participant = data;
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('journey_participants')
       .insert({
         journey_id: journeyId,
@@ -485,7 +485,7 @@ export async function joinJourney(
   }
 
   if (invite) {
-    const { error: inviteUpdateError } = await supabase
+    const { error: inviteUpdateError } = await db
       .from('journey_invites')
       .update({ status: 'accepted', responded_at: new Date().toISOString() })
       .eq('id', invite.id);
@@ -512,7 +512,7 @@ export async function leaveJourney(journeyId: string, userId: string) {
     throw new Error('Journey owner cannot leave. Transfer ownership or archive journey instead.');
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('journey_participants')
     .update({ status: 'left' })
     .eq('id', participant.id);
@@ -534,12 +534,12 @@ export async function evaluateConsequences(journeyId: string, userId: string) {
     { data: consequences, error: consequencesError },
     { data: existingStatuses, error: statusError },
   ] = await Promise.all([
-    supabase
+    db
       .from('journey_consequences')
       .select('*')
       .eq('journey_id', journeyId)
       .order('failure_threshold', { ascending: true }),
-    supabase
+    db
       .from('journey_consequence_statuses')
       .select('*')
       .eq('journey_id', journeyId)
@@ -566,7 +566,7 @@ export async function evaluateConsequences(journeyId: string, userId: string) {
         status: 'triggered',
       }));
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await db
       .from('journey_consequence_statuses')
       .insert(payload);
 
@@ -576,7 +576,7 @@ export async function evaluateConsequences(journeyId: string, userId: string) {
   const structuredRules = asStructuredRules(journey.rules_json);
   const sevenDaysAgo = dayjs().subtract(7, 'day').toISOString();
 
-  const { data: weeklyFailures, error: weeklyError } = await supabase
+  const { data: weeklyFailures, error: weeklyError } = await db
     .from('journey_failures')
     .select('id')
     .eq('journey_id', journeyId)
@@ -598,7 +598,7 @@ export async function evaluateConsequences(journeyId: string, userId: string) {
     participant.total_failures >= journey.max_failures &&
     participant.status !== 'failed'
   ) {
-    const { error: failedStatusError } = await supabase
+    const { error: failedStatusError } = await db
       .from('journey_participants')
       .update({ status: 'failed' })
       .eq('id', participant.id);
@@ -609,7 +609,7 @@ export async function evaluateConsequences(journeyId: string, userId: string) {
 
   let checkedInToday = true;
   if (structuredRules.mandatoryDailyCheckIn) {
-    const { data: todayCheckIn, error: checkInError } = await supabase
+    const { data: todayCheckIn, error: checkInError } = await db
       .from('journey_check_ins')
       .select('id')
       .eq('journey_id', journeyId)
@@ -635,7 +635,7 @@ export async function calculateLeaderboard(journeyId: string) {
   const journey = await getJourneyRow(journeyId);
   if (!journey) throw new Error('Journey not found');
 
-  const { data: participants, error: participantsError } = await supabase
+  const { data: participants, error: participantsError } = await db
     .from('journey_participants')
     .select('*')
     .eq('journey_id', journeyId)
@@ -654,13 +654,13 @@ export async function calculateLeaderboard(journeyId: string) {
     { data: consequenceStatuses, error: consequenceStatusError },
     { data: weeklyFailures, error: weeklyFailuresError },
   ] = await Promise.all([
-    supabase
+    db
       .from('journey_consequence_statuses')
       .select('*')
       .eq('journey_id', journeyId)
       .eq('status', 'triggered')
       .in('participant_id', participantIdSet),
-    supabase
+    db
       .from('journey_failures')
       .select('user_id')
       .eq('journey_id', journeyId)
@@ -707,7 +707,6 @@ export async function calculateLeaderboard(journeyId: string) {
       return {
         userId: participant.user_id,
         username: profile?.username || 'unknown',
-        email: profile?.email || '',
         role: participant.role as ParticipantRole,
         status: participant.status as ParticipantStatus,
         currentStreak: currentStreakSeconds,
@@ -738,7 +737,7 @@ export async function recordJourneyFailure(journeyId: string, userId: string) {
   if (!journey || !journey.is_active) throw new Error('Journey is not active');
   if (!participant) throw new Error('You must join this journey before logging failure');
 
-  const { data: lastFailureRows, error: lastFailureError } = await supabase
+  const { data: lastFailureRows, error: lastFailureError } = await db
     .from('journey_failures')
     .select('*')
     .eq('journey_id', journeyId)
@@ -769,7 +768,7 @@ export async function recordJourneyFailure(journeyId: string, userId: string) {
     }
   }
 
-  const { data: insertedFailure, error: insertFailureError } = await supabase
+  const { data: insertedFailure, error: insertFailureError } = await db
     .from('journey_failures')
     .insert({
       journey_id: journeyId,
@@ -784,16 +783,16 @@ export async function recordJourneyFailure(journeyId: string, userId: string) {
   const rules = asStructuredRules(journey.rules_json);
   const resetStreak = rules.resetStreakOnFailure ?? true;
 
-  const { error: participantUpdateError } = await supabase
+  const { error: participantUpdateError } = await db
     .rpc('increment_journey_failure', {
       p_participant_id: participant.id,
       p_reset_streak: resetStreak,
-    } as any);
+    });
 
   if (participantUpdateError) throw new Error(participantUpdateError.message);
 
   if (rules.syncToPersonal) {
-    const { error: syncError } = await supabase.from('failure_logs').insert({
+    const { error: syncError } = await db.from('failure_logs').insert({
       user_id: userId,
       journey_id: null,
       timestamp: now.toISOString(),
@@ -828,7 +827,7 @@ export async function recordJourneyCheckIn(journeyId: string, userId: string, no
 
   const today = dayjs().format('YYYY-MM-DD');
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('journey_check_ins')
     .upsert(
       {
@@ -844,7 +843,7 @@ export async function recordJourneyCheckIn(journeyId: string, userId: string, no
 
   if (error) throw new Error(error.message);
 
-  const { error: participantUpdateError } = await supabase
+  const { error: participantUpdateError } = await db
     .from('journey_participants')
     .update({ last_check_in_at: new Date().toISOString() })
     .eq('id', participant.id);
@@ -873,7 +872,7 @@ export async function addJourneyReaction(
 
   const emoji = input.emoji?.trim() || '👏';
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('journey_reactions')
     .insert({
       journey_id: journeyId,
@@ -915,7 +914,7 @@ export async function addJourneyConsequence(
     throw new Error('Failure threshold must be a positive integer');
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('journey_consequences')
     .insert({
       journey_id: journeyId,
@@ -940,11 +939,11 @@ async function buildJourneySummaries(journeys: JourneyRow[], userId: string) {
     { data: participants, error: participantsError },
     { data: failures, error: failuresError },
   ] = await Promise.all([
-    supabase
+    db
       .from('journey_participants')
       .select('*')
       .in('journey_id', journeyIds),
-    supabase
+    db
       .from('journey_failures')
       .select('journey_id')
       .in('journey_id', journeyIds),
@@ -992,7 +991,7 @@ async function buildJourneySummaries(journeys: JourneyRow[], userId: string) {
 }
 
 export async function getJourneyCatalog(userId: string) {
-  const { data: memberships, error: membershipsError } = await supabase
+  const { data: memberships, error: membershipsError } = await db
     .from('journey_participants')
     .select('*')
     .eq('user_id', userId)
@@ -1010,19 +1009,19 @@ export async function getJourneyCatalog(userId: string) {
     { data: invites, error: invitesError },
   ] = await Promise.all([
     memberJourneyIds.length > 0
-      ? supabase
+      ? db
           .from('competitive_journeys')
           .select('*')
           .in('id', memberJourneyIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    supabase
+    db
       .from('competitive_journeys')
       .select('*')
       .eq('visibility', 'public')
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
-    supabase
+    db
       .from('journey_invites')
       .select('*')
       .eq('invitee_user_id', userId)
@@ -1061,7 +1060,7 @@ export async function getJourneyCatalog(userId: string) {
 
   const { data: inviteJourneys, error: inviteJourneyLookupError } =
     missingInviteJourneyIds.length > 0
-      ? await supabase
+      ? await db
           .from('competitive_journeys')
           .select('*')
           .in('id', missingInviteJourneyIds)
@@ -1101,7 +1100,7 @@ export async function getJourneyParticipants(journeyId: string, requesterId: str
     throw new Error('You do not have access to this journey');
   }
 
-  const { data: participants, error } = await supabase
+  const { data: participants, error } = await db
     .from('journey_participants')
     .select('*')
     .eq('journey_id', journeyId)
@@ -1117,7 +1116,6 @@ export async function getJourneyParticipants(journeyId: string, requesterId: str
     journeyId: participant.journey_id,
     userId: participant.user_id,
     username: userMap.get(participant.user_id)?.username || 'unknown',
-    email: userMap.get(participant.user_id)?.email || '',
     role: participant.role as ParticipantRole,
     status: participant.status as ParticipantStatus,
     joinedAt: participant.joined_at,
@@ -1150,40 +1148,40 @@ export async function getJourneyDetails(journeyId: string, requesterId: string) 
     { data: reactions, error: reactionsError },
     { data: invites, error: invitesError },
   ] = await Promise.all([
-    supabase
+    db
       .from('journey_participants')
       .select('*')
       .eq('journey_id', journeyId)
       .order('joined_at', { ascending: true }),
-    supabase
+    db
       .from('journey_failures')
       .select('*')
       .eq('journey_id', journeyId)
       .order('timestamp', { ascending: false })
       .limit(80),
-    supabase
+    db
       .from('journey_failures')
       .select('user_id')
       .eq('journey_id', journeyId)
       .gte('timestamp', dayjs().subtract(7, 'day').toISOString()),
-    supabase
+    db
       .from('journey_consequences')
       .select('*')
       .eq('journey_id', journeyId)
       .order('failure_threshold', { ascending: true }),
-    supabase
+    db
       .from('journey_consequence_statuses')
       .select('*')
       .eq('journey_id', journeyId)
       .eq('status', 'triggered'),
-    supabase
+    db
       .from('journey_reactions')
       .select('*')
       .eq('journey_id', journeyId)
       .order('created_at', { ascending: false })
       .limit(40),
     access.membership?.role === 'owner'
-      ? supabase
+      ? db
           .from('journey_invites')
           .select('*')
           .eq('journey_id', journeyId)
@@ -1218,7 +1216,6 @@ export async function getJourneyDetails(journeyId: string, requesterId: string) 
     journeyId: participant.journey_id,
     userId: participant.user_id,
     username: usersById.get(participant.user_id)?.username || 'unknown',
-    email: usersById.get(participant.user_id)?.email || '',
     role: participant.role as ParticipantRole,
     status: participant.status as ParticipantStatus,
     joinedAt: participant.joined_at,
@@ -1263,7 +1260,6 @@ export async function getJourneyDetails(journeyId: string, requesterId: string) 
       return {
         userId: participant.user_id,
         username: profile?.username || 'unknown',
-        email: profile?.email || '',
         role: participant.role as ParticipantRole,
         status: participant.status as ParticipantStatus,
         currentStreak: currentStreakSeconds,
@@ -1346,7 +1342,7 @@ export async function getJourneyDetails(journeyId: string, requesterId: string) 
 
 export async function deleteJourney(journeyId: string, requesterId: string) {
   // Verify the requester is the owner
-  const { data: membership, error: membershipError } = await supabase
+  const { data: membership, error: membershipError } = await db
     .from('journey_participants')
     .select('role')
     .eq('journey_id', journeyId)
@@ -1362,7 +1358,7 @@ export async function deleteJourney(journeyId: string, requesterId: string) {
   }
 
   // Delete journey (this will cascade delete related records due to foreign keys)
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await db
     .from('competitive_journeys')
     .delete()
     .eq('id', journeyId);
@@ -1386,7 +1382,7 @@ export async function updateJourney(
   }
 ) {
   // Verify the requester is the owner
-  const { data: membership, error: membershipError } = await supabase
+  const { data: membership, error: membershipError } = await db
     .from('journey_participants')
     .select('role')
     .eq('journey_id', journeyId)
@@ -1409,7 +1405,7 @@ export async function updateJourney(
   if (updates.consequenceRules !== undefined) updateData.consequence_rules = updates.consequenceRules;
   if (updates.rules !== undefined) updateData.rules_json = updates.rules as Json;
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await db
     .from('competitive_journeys')
     .update(updateData)
     .eq('id', journeyId);

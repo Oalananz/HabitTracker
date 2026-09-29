@@ -33,7 +33,7 @@ export default function AiGoalBreakdownPreview({
     <div className="space-y-5">
       {/* Strategy + meta */}
       <div className="flex items-start gap-3 flex-wrap">
-        <span className="font-mono text-[9px] uppercase tracking-widest px-2 py-1 rounded-[2px] bg-primary/10 text-primary">
+        <span className="font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded-[2px] bg-primary/10 text-primary">
           ~{breakdown.estimatedDurationWeeks} weeks
         </span>
         <LifeAreaBadge lifeArea={lifeAreaLabelToId(breakdown.lifeArea)} />
@@ -64,7 +64,7 @@ export default function AiGoalBreakdownPreview({
                     <span className="font-headline text-xs font-bold text-primary">M{m.order}</span>
                     <span className="font-headline text-sm font-bold text-on-surface truncate">{m.title}</span>
                   </span>
-                  <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${open.has(i) ? 'rotate-180' : ''}`}>expand_more</span>
+                  <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${open.has(i) ? 'rotate-180' : ''}`}>expand_more</span>
                 </button>
                 {open.has(i) && (
                   <div className="px-3 pb-3 border-t border-outline-variant/10 animate-fade-in">
@@ -72,12 +72,12 @@ export default function AiGoalBreakdownPreview({
                     <div className="space-y-1.5">
                       {m.tasks.map((t, ti) => (
                         <div key={ti} className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-[14px] text-outline mt-0.5">check_box_outline_blank</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-outline mt-0.5">check_box_outline_blank</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-body text-sm text-on-surface">{t.title}</span>
-                              <span className="font-mono text-[9px] text-on-surface-variant">{t.estimatedMinutes}m</span>
-                              <span className={`font-mono text-[9px] uppercase ${PRIORITY_COLOR[t.priority] || ''}`}>{t.priority}</span>
+                              <span className="font-mono text-[10px] text-on-surface-variant">{t.estimatedMinutes}m</span>
+                              <span className={`font-mono text-[10px] uppercase ${PRIORITY_COLOR[t.priority] || ''}`}>{t.priority}</span>
                             </div>
                             {t.description && <p className="font-body text-[11px] text-on-surface-variant">{t.description}</p>}
                           </div>
@@ -103,9 +103,9 @@ export default function AiGoalBreakdownPreview({
           <div className="space-y-1.5">
             {breakdown.suggestedHabits.map((h, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap font-body text-sm text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px] text-primary">add_circle</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary">add_circle</span>
                 <span className="font-bold text-on-surface">{h.title}</span>
-                <span className="font-mono text-[9px] uppercase text-on-surface-variant">{h.frequency} · {h.estimatedMinutes}m</span>
+                <span className="font-mono text-[10px] uppercase text-on-surface-variant">{h.frequency} · {h.estimatedMinutes}m</span>
                 <LifeAreaBadge lifeArea={lifeAreaLabelToId(h.lifeArea)} />
               </div>
             ))}

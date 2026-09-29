@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 import dayjs from 'dayjs';
 
@@ -75,6 +75,13 @@ function getDefaultPrayerTimes(date: string): Omit<PrayerTimes, 'id' | 'userId' 
 // API-based prayer time calculation
 // =====================================================
 
+const PRAYER_API_TIMEOUT_MS = 5000;
+
+/**
+ * Fetches real prayer times for a location, or null if the API is unreachable.
+ * With no method given, the API uses the regional authority nearest to the
+ * coordinates; PRAYER_CALC_METHOD (an Aladhan method id) overrides that.
+ */
 async function fetchPrayerTimesFromAPI(
   date: string,
   latitude: number,
@@ -86,37 +93,32 @@ async function fetchPrayerTimesFromAPI(
   asr: string;
   maghrib: string;
   isha: string;
-}> {
+} | null> {
   try {
     const dateStr = dayjs(date).format('DD-MM-YYYY');
-    const res = await fetch(
-      `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${latitude}&longitude=${longitude}&method=2`
-    );
-    const data = await res.json();
-    const timings = data?.data?.timings;
+    const params = new URLSearchParams({ latitude: String(latitude), longitude: String(longitude) });
+    const method = process.env.PRAYER_CALC_METHOD;
+    if (method && /^\d+$/.test(method)) params.set('method', method);
 
-    if (timings) {
-      return {
-        fajr: timings.Fajr?.substring(0, 5) || '05:00',
-        sunrise: timings.Sunrise?.substring(0, 5) || '06:15',
-        dhuhr: timings.Dhuhr?.substring(0, 5) || '12:15',
-        asr: timings.Asr?.substring(0, 5) || '15:30',
-        maghrib: timings.Maghrib?.substring(0, 5) || '18:15',
-        isha: timings.Isha?.substring(0, 5) || '19:45',
-      };
-    }
+    const res = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?${params}`, {
+      signal: AbortSignal.timeout(PRAYER_API_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const timings = (await res.json())?.data?.timings;
+    const pick = (v: unknown) => (typeof v === 'string' && /^\d{2}:\d{2}/.test(v) ? v.substring(0, 5) : null);
+    const times = {
+      fajr: pick(timings?.Fajr),
+      sunrise: pick(timings?.Sunrise),
+      dhuhr: pick(timings?.Dhuhr),
+      asr: pick(timings?.Asr),
+      maghrib: pick(timings?.Maghrib),
+      isha: pick(timings?.Isha),
+    };
+    if (Object.values(times).some((t) => t === null)) return null;
+    return times as { fajr: string; sunrise: string; dhuhr: string; asr: string; maghrib: string; isha: string };
   } catch {
-    // Fallback to defaults
+    return null;
   }
-
-  return {
-    fajr: '05:00',
-    sunrise: '06:15',
-    dhuhr: '12:15',
-    asr: '15:30',
-    maghrib: '18:15',
-    isha: '19:45',
-  };
 }
 
 // =====================================================
@@ -127,7 +129,7 @@ export async function getPrayerTimes(userId: string, date: string): Promise<Pray
   const dateStr = dayjs(date).format('YYYY-MM-DD');
 
   // Check if we have stored prayer times for this date
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('prayer_times')
     .select('*')
     .eq('user_id', userId)
@@ -163,7 +165,7 @@ export async function setManualPrayerTimes(
   const dateStr = dayjs(date).format('YYYY-MM-DD');
 
   // Check if entry exists
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('prayer_times')
     .select('id')
     .eq('user_id', userId)
@@ -179,7 +181,7 @@ export async function setManualPrayerTimes(
     if (times.isha !== undefined) updateData.isha = times.isha;
     if (times.sunrise !== undefined) updateData.sunrise = times.sunrise;
 
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await db
       .from('prayer_times')
       .update(updateData)
       .eq('id', existing.id)
@@ -204,7 +206,7 @@ export async function setManualPrayerTimes(
     source: 'manual',
   };
 
-  const { data: created, error } = await supabase
+  const { data: created, error } = await db
     .from('prayer_times')
     .insert(insertData)
     .select()
@@ -222,9 +224,12 @@ export async function fetchAndStorePrayerTimes(
 ) {
   const dateStr = dayjs(date).format('YYYY-MM-DD');
   const times = await fetchPrayerTimesFromAPI(dateStr, latitude, longitude);
+  // API unreachable: keep whatever is stored (or the defaults) rather than
+  // saving placeholder times labelled as location-based.
+  if (!times) return getPrayerTimes(userId, dateStr);
 
   // Check if manual entry exists — don't overwrite manual entries
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('prayer_times')
     .select('id, source')
     .eq('user_id', userId)
@@ -233,7 +238,7 @@ export async function fetchAndStorePrayerTimes(
 
   if (existing && existing.source === 'manual') {
     // Don't overwrite manual entries
-    const { data: manual } = await supabase
+    const { data: manual } = await db
       .from('prayer_times')
       .select('*')
       .eq('id', existing.id)
@@ -242,7 +247,7 @@ export async function fetchAndStorePrayerTimes(
   }
 
   if (existing) {
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await db
       .from('prayer_times')
       .update({ ...times, source: 'api' })
       .eq('id', existing.id)
@@ -252,7 +257,7 @@ export async function fetchAndStorePrayerTimes(
     return mapPrayerTimes(updated as PrayerTimesRow);
   }
 
-  const { data: created, error } = await supabase
+  const { data: created, error } = await db
     .from('prayer_times')
     .insert({
       user_id: userId,

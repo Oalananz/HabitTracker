@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthUserId } from '@/lib/auth';
+import { db } from '@/lib/db';
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: stats } = await supabase
+  const { data: stats } = await db
     .from('user_stats')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle();
 
   return NextResponse.json({ stats });

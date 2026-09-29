@@ -94,7 +94,7 @@ export default function TodaySidePanel({ dayRecord, date }: TodaySidePanelProps)
           <ul className="space-y-1 mt-1">
             {warnings.map(w => (
               <li key={w} className="font-body text-xs text-on-surface-variant flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px] text-tertiary">priority_high</span>{w}
+                <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-tertiary">priority_high</span>{w}
               </li>
             ))}
           </ul>
@@ -108,7 +108,7 @@ export default function TodaySidePanel({ dayRecord, date }: TodaySidePanelProps)
           className="w-full flex items-center justify-between px-4 py-3"
         >
           <span className="font-label text-xs font-bold text-on-surface">View Activity Log</span>
-          <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${logExpanded ? 'rotate-180' : ''}`}>
+          <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${logExpanded ? 'rotate-180' : ''}`}>
             expand_more
           </span>
         </button>

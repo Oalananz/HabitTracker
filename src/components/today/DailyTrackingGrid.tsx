@@ -40,14 +40,14 @@ function SummaryCard({
         className="w-full flex items-center justify-between px-4 py-3 text-left group hover:bg-surface-container-high/30 transition-colors min-h-[56px]"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <span className={`material-symbols-outlined text-[20px] ${statusColor} flex-shrink-0`}>{icon}</span>
+          <span aria-hidden="true" className={`material-symbols-outlined text-[20px] ${statusColor} flex-shrink-0`}>{icon}</span>
           <div className="min-w-0">
             <div className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">{label}</div>
             <div className={`font-headline text-sm font-bold ${statusColor} leading-tight`}>{value}</div>
             {sub && <div className="font-mono text-[10px] text-on-surface-variant/70 mt-0.5">{sub}</div>}
           </div>
         </div>
-        <span
+        <span aria-hidden="true"
           className={`material-symbols-outlined text-[18px] text-on-surface-variant flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         >
           expand_more

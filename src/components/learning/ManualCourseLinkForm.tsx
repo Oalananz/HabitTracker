@@ -46,12 +46,12 @@ export default function ManualCourseLinkForm({ onSubmit, onCancel }: ManualCours
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="manual-course-link-form-course-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; COURSE_TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="manual-course-link-form-course-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -62,12 +62,12 @@ export default function ManualCourseLinkForm({ onSubmit, onCancel }: ManualCours
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="manual-course-link-form-provider-name" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROVIDER_NAME
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="manual-course-link-form-provider-name"
               type="text"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -78,12 +78,12 @@ export default function ManualCourseLinkForm({ onSubmit, onCancel }: ManualCours
         </div>
 
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="manual-course-link-form-course-url" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; COURSE_URL
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="manual-course-link-form-course-url"
               type="url"
               value={courseUrl}
               onChange={(e) => setCourseUrl(e.target.value)}
@@ -94,12 +94,12 @@ export default function ManualCourseLinkForm({ onSubmit, onCancel }: ManualCours
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="manual-course-link-form-current-progress" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENT_PROGRESS_%
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="manual-course-link-form-current-progress"
               type="number"
               min={0}
               max={100}
@@ -112,12 +112,12 @@ export default function ManualCourseLinkForm({ onSubmit, onCancel }: ManualCours
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="manual-course-link-form-target-completion-date-optiona" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TARGET_COMPLETION_DATE (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="manual-course-link-form-target-completion-date-optiona"
               type="date"
               value={targetCompletionDate}
               onChange={(e) => setTargetCompletionDate(e.target.value)}

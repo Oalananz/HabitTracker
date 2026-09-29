@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import dayjs from 'dayjs';
 
 export async function calculateMetrics(userId: string) {
@@ -10,18 +10,18 @@ export async function calculateMetrics(userId: string) {
     { data: recoveryState },
     { data: failureLogs }
   ] = await Promise.all([
-    supabase
+    db
       .from('task_instances')
       .select('date, completed, source_type')
       .eq('user_id', userId)
       .gte('date', now.subtract(365, 'day').format('YYYY-MM-DD'))
       .order('date', { ascending: true }),
-    supabase
+    db
       .from('recovery_states')
       .select('start_time')
       .eq('user_id', userId)
       .maybeSingle(),
-    supabase
+    db
       .from('failure_logs')
       .select('timestamp')
       .eq('user_id', userId)

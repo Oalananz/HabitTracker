@@ -61,12 +61,12 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-course-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; COURSE_TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="course-form-course-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -77,12 +77,12 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-provider-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROVIDER (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="course-form-provider-optional"
               type="text"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -93,12 +93,12 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
         </div>
 
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-course-url-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; COURSE_URL (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="course-form-course-url-optional"
               type="url"
               value={courseUrl}
               onChange={(e) => setCourseUrl(e.target.value)}
@@ -109,10 +109,10 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-status" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; STATUS
           </label>
-          <select
+          <select id="course-form-status"
             value={status}
             onChange={(e) => setStatus(e.target.value as CourseStatus)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -126,12 +126,12 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-progress" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROGRESS_%
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="course-form-progress"
               type="number"
               min={0}
               max={100}
@@ -144,12 +144,12 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
         </div>
 
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="course-form-target-completion-date-optiona" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TARGET_COMPLETION_DATE (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="course-form-target-completion-date-optiona"
               type="date"
               value={targetCompletionDate}
               onChange={(e) => setTargetCompletionDate(e.target.value)}
@@ -160,11 +160,11 @@ export default function CourseForm({ onSubmit, onCancel, initial }: CourseFormPr
       </div>
 
       <div>
-        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+        <label htmlFor="course-form-description-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
           &gt; DESCRIPTION (optional)
         </label>
         <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 focus-within:border-primary/50 transition-colors">
-          <textarea
+          <textarea id="course-form-description-optional"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0 resize-none"

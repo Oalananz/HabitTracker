@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
@@ -233,7 +233,7 @@ async function getPlanRowsForRange(userId: string, startDate: string, endDate: s
   const start = normalizeDate(startDate);
   const end = normalizeDate(endDate);
 
-  const { data: plans, error } = await supabase
+  const { data: plans, error } = await db
     .from('plans')
     .select('*')
     .eq('user_id', userId)
@@ -270,7 +270,7 @@ export async function createPlan(
     lifeArea?: string | null;
   }
 ) {
-  const { data: plan, error } = await supabase
+  const { data: plan, error } = await db
     .from('plans')
     .insert({
       user_id: userId,
@@ -342,7 +342,7 @@ export async function updatePlan(
   if (data.prayerBlock !== undefined) updateData.prayer_block = data.prayerBlock;
   if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
-  const { data: plan, error } = await supabase
+  const { data: plan, error } = await db
     .from('plans')
     .update(updateData)
     .eq('id', planId)
@@ -355,7 +355,7 @@ export async function updatePlan(
 }
 
 export async function deletePlan(planId: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await db
     .from('plans')
     .delete()
     .eq('id', planId)
@@ -414,7 +414,7 @@ export async function getPlansSummary(userId: string) {
   const monthStart = normalizeDate(dayjs().startOf('month').format('YYYY-MM-DD'));
   const monthEnd = normalizeDate(dayjs().endOf('month').format('YYYY-MM-DD'));
 
-  const { data: allPlans, error } = await supabase
+  const { data: allPlans, error } = await db
     .from('plans')
     .select('*')
     .eq('user_id', userId);

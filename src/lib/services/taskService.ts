@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 import dayjs from 'dayjs';
 
@@ -30,7 +30,7 @@ export async function generateTasksForDate(userId: string, date: string) {
   const dateStr = targetDate.format('YYYY-MM-DD');
 
   // Get all active habits for this user
-  const { data: habits, error } = await supabase
+  const { data: habits, error } = await db
     .from('habits')
     .select('*')
     .eq('user_id', userId)
@@ -39,7 +39,7 @@ export async function generateTasksForDate(userId: string, date: string) {
   if (error || !habits || habits.length === 0) return [];
 
   // Get existing task instances for this date in a single query
-  const { data: existingTasks } = await supabase
+  const { data: existingTasks } = await db
     .from('task_instances')
     .select('habit_id')
     .eq('user_id', userId)
@@ -74,7 +74,7 @@ export async function generateTasksForDate(userId: string, date: string) {
   }
 
   if (toInsert.length > 0) {
-    await supabase.from('task_instances').insert(toInsert);
+    await db.from('task_instances').insert(toInsert);
   }
 
   return created;
@@ -105,7 +105,7 @@ export async function generateMissingTasks(
 export async function getTasksForDate(userId: string, date: string) {
   const dateStr = dayjs(date).startOf('day').format('YYYY-MM-DD');
 
-  const { data: tasks, error } = await supabase
+  const { data: tasks, error } = await db
     .from('task_instances')
     .select('*')
     .eq('user_id', userId)
@@ -131,12 +131,12 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
 
   // Run habit lookup and existing-task lookup in PARALLEL
   const [{ data: habits }, { data: existingTasks }] = await Promise.all([
-    supabase
+    db
       .from('habits')
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true),
-    supabase
+    db
       .from('task_instances')
       .select('*')
       .eq('user_id', userId)
@@ -174,7 +174,7 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
 
     if (toInsert.length > 0) {
       try {
-        const { data: inserted, error: insertError } = await supabase
+        const { data: inserted, error: insertError } = await db
           .from('task_instances')
           .upsert(toInsert, { onConflict: 'habit_id,date', ignoreDuplicates: true })
           .select('*');
@@ -189,7 +189,7 @@ export async function getOrGenerateTasksForDate(userId: string, date: string) {
         });
         return merged.map(mapTask);
       } catch {
-        const { data: fallbackTasks } = await supabase
+        const { data: fallbackTasks } = await db
           .from('task_instances')
           .select('*')
           .eq('user_id', userId)
@@ -211,7 +211,7 @@ export async function getTasksForRange(userId: string, startDate: string, endDat
   const start = dayjs(startDate).startOf('day').format('YYYY-MM-DD');
   const end = dayjs(endDate).startOf('day').format('YYYY-MM-DD');
 
-  const { data: tasks, error } = await supabase
+  const { data: tasks, error } = await db
     .from('task_instances')
     .select('*')
     .eq('user_id', userId)
@@ -230,7 +230,7 @@ export async function getTaskSummaryForRange(
   const start = dayjs(startDate).startOf('day').format('YYYY-MM-DD');
   const end = dayjs(endDate).startOf('day').format('YYYY-MM-DD');
 
-  const { data: rows, error } = await supabase
+  const { data: rows, error } = await db
     .from('task_instances')
     .select('date, completed')
     .eq('user_id', userId)
@@ -259,7 +259,7 @@ export async function getTaskSummaryForRange(
 }
 
 export async function completeTask(taskId: string, userId: string) {
-  const { data: task, error } = await supabase
+  const { data: task, error } = await db
     .from('task_instances')
     .update({
       completed: true,
@@ -275,7 +275,7 @@ export async function completeTask(taskId: string, userId: string) {
 }
 
 export async function uncompleteTask(taskId: string, userId: string) {
-  const { data: task, error } = await supabase
+  const { data: task, error } = await db
     .from('task_instances')
     .update({
       completed: false,
@@ -303,7 +303,7 @@ export async function createManualTask(
 ) {
   const dateStr = dayjs(data.date).startOf('day').format('YYYY-MM-DD');
 
-  const { data: task, error } = await supabase
+  const { data: task, error } = await db
     .from('task_instances')
     .insert({
       user_id: userId,
@@ -342,7 +342,7 @@ export async function updateTask(
   if (data.date !== undefined) updateData.date = dayjs(data.date).startOf('day').format('YYYY-MM-DD');
   if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
-  const { data: task, error } = await supabase
+  const { data: task, error } = await db
     .from('task_instances')
     .update(updateData)
     .eq('id', taskId)
@@ -356,7 +356,7 @@ export async function updateTask(
 
 export async function deleteTask(taskId: string, userId: string) {
   // Only allow deleting manual tasks
-  const { data: task, error: fetchError } = await supabase
+  const { data: task, error: fetchError } = await db
     .from('task_instances')
     .select('id, source_type')
     .eq('id', taskId)
@@ -368,7 +368,7 @@ export async function deleteTask(taskId: string, userId: string) {
     throw new Error('Cannot delete habit-generated tasks');
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('task_instances')
     .delete()
     .eq('id', taskId);

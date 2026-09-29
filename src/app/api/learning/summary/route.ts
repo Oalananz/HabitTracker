@@ -1,17 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import { getLearningSummary } from '@/lib/services/learningService';
+import { errorResponse } from '@/lib/apiErrors';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const userId = await requireAuthId();
     const summary = await getLearningSummary(userId);
     return NextResponse.json({ summary });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/learning/summary error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/learning/summary');
   }
 }

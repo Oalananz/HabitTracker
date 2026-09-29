@@ -30,7 +30,7 @@ export default function EmptyState({ title, description, icon, compact, action }
         <div className="w-48 h-48 bg-primary/3 rounded-full blur-3xl" />
       </div>
       {icon && (
-        <span className="material-symbols-outlined text-[56px] text-on-surface-variant/25 mb-4 animate-float">
+        <span aria-hidden="true" className="material-symbols-outlined text-[56px] text-on-surface-variant/25 mb-4 animate-float">
           {icon}
         </span>
       )}

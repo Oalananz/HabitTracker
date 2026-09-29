@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import dayjs from 'dayjs';
-import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
+import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
+import { getAreaQueryParam } from '@/lib/queryParam';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import LifeAreaSelect from '@/components/ui/LifeAreaSelect';
 import AiGoalBreaker from '@/components/ai/AiGoalBreaker';
@@ -22,14 +23,16 @@ export default function GoalsPage() {
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<GoalTab>('all');
-  const [showCreate, setShowCreate] = useState(false);
+  // Deep-link: /goals?area=health preselects the area + opens the create form
+  const [deepLinkArea] = useState(getAreaQueryParam);
+  const [showCreate, setShowCreate] = useState(deepLinkArea !== null);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newType, setNewType] = useState<'weekly' | 'dated' | 'open'>('open');
   const [newTargetDate, setNewTargetDate] = useState('');
   const [newTargetCount, setNewTargetCount] = useState(1);
-  const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | null>(null);
-  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
+  const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | null>(deepLinkArea);
+  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>(deepLinkArea ?? 'all');
   const [showArchived, setShowArchived] = useState(false);
   const [showBreaker, setShowBreaker] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -39,16 +42,6 @@ export default function GoalsPage() {
     fetchGoals(activeTab === 'all' ? undefined : activeTab);
   }, [fetchGoals, activeTab]);
 
-  // Deep-link: /goals?area=health preselects the area + opens the create form
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const area = new URLSearchParams(window.location.search).get('area');
-    if (area && isLifeAreaId(area)) {
-      setFilterArea(area);
-      setNewLifeArea(area);
-      setShowCreate(true);
-    }
-  }, []);
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
@@ -146,8 +139,8 @@ export default function GoalsPage() {
 
             {/* Goal Type Selector */}
             <div>
-              <label className="text-xs text-on-surface-variant/80 block mb-2">Goal type</label>
-              <div className="flex gap-2">
+              <p id="goal-type-label" className="text-xs text-on-surface-variant/80 block mb-2">Goal type</p>
+              <div role="group" aria-labelledby="goal-type-label" className="flex gap-2">
                 {(['weekly', 'dated', 'open'] as const).map((type) => (
                   <button
                     key={type}
@@ -166,7 +159,7 @@ export default function GoalsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Title</label>
+                <label htmlFor="goal-title" className="text-xs text-on-surface-variant/80 block mb-1.5">Title</label>
                 <Input
                   type="text"
                   value={newTitle}
@@ -178,7 +171,7 @@ export default function GoalsPage() {
 
               {newType === 'dated' && (
                 <div>
-                  <label className="text-xs text-on-surface-variant/80 block mb-1.5">Target date</label>
+                  <label htmlFor="goal-target-date" className="text-xs text-on-surface-variant/80 block mb-1.5">Target date</label>
                   <Input
                     type="date"
                     value={newTargetDate}
@@ -189,7 +182,7 @@ export default function GoalsPage() {
               )}
 
               <div>
-                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Target count</label>
+                <label htmlFor="goal-target-count" className="text-xs text-on-surface-variant/80 block mb-1.5">Target count</label>
                 <Input
                   type="number"
                   min={1}
@@ -203,7 +196,7 @@ export default function GoalsPage() {
             </div>
 
             <div>
-              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Description (optional)</label>
+              <label htmlFor="goal-desc" className="text-xs text-on-surface-variant/80 block mb-1.5">Description (optional)</label>
               <Textarea
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
@@ -242,7 +235,7 @@ export default function GoalsPage() {
                   : 'text-on-surface-variant hover:bg-surface-container-high'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -433,7 +426,7 @@ function GoalRow({
             }`}
           >
             {goal.completed && (
-              <span className="material-symbols-outlined text-[14px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                 check
               </span>
             )}
@@ -463,11 +456,11 @@ function GoalRow({
                   {goal.currentCount}/{goal.targetCount}
                 </span>
                 {!goal.completed && (
-                  <button
+                  <button aria-label="Add progress"
                     onClick={() => incrementGoal(goal.id)}
                     className="w-6 h-6 rounded-sm bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[14px]">add</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[14px]">add</span>
                   </button>
                 )}
               </div>
@@ -489,9 +482,9 @@ function GoalRow({
             <button
               onClick={() => setOpenMenuId(menuOpen ? null : goal.id)}
               className="text-on-surface-variant/60 hover:text-on-surface transition-colors p-1"
-              title="More actions"
+              aria-label="More actions"  title="More actions"
             >
-              <span className="material-symbols-outlined text-[18px]">more_vert</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">more_vert</span>
             </button>
             {menuOpen && (
               <>
@@ -501,14 +494,14 @@ function GoalRow({
                     onClick={() => { updateGoal(goal.id, { isActive: goal.isActive === false }); setOpenMenuId(null); }}
                     className="w-full text-left px-3 py-1.5 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{goal.isActive === false ? 'unarchive' : 'archive'}</span>
                     {goal.isActive === false ? 'Unarchive' : 'Archive'}
                   </button>
                   <button
                     onClick={async () => { setOpenMenuId(null); if (await confirm({ message: 'Delete this goal?' })) deleteGoal(goal.id); }}
                     className="w-full text-left px-3 py-1.5 text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">delete</span>
                     Delete
                   </button>
                 </div>

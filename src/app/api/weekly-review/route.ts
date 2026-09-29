@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthUserId } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { errorResponse } from '@/lib/apiErrors';
 
 // snake_case row -> camelCase
 function mapReview(r: Record<string, unknown>) {
@@ -23,45 +25,44 @@ function mapReview(r: Record<string, unknown>) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const weekStart = searchParams.get('weekStart');
 
   if (weekStart) {
-    const { data } = await supabase
+    const { data } = await db
       .from('weekly_reviews')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('week_start_date', weekStart)
       .maybeSingle();
     return NextResponse.json({ review: data ? mapReview(data) : null });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('weekly_reviews')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('week_start_date', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return errorResponse(new Error(error.message), 'GET /api/weekly-review');
   return NextResponse.json({ reviews: (data || []).map(mapReview) });
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const b = await request.json();
+  const b = await request.json().catch(() => null);
+  if (!b) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   if (!b.weekStartDate || !b.weekEndDate) {
     return NextResponse.json({ error: 'weekStartDate and weekEndDate are required' }, { status: 400 });
   }
 
   const row = {
-    user_id: user.id,
+    user_id: userId,
     week_start_date: b.weekStartDate,
     week_end_date: b.weekEndDate,
     wins: b.wins ?? null,
@@ -77,12 +78,12 @@ export async function POST(request: NextRequest) {
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('weekly_reviews')
     .upsert(row, { onConflict: 'user_id,week_start_date' })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return errorResponse(new Error(error.message), 'POST /api/weekly-review');
   return NextResponse.json({ review: mapReview(data) });
 }

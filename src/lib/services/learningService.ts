@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db, type AnyRow } from '../db';
 import dayjs from 'dayjs';
 import {
   calculateStudyTimeThisWeek,
@@ -14,18 +14,16 @@ import {
   type LearningResource,
 } from '../learning';
 
-// NOTE: the learning_* tables are not yet present in src/lib/database.types.ts
-// (generated file — do not hand-edit), so every table-name argument below is
-// cast `as any` to keep the Supabase client's generic typing happy. This
-// mirrors the existing `.rpc(..., params as any)` pattern used elsewhere.
+// NOTE: the learning_* tables are not yet present in src/lib/database.types.ts;
+// rows from the db layer are untyped and mapped below.
 
 // ================================================================
 // Courses
 // ================================================================
 
 export async function getLearningCourses(userId: string): Promise<LearningCourse[]> {
-  const { data, error } = await supabase
-    .from('learning_courses' as any)
+  const { data, error } = await db
+    .from('learning_courses')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -35,8 +33,8 @@ export async function getLearningCourses(userId: string): Promise<LearningCourse
 }
 
 export async function getLearningCourse(courseId: string, userId: string): Promise<LearningCourse> {
-  const { data, error } = await supabase
-    .from('learning_courses' as any)
+  const { data, error } = await db
+    .from('learning_courses')
     .select('*')
     .eq('id', courseId)
     .eq('user_id', userId)
@@ -59,8 +57,8 @@ export async function createLearningCourse(
     targetCompletionDate?: string;
   }
 ): Promise<LearningCourse> {
-  const { data: course, error } = await supabase
-    .from('learning_courses' as any)
+  const { data: course, error } = await db
+    .from('learning_courses')
     .insert({
       user_id: userId,
       title: data.title,
@@ -108,8 +106,8 @@ export async function updateLearningCourse(
   if (data.completedAt !== undefined) updateData.completed_at = data.completedAt;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: course, error } = await supabase
-    .from('learning_courses' as any)
+  const { data: course, error } = await db
+    .from('learning_courses')
     .update(updateData)
     .eq('id', courseId)
     .eq('user_id', userId)
@@ -121,8 +119,8 @@ export async function updateLearningCourse(
 }
 
 export async function deleteLearningCourse(courseId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('learning_courses' as any)
+  const { error } = await db
+    .from('learning_courses')
     .delete()
     .eq('id', courseId)
     .eq('user_id', userId);
@@ -135,7 +133,7 @@ export async function deleteLearningCourse(courseId: string, userId: string): Pr
 // ================================================================
 
 export async function getLearningModules(userId: string, courseId?: string): Promise<LearningModule[]> {
-  let query = supabase.from('learning_modules' as any).select('*').eq('user_id', userId);
+  let query = db.from('learning_modules').select('*').eq('user_id', userId);
   if (courseId) query = query.eq('course_id', courseId);
   const { data, error } = await query.order('order', { ascending: true });
 
@@ -147,8 +145,8 @@ export async function createLearningModule(
   userId: string,
   data: { courseId: string; title?: string; order?: number; status?: string }
 ): Promise<LearningModule> {
-  const { data: mod, error } = await supabase
-    .from('learning_modules' as any)
+  const { data: mod, error } = await db
+    .from('learning_modules')
     .insert({
       user_id: userId,
       course_id: data.courseId,
@@ -175,8 +173,8 @@ export async function updateLearningModule(
   if (data.progressPercentage !== undefined) updateData.progress_percentage = data.progressPercentage;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: mod, error } = await supabase
-    .from('learning_modules' as any)
+  const { data: mod, error } = await db
+    .from('learning_modules')
     .update(updateData)
     .eq('id', moduleId)
     .eq('user_id', userId)
@@ -188,8 +186,8 @@ export async function updateLearningModule(
 }
 
 export async function deleteLearningModule(moduleId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('learning_modules' as any)
+  const { error } = await db
+    .from('learning_modules')
     .delete()
     .eq('id', moduleId)
     .eq('user_id', userId);
@@ -202,7 +200,7 @@ export async function deleteLearningModule(moduleId: string, userId: string): Pr
 // ================================================================
 
 export async function getLearningLessons(userId: string, courseId?: string): Promise<LearningLesson[]> {
-  let query = supabase.from('learning_lessons' as any).select('*').eq('user_id', userId);
+  let query = db.from('learning_lessons').select('*').eq('user_id', userId);
   if (courseId) query = query.eq('course_id', courseId);
   const { data, error } = await query.order('order', { ascending: true });
 
@@ -221,8 +219,8 @@ export async function createLearningLesson(
     status?: string;
   }
 ): Promise<LearningLesson> {
-  const { data: lesson, error } = await supabase
-    .from('learning_lessons' as any)
+  const { data: lesson, error } = await db
+    .from('learning_lessons')
     .insert({
       user_id: userId,
       course_id: data.courseId,
@@ -252,8 +250,8 @@ export async function updateLearningLesson(
   if (data.completedAt !== undefined) updateData.completed_at = data.completedAt;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: lesson, error } = await supabase
-    .from('learning_lessons' as any)
+  const { data: lesson, error } = await db
+    .from('learning_lessons')
     .update(updateData)
     .eq('id', lessonId)
     .eq('user_id', userId)
@@ -265,8 +263,8 @@ export async function updateLearningLesson(
 }
 
 export async function deleteLearningLesson(lessonId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('learning_lessons' as any)
+  const { error } = await db
+    .from('learning_lessons')
     .delete()
     .eq('id', lessonId)
     .eq('user_id', userId);
@@ -282,7 +280,7 @@ export async function getStudySessions(
   userId: string,
   filters?: { courseId?: string; skillId?: string; limit?: number }
 ): Promise<StudySession[]> {
-  let query = supabase.from('study_sessions' as any).select('*').eq('user_id', userId);
+  let query = db.from('study_sessions').select('*').eq('user_id', userId);
   if (filters?.courseId) query = query.eq('course_id', filters.courseId);
   if (filters?.skillId) query = query.eq('skill_id', filters.skillId);
   query = query.order('date', { ascending: false });
@@ -304,8 +302,8 @@ export async function createStudySession(
     notes?: string;
   }
 ): Promise<StudySession> {
-  const { data: session, error } = await supabase
-    .from('study_sessions' as any)
+  const { data: session, error } = await db
+    .from('study_sessions')
     .insert({
       user_id: userId,
       course_id: data.courseId || null,
@@ -323,8 +321,8 @@ export async function createStudySession(
 }
 
 export async function deleteStudySession(sessionId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('study_sessions' as any)
+  const { error } = await db
+    .from('study_sessions')
     .delete()
     .eq('id', sessionId)
     .eq('user_id', userId);
@@ -337,8 +335,8 @@ export async function deleteStudySession(sessionId: string, userId: string): Pro
 // ================================================================
 
 export async function getSkills(userId: string): Promise<Skill[]> {
-  const { data, error } = await supabase
-    .from('skills' as any)
+  const { data, error } = await db
+    .from('skills')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -351,8 +349,8 @@ export async function createSkill(
   userId: string,
   data: { name: string; category?: string; level?: string; progressPercentage?: number; targetLevel?: string }
 ): Promise<Skill> {
-  const { data: skill, error } = await supabase
-    .from('skills' as any)
+  const { data: skill, error } = await db
+    .from('skills')
     .insert({
       user_id: userId,
       name: data.name,
@@ -381,8 +379,8 @@ export async function updateSkill(
   if (data.targetLevel !== undefined) updateData.target_level = data.targetLevel;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: skill, error } = await supabase
-    .from('skills' as any)
+  const { data: skill, error } = await db
+    .from('skills')
     .update(updateData)
     .eq('id', skillId)
     .eq('user_id', userId)
@@ -394,8 +392,8 @@ export async function updateSkill(
 }
 
 export async function deleteSkill(skillId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('skills' as any)
+  const { error } = await db
+    .from('skills')
     .delete()
     .eq('id', skillId)
     .eq('user_id', userId);
@@ -408,8 +406,8 @@ export async function deleteSkill(skillId: string, userId: string): Promise<void
 // ================================================================
 
 export async function getCertificates(userId: string): Promise<Certificate[]> {
-  const { data, error } = await supabase
-    .from('certificates' as any)
+  const { data, error } = await db
+    .from('certificates')
     .select('*')
     .eq('user_id', userId)
     .order('issue_date', { ascending: false });
@@ -422,8 +420,8 @@ export async function createCertificate(
   userId: string,
   data: { title: string; provider?: string; issueDate?: string; certificateUrl?: string; fileUrl?: string }
 ): Promise<Certificate> {
-  const { data: cert, error } = await supabase
-    .from('certificates' as any)
+  const { data: cert, error } = await db
+    .from('certificates')
     .insert({
       user_id: userId,
       title: data.title,
@@ -440,8 +438,8 @@ export async function createCertificate(
 }
 
 export async function deleteCertificate(certificateId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('certificates' as any)
+  const { error } = await db
+    .from('certificates')
     .delete()
     .eq('id', certificateId)
     .eq('user_id', userId);
@@ -454,8 +452,8 @@ export async function deleteCertificate(certificateId: string, userId: string): 
 // ================================================================
 
 export async function getLearningResources(userId: string): Promise<LearningResource[]> {
-  const { data, error } = await supabase
-    .from('learning_resources' as any)
+  const { data, error } = await db
+    .from('learning_resources')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -468,8 +466,8 @@ export async function createLearningResource(
   userId: string,
   data: { title: string; url: string; type?: string; provider?: string; status?: string }
 ): Promise<LearningResource> {
-  const { data: resource, error } = await supabase
-    .from('learning_resources' as any)
+  const { data: resource, error } = await db
+    .from('learning_resources')
     .insert({
       user_id: userId,
       title: data.title,
@@ -498,8 +496,8 @@ export async function updateLearningResource(
   if (data.status !== undefined) updateData.status = data.status;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: resource, error } = await supabase
-    .from('learning_resources' as any)
+  const { data: resource, error } = await db
+    .from('learning_resources')
     .update(updateData)
     .eq('id', resourceId)
     .eq('user_id', userId)
@@ -511,8 +509,8 @@ export async function updateLearningResource(
 }
 
 export async function deleteLearningResource(resourceId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('learning_resources' as any)
+  const { error } = await db
+    .from('learning_resources')
     .delete()
     .eq('id', resourceId)
     .eq('user_id', userId);
@@ -532,8 +530,8 @@ export async function getLearningSummary(userId: string) {
     getCertificates(userId),
   ]);
 
-  const { data: connectedAccounts, error: connectedError } = await supabase
-    .from('connected_learning_accounts' as any)
+  const { data: connectedAccounts, error: connectedError } = await db
+    .from('connected_learning_accounts')
     .select('id')
     .eq('user_id', userId)
     .eq('status', 'connected');
@@ -571,7 +569,7 @@ export async function getLearningSummary(userId: string) {
 // Mappers (snake_case DB rows -> camelCase domain types)
 // ================================================================
 
-function mapCourse(c: any): LearningCourse {
+function mapCourse(c: AnyRow): LearningCourse {
   return {
     id: c.id,
     userId: c.user_id,
@@ -592,7 +590,7 @@ function mapCourse(c: any): LearningCourse {
   };
 }
 
-function mapModule(m: any): LearningModule {
+function mapModule(m: AnyRow): LearningModule {
   return {
     id: m.id,
     userId: m.user_id,
@@ -606,7 +604,7 @@ function mapModule(m: any): LearningModule {
   };
 }
 
-function mapLesson(l: any): LearningLesson {
+function mapLesson(l: AnyRow): LearningLesson {
   return {
     id: l.id,
     userId: l.user_id,
@@ -623,7 +621,7 @@ function mapLesson(l: any): LearningLesson {
   };
 }
 
-function mapStudySession(s: any): StudySession {
+function mapStudySession(s: AnyRow): StudySession {
   return {
     id: s.id,
     userId: s.user_id,
@@ -638,7 +636,7 @@ function mapStudySession(s: any): StudySession {
   };
 }
 
-function mapSkill(s: any): Skill {
+function mapSkill(s: AnyRow): Skill {
   return {
     id: s.id,
     userId: s.user_id,
@@ -652,7 +650,7 @@ function mapSkill(s: any): Skill {
   };
 }
 
-function mapCertificate(c: any): Certificate {
+function mapCertificate(c: AnyRow): Certificate {
   return {
     id: c.id,
     userId: c.user_id,
@@ -666,7 +664,7 @@ function mapCertificate(c: any): Certificate {
   };
 }
 
-function mapResource(r: any): LearningResource {
+function mapResource(r: AnyRow): LearningResource {
   return {
     id: r.id,
     userId: r.user_id,

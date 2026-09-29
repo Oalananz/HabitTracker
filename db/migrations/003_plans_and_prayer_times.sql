@@ -3,7 +3,7 @@
 -- =====================================================
 CREATE TABLE IF NOT EXISTS plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
   plan_type TEXT NOT NULL DEFAULT 'daily' CHECK (plan_type IN ('daily', 'weekly', 'monthly', 'custom')),
@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_plans_user_type ON plans(user_id, plan_type);
 -- =====================================================
 CREATE TABLE IF NOT EXISTS prayer_times (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   fajr TEXT NOT NULL DEFAULT '05:00',
   sunrise TEXT,
@@ -46,37 +46,3 @@ CREATE TABLE IF NOT EXISTS prayer_times (
 
 -- Indexes for prayer_times
 CREATE INDEX IF NOT EXISTS idx_prayer_times_user_date ON prayer_times(user_id, date);
-
--- =====================================================
--- RLS Policies
--- =====================================================
-
--- Plans RLS
-ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own plans" ON plans
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own plans" ON plans
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own plans" ON plans
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own plans" ON plans
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Prayer Times RLS
-ALTER TABLE prayer_times ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own prayer times" ON prayer_times
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own prayer times" ON prayer_times
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own prayer times" ON prayer_times
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own prayer times" ON prayer_times
-  FOR DELETE USING (auth.uid() = user_id);

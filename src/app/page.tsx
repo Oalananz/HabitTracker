@@ -1,24 +1,17 @@
 'use client';
 
 import { useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
 
 function HomeContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { checkAuth, user, isAuthLoading } = useStore();
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    if (code) {
-      // If we got an OAuth code at the root URL, redirect to our proper callback route
-      window.location.href = `/auth/callback?code=${code}`;
-      return;
-    }
     checkAuth();
-  }, [checkAuth, searchParams]);
+  }, [checkAuth]);
 
   useEffect(() => {
     if (!isAuthLoading) {

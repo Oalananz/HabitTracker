@@ -113,7 +113,7 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
             href="/habits"
             className="font-label text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-wider transition-colors flex items-center gap-1"
           >
-            <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[13px]">open_in_new</span>
             All habits
           </Link>
         </div>
@@ -126,7 +126,7 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
           </div>
         ) : scheduled.length === 0 ? (
           <div className="flex flex-col items-center text-center gap-2 py-4">
-            <span className="material-symbols-outlined text-[22px] text-outline">cached</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[22px] text-outline">cached</span>
             <span className="font-body text-sm text-on-surface-variant">No habits due today.</span>
             <Link
               href="/habits"
@@ -155,13 +155,13 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
                       <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant group-hover:text-on-surface transition-colors">
                         {label}
                       </span>
-                      <span className="font-mono text-[9px] text-on-surface-variant/60">
+                      <span className="font-mono text-[10px] text-on-surface-variant/60">
                         <span className={groupDone === groupHabits.length ? 'text-primary' : 'text-on-surface-variant'}>
                           {groupDone}
                         </span>/{groupHabits.length}
                       </span>
                     </div>
-                    <span className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                    <span aria-hidden="true" className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`}>
                       expand_more
                     </span>
                   </button>
@@ -187,7 +187,7 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
                               checked ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant/40 bg-transparent'
                             }`}>
                               {checked && (
-                                <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                                   check
                                 </span>
                               )}
@@ -196,7 +196,7 @@ export default function HabitsSection({ date }: HabitsSectionProps) {
                               {habit.title}
                             </span>
                             {habit.category && (
-                              <span className="font-mono text-[9px] text-on-surface-variant/60 px-1.5 py-0.5 bg-surface-container rounded-[2px]">
+                              <span className="font-mono text-[10px] text-on-surface-variant/60 px-1.5 py-0.5 bg-surface-container rounded-[2px]">
                                 {habit.category}
                               </span>
                             )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import dayjs from 'dayjs';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -260,7 +261,7 @@ export default function DayTimeline({
     return () => clearInterval(timer);
   }, []);
 
-  const isToday = date === new Date().toISOString().split('T')[0];
+  const isToday = date === dayjs().format('YYYY-MM-DD');
 
   // ── Render ──
 
@@ -322,7 +323,7 @@ export default function DayTimeline({
             <span className="font-mono text-[11px] text-primary font-bold">
               {formatTimeLabel(minutesToTime(selectionPreview.startMin))} – {formatTimeLabel(minutesToTime(selectionPreview.endMin))}
             </span>
-            <span className="font-label text-[9px] text-primary/70 uppercase tracking-widest mt-0.5">
+            <span className="font-label text-[10px] text-primary/70 uppercase tracking-widest mt-0.5">
               Release to create
             </span>
           </div>
@@ -365,7 +366,7 @@ export default function DayTimeline({
                       {ev.title}
                     </div>
                     {blockHeight > 40 && (
-                      <div className="font-mono text-[9px] mt-0.5" style={{ color: colors.text, opacity: 0.7 }}>
+                      <div className="font-mono text-[10px] mt-0.5" style={{ color: colors.text, opacity: 0.7 }}>
                         {formatTimeLabel(minutesToTime(startMin))} – {formatTimeLabel(minutesToTime(endMin))}
                       </div>
                     )}
@@ -378,17 +379,17 @@ export default function DayTimeline({
                         onMouseDown={e => e.stopPropagation()}
                         onClick={e => { e.stopPropagation(); onSelectEvent(ev.id); }}
                         className="p-0.5 rounded-sm hover:bg-white/10 transition-colors"
-                        title="Edit"
+                        aria-label="Edit" title="Edit"
                       >
-                        <span className="material-symbols-outlined text-[13px]" style={{ color: colors.text }}>edit</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px]" style={{ color: colors.text }}>edit</span>
                       </button>
                       <button
                         onMouseDown={e => e.stopPropagation()}
                         onClick={e => { e.stopPropagation(); onDeleteEvent(ev.id); }}
                         className="p-0.5 rounded-sm hover:bg-white/10 transition-colors"
-                        title="Delete"
+                        aria-label="Delete" title="Delete"
                       >
-                        <span className="material-symbols-outlined text-[13px] text-error">delete</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px] text-error">delete</span>
                       </button>
                     </div>
                   )}
@@ -398,12 +399,12 @@ export default function DayTimeline({
                 {blockHeight > 56 && (
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {ev.category && (
-                      <span className="px-1 py-px rounded-[2px] bg-white/5 font-label text-[8px] uppercase tracking-wider" style={{ color: colors.text }}>
+                      <span className="px-1 py-px rounded-[2px] bg-white/5 font-label text-[10px] uppercase tracking-wider" style={{ color: colors.text }}>
                         {ev.category}
                       </span>
                     )}
                     {ev.prayerBlock && (
-                      <span className="px-1 py-px rounded-[2px] bg-white/5 font-label text-[8px] uppercase tracking-wider text-primary">
+                      <span className="px-1 py-px rounded-[2px] bg-white/5 font-label text-[10px] uppercase tracking-wider text-primary">
                         {ev.prayerBlock}
                       </span>
                     )}

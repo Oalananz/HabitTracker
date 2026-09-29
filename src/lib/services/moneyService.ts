@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db, type AnyRow } from '../db';
 import dayjs from 'dayjs';
 import {
   DEFAULT_CURRENCY,
@@ -22,8 +22,8 @@ import {
 // ================================================================
 
 export async function getMoneyCategories(userId: string): Promise<MoneyCategory[]> {
-  const { data: existing, error } = await supabase
-    .from('money_categories' as any)
+  const { data: existing, error } = await db
+    .from('money_categories')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
@@ -48,8 +48,8 @@ export async function getMoneyCategories(userId: string): Promise<MoneyCategory[
     })),
   ];
 
-  const { data: seeded, error: seedError } = await supabase
-    .from('money_categories' as any)
+  const { data: seeded, error: seedError } = await db
+    .from('money_categories')
     .insert(seedRows)
     .select();
 
@@ -61,8 +61,8 @@ export async function createMoneyCategory(
   userId: string,
   data: { name: string; type: 'income' | 'expense'; color?: string; icon?: string }
 ): Promise<MoneyCategory> {
-  const { data: category, error } = await supabase
-    .from('money_categories' as any)
+  const { data: category, error } = await db
+    .from('money_categories')
     .insert({
       user_id: userId,
       name: data.name,
@@ -96,8 +96,8 @@ export async function getMoneyTransactions(
   userId: string,
   filters?: TransactionFilters
 ): Promise<MoneyTransaction[]> {
-  let query = supabase
-    .from('money_transactions' as any)
+  let query = db
+    .from('money_transactions')
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
@@ -138,8 +138,8 @@ export async function createMoneyTransaction(
     recurringRule?: Record<string, unknown> | null;
   }
 ): Promise<MoneyTransaction> {
-  const { data: transaction, error } = await supabase
-    .from('money_transactions' as any)
+  const { data: transaction, error } = await db
+    .from('money_transactions')
     .insert({
       user_id: userId,
       type: data.type,
@@ -192,8 +192,8 @@ export async function updateMoneyTransaction(
   if (data.recurringRule !== undefined) updateData.recurring_rule = data.recurringRule;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: transaction, error } = await supabase
-    .from('money_transactions' as any)
+  const { data: transaction, error } = await db
+    .from('money_transactions')
     .update(updateData)
     .eq('id', transactionId)
     .eq('user_id', userId)
@@ -205,8 +205,8 @@ export async function updateMoneyTransaction(
 }
 
 export async function deleteMoneyTransaction(transactionId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('money_transactions' as any)
+  const { error } = await db
+    .from('money_transactions')
     .delete()
     .eq('id', transactionId)
     .eq('user_id', userId);
@@ -223,7 +223,7 @@ export async function getMoneyBudgets(
   month?: number,
   year?: number
 ): Promise<Budget[]> {
-  let query = supabase.from('money_budgets' as any).select('*').eq('user_id', userId);
+  let query = db.from('money_budgets').select('*').eq('user_id', userId);
 
   if (month) query = query.eq('month', month);
   if (year) query = query.eq('year', year);
@@ -246,8 +246,8 @@ export async function createMoneyBudget(
   userId: string,
   data: { month: number; year: number; categoryId?: string | null; amount: number; currency?: string }
 ): Promise<Budget> {
-  const { data: budget, error } = await supabase
-    .from('money_budgets' as any)
+  const { data: budget, error } = await db
+    .from('money_budgets')
     .insert({
       user_id: userId,
       month: data.month,
@@ -276,8 +276,8 @@ export async function updateMoneyBudget(
   if (data.currency !== undefined) updateData.currency = data.currency;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: budget, error } = await supabase
-    .from('money_budgets' as any)
+  const { data: budget, error } = await db
+    .from('money_budgets')
     .update(updateData)
     .eq('id', budgetId)
     .eq('user_id', userId)
@@ -289,8 +289,8 @@ export async function updateMoneyBudget(
 }
 
 export async function deleteMoneyBudget(budgetId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('money_budgets' as any)
+  const { error } = await db
+    .from('money_budgets')
     .delete()
     .eq('id', budgetId)
     .eq('user_id', userId);
@@ -303,8 +303,8 @@ export async function deleteMoneyBudget(budgetId: string, userId: string): Promi
 // ================================================================
 
 export async function getSavingsGoals(userId: string): Promise<SavingsGoal[]> {
-  const { data, error } = await supabase
-    .from('savings_goals' as any)
+  const { data, error } = await db
+    .from('savings_goals')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -323,8 +323,8 @@ export async function createSavingsGoal(
     targetDate?: string;
   }
 ): Promise<SavingsGoal> {
-  const { data: goal, error } = await supabase
-    .from('savings_goals' as any)
+  const { data: goal, error } = await db
+    .from('savings_goals')
     .insert({
       user_id: userId,
       title: data.title,
@@ -361,8 +361,8 @@ export async function updateSavingsGoal(
   if (data.status !== undefined) updateData.status = data.status;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: goal, error } = await supabase
-    .from('savings_goals' as any)
+  const { data: goal, error } = await db
+    .from('savings_goals')
     .update(updateData)
     .eq('id', goalId)
     .eq('user_id', userId)
@@ -378,20 +378,20 @@ export async function incrementSavingsGoal(
   userId: string,
   amount: number
 ): Promise<SavingsGoal> {
-  const { data: goal, error } = await supabase.rpc('increment_savings_goal', {
+  const { data: goal, error } = await db.rpc('increment_savings_goal', {
     p_id: goalId,
     p_user_id: userId,
     p_amount: amount,
-  } as any);
+  });
 
   if (error) throw new Error(error.message);
   if (!goal) throw new Error('Savings goal not found');
-  return mapSavingsGoal(goal as any);
+  return mapSavingsGoal(goal);
 }
 
 export async function deleteSavingsGoal(goalId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('savings_goals' as any)
+  const { error } = await db
+    .from('savings_goals')
     .delete()
     .eq('id', goalId)
     .eq('user_id', userId);
@@ -404,8 +404,8 @@ export async function deleteSavingsGoal(goalId: string, userId: string): Promise
 // ================================================================
 
 export async function getDebts(userId: string): Promise<Debt[]> {
-  const { data, error } = await supabase
-    .from('debts' as any)
+  const { data, error } = await db
+    .from('debts')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -425,8 +425,8 @@ export async function createDebt(
     dueDate?: string;
   }
 ): Promise<Debt> {
-  const { data: debt, error } = await supabase
-    .from('debts' as any)
+  const { data: debt, error } = await db
+    .from('debts')
     .insert({
       user_id: userId,
       title: data.title,
@@ -466,8 +466,8 @@ export async function updateDebt(
   if (data.status !== undefined) updateData.status = data.status;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: debt, error } = await supabase
-    .from('debts' as any)
+  const { data: debt, error } = await db
+    .from('debts')
     .update(updateData)
     .eq('id', debtId)
     .eq('user_id', userId)
@@ -483,20 +483,20 @@ export async function decrementDebtRemaining(
   userId: string,
   amount: number
 ): Promise<Debt> {
-  const { data: debt, error } = await supabase.rpc('decrement_debt_remaining', {
+  const { data: debt, error } = await db.rpc('decrement_debt_remaining', {
     p_id: debtId,
     p_user_id: userId,
     p_amount: amount,
-  } as any);
+  });
 
   if (error) throw new Error(error.message);
   if (!debt) throw new Error('Debt not found');
-  return mapDebt(debt as any);
+  return mapDebt(debt);
 }
 
 export async function deleteDebt(debtId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('debts' as any)
+  const { error } = await db
+    .from('debts')
     .delete()
     .eq('id', debtId)
     .eq('user_id', userId);
@@ -509,8 +509,8 @@ export async function deleteDebt(debtId: string, userId: string): Promise<void> 
 // ================================================================
 
 export async function getSubscriptions(userId: string): Promise<Subscription[]> {
-  const { data, error } = await supabase
-    .from('subscriptions' as any)
+  const { data, error } = await db
+    .from('subscriptions')
     .select('*')
     .eq('user_id', userId)
     .order('next_billing_date', { ascending: true });
@@ -531,8 +531,8 @@ export async function createSubscription(
     isActive?: boolean;
   }
 ): Promise<Subscription> {
-  const { data: subscription, error } = await supabase
-    .from('subscriptions' as any)
+  const { data: subscription, error } = await db
+    .from('subscriptions')
     .insert({
       user_id: userId,
       title: data.title,
@@ -573,8 +573,8 @@ export async function updateSubscription(
   if (data.isActive !== undefined) updateData.is_active = data.isActive;
   updateData.updated_at = new Date().toISOString();
 
-  const { data: subscription, error } = await supabase
-    .from('subscriptions' as any)
+  const { data: subscription, error } = await db
+    .from('subscriptions')
     .update(updateData)
     .eq('id', subscriptionId)
     .eq('user_id', userId)
@@ -586,8 +586,8 @@ export async function updateSubscription(
 }
 
 export async function deleteSubscription(subscriptionId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('subscriptions' as any)
+  const { error } = await db
+    .from('subscriptions')
     .delete()
     .eq('id', subscriptionId)
     .eq('user_id', userId);
@@ -604,13 +604,33 @@ export async function getMoneySummary(userId: string) {
   const month = now.month() + 1;
   const year = now.year();
 
-  const [transactions, budgets, savingsGoals, debts, subscriptions] = await Promise.all([
+  const [allTransactions, allBudgets, allSavingsGoals, allDebts, subscriptions] = await Promise.all([
     getMoneyTransactions(userId, { month, year }),
     getMoneyBudgets(userId, month, year),
     getSavingsGoals(userId),
     getDebts(userId),
     getSubscriptions(userId),
   ]);
+
+  // Amounts in different currencies can't be added together. Summarise in the
+  // currency used most this month and report the others separately.
+  const currencyCounts = new Map<string, number>();
+  for (const t of allTransactions) {
+    currencyCounts.set(t.currency, (currencyCounts.get(t.currency) || 0) + 1);
+  }
+  const currency = [...currencyCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? DEFAULT_CURRENCY;
+  const inCurrency = <T extends { currency: string }>(items: T[]) => items.filter((i) => i.currency === currency);
+  const transactions = inCurrency(allTransactions);
+  const budgets = inCurrency(allBudgets);
+  const savingsGoals = inCurrency(allSavingsGoals);
+  const debts = inCurrency(allDebts);
+  const otherCurrencies = [
+    ...new Set(
+      [...allTransactions, ...allBudgets, ...allSavingsGoals, ...allDebts]
+        .map((i) => i.currency)
+        .filter((c) => c && c !== currency)
+    ),
+  ].sort();
 
   const monthlyIncome = calculateMonthlyIncome(transactions, month, year);
   const monthlyExpenses = calculateMonthlyExpenses(transactions, month, year);
@@ -650,7 +670,8 @@ export async function getMoneySummary(userId: string) {
     debtRemaining,
     upcomingBillsCount,
     activeSubscriptionsCount,
-    currency: DEFAULT_CURRENCY,
+    currency,
+    otherCurrencies,
   };
 }
 
@@ -658,7 +679,7 @@ export async function getMoneySummary(userId: string) {
 // Mappers — snake_case DB rows -> camelCase domain types
 // ================================================================
 
-function mapCategory(c: any): MoneyCategory {
+function mapCategory(c: AnyRow): MoneyCategory {
   return {
     id: c.id,
     userId: c.user_id,
@@ -671,7 +692,7 @@ function mapCategory(c: any): MoneyCategory {
   };
 }
 
-function mapTransaction(t: any): MoneyTransaction {
+function mapTransaction(t: AnyRow): MoneyTransaction {
   return {
     id: t.id,
     userId: t.user_id,
@@ -691,7 +712,7 @@ function mapTransaction(t: any): MoneyTransaction {
   };
 }
 
-function mapBudget(b: any): Budget {
+function mapBudget(b: AnyRow): Budget {
   return {
     id: b.id,
     userId: b.user_id,
@@ -705,7 +726,7 @@ function mapBudget(b: any): Budget {
   };
 }
 
-function mapSavingsGoal(g: any): SavingsGoal {
+function mapSavingsGoal(g: AnyRow): SavingsGoal {
   return {
     id: g.id,
     userId: g.user_id,
@@ -720,7 +741,7 @@ function mapSavingsGoal(g: any): SavingsGoal {
   };
 }
 
-function mapDebt(d: any): Debt {
+function mapDebt(d: AnyRow): Debt {
   return {
     id: d.id,
     userId: d.user_id,
@@ -736,7 +757,7 @@ function mapDebt(d: any): Debt {
   };
 }
 
-function mapSubscription(s: any): Subscription {
+function mapSubscription(s: AnyRow): Subscription {
   return {
     id: s.id,
     userId: s.user_id,

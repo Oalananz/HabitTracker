@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { LearningCourse, Skill } from '@/lib/learning';
+import dayjs from 'dayjs';
 
 interface StudySessionFormProps {
   courses: LearningCourse[];
@@ -17,7 +18,7 @@ interface StudySessionFormProps {
   onCancel: () => void;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => dayjs().format('YYYY-MM-DD');
 
 export default function StudySessionForm({ courses, skills, onSubmit, onCancel }: StudySessionFormProps) {
   const [courseId, setCourseId] = useState('');
@@ -48,12 +49,12 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="study-session-form-session-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; SESSION_TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="study-session-form-session-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -64,12 +65,12 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="study-session-form-duration-minutes" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; DURATION (minutes)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="study-session-form-duration-minutes"
               type="number"
               min={1}
               value={durationMinutes}
@@ -81,10 +82,10 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="study-session-form-course-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; COURSE (optional)
           </label>
-          <select
+          <select id="study-session-form-course-optional"
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -99,10 +100,10 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="study-session-form-skill-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; SKILL (optional)
           </label>
-          <select
+          <select id="study-session-form-skill-optional"
             value={skillId}
             onChange={(e) => setSkillId(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -117,12 +118,12 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
         </div>
 
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="study-session-form-date" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; DATE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="study-session-form-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -133,11 +134,11 @@ export default function StudySessionForm({ courses, skills, onSubmit, onCancel }
       </div>
 
       <div>
-        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+        <label htmlFor="study-session-form-notes-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
           &gt; NOTES (optional)
         </label>
         <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 focus-within:border-primary/50 transition-colors">
-          <textarea
+          <textarea id="study-session-form-notes-optional"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0 resize-none"

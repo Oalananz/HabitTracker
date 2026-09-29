@@ -1,9 +1,8 @@
 import { create } from 'zustand';
-import { createClient } from '@/utils/supabase/client';
 import {
   networkStatus, persistSession, getPersistedSession, clearPersistedSession,
   clearAllLocalData, pullAllDataFromServer, markInitialDataLoaded, hasInitialData,
-  getPendingSyncCount,
+  getPendingSyncCount, getMeta, setMeta, enqueueSync,
   getLocalTasks, cacheTasksFromServer, localCreateTask, localUpdateTask,
   localCompleteTask, localUncompleteTask, localDeleteTask,
   getLocalHabits, cacheHabitsFromServer, localCreateHabit, localUpdateHabit,
@@ -19,8 +18,55 @@ import {
   getLocalPrayerTimes, cachePrayerTimesFromServer,
 } from '@/lib/offline';
 import type { DayRecord, DayRecordUpdate } from '@/lib/services/dayRecordService';
+import dayjs from 'dayjs';
 
 let authCheckPromise: Promise<void> | null = null;
+
+async function postAuth(url: string, body: Record<string, string>) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Authentication failed');
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapDayRecordRow(r: Record<string, any>): DayRecord {
+  return {
+    id: r.id, userId: r.user_id, date: r.date,
+    focusHours: Number(r.focus_hours ?? 0), focusGoal: Number(r.focus_goal ?? 6),
+    noReels: Boolean(r.no_reels), noMasturbation: Boolean(r.no_masturbation),
+    lowSugar: Boolean(r.low_sugar), noMusic: Boolean(r.no_music), noYapping: Boolean(r.no_yapping),
+    fajr: Boolean(r.fajr), dhuhr: Boolean(r.dhuhr), asr: Boolean(r.asr),
+    maghrib: Boolean(r.maghrib), isha: Boolean(r.isha),
+    quran: Boolean(r.quran), dhikrMorning: Boolean(r.dhikr_morning),
+    dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
+    sunnahPrayer: Boolean(r.sunnah_prayer),
+    sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
+    tasksDone: Boolean(r.tasks_done),
+    dailyScore: Number(r.daily_score ?? 0),
+    notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
+  };
+}
+
+const dayRecordCacheKey = (date: string) => `dayRecord:${date}`;
+
+async function cacheDayRecord(record: DayRecord) {
+  try { await setMeta(dayRecordCacheKey(record.date), JSON.stringify(record)); } catch {/* best effort */}
+}
+
+async function getCachedDayRecord(date: string): Promise<DayRecord | null> {
+  try {
+    const raw = await getMeta(dayRecordCacheKey(date));
+    return raw ? (JSON.parse(raw) as DayRecord) : null;
+  } catch {
+    return null;
+  }
+}
 
 function applySummaryDelta(summary: TaskSummary | null, totalDelta: number, completedDelta: number) {
   if (!summary) return summary;
@@ -376,28 +422,17 @@ export const useStore = create<AppState>((set, get) => ({
   setUser: (user) => set({ user }),
 
   login: async (email, password) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    await postAuth('/api/auth/login', { email, password });
     await get().checkAuth({ force: true, background: true });
   },
 
   register: async (email, username, password) => {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email, password, options: { data: { username } },
-    });
-    if (error) throw new Error(error.message);
-    if (data.session) {
-      await get().checkAuth({ force: true, background: true });
-    } else {
-      throw new Error('Check your email for the confirmation link.');
-    }
+    await postAuth('/api/auth/register', { email, username, password });
+    await get().checkAuth({ force: true, background: true });
   },
 
   logout: async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     await clearPersistedSession();
     await clearAllLocalData();
     set({ user: null, isAuthLoading: false, authInitialized: true, pendingSyncCount: 0 });
@@ -782,7 +817,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
   fetchWeeklyPlans: async (weekOf) => {
     set({ isPlansLoading: true });
-    if (networkStatus.isOnline) { try { const p = weekOf ? `?week=${weekOf}` : `?week=${new Date().toISOString().split('T')[0]}`; const res = await fetch(`/api/plans${p}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
+    if (networkStatus.isOnline) { try { const p = weekOf ? `?week=${weekOf}` : `?week=${dayjs().format('YYYY-MM-DD')}`; const res = await fetch(`/api/plans${p}`); const data = await res.json(); if (res.ok) { await cachePlansFromServer(data.plans); set({ plans: data.plans, isPlansLoading: false }); } } catch {} }
     set({ isPlansLoading: false });
   },
   fetchMonthlyPlans: async (month) => {
@@ -849,29 +884,23 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchDayRecord: async (date) => {
     set({ isDayRecordLoading: true });
-    try {
-      const res = await fetch(`/api/day-record?date=${date}`);
-      const data = await res.json();
-      if (res.ok && data.record) {
-        const r = data.record;
-        const mapped: DayRecord = {
-          id: r.id, userId: r.user_id, date: r.date,
-          focusHours: Number(r.focus_hours ?? 0), focusGoal: Number(r.focus_goal ?? 6),
-          noReels: Boolean(r.no_reels), noMasturbation: Boolean(r.no_masturbation),
-          lowSugar: Boolean(r.low_sugar), noMusic: Boolean(r.no_music), noYapping: Boolean(r.no_yapping),
-          fajr: Boolean(r.fajr), dhuhr: Boolean(r.dhuhr), asr: Boolean(r.asr),
-          maghrib: Boolean(r.maghrib), isha: Boolean(r.isha),
-          quran: Boolean(r.quran), dhikrMorning: Boolean(r.dhikr_morning),
-          dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
-          sunnahPrayer: Boolean(r.sunnah_prayer),
-          sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
-          tasksDone: Boolean(r.tasks_done),
-          dailyScore: Number(r.daily_score ?? 0),
-          notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
-        };
-        set({ dayRecord: mapped });
-      }
-    } catch {/* use cached */}
+    let loaded = false;
+    if (networkStatus.isOnline) {
+      try {
+        const res = await fetch(`/api/day-record?date=${date}`);
+        const data = await res.json();
+        if (res.ok && data.record) {
+          const mapped = mapDayRecordRow(data.record);
+          set({ dayRecord: mapped });
+          void cacheDayRecord(mapped);
+          loaded = true;
+        }
+      } catch {/* fall back to cache */}
+    }
+    if (!loaded) {
+      const cached = await getCachedDayRecord(date);
+      if (cached) set({ dayRecord: cached });
+    }
     set({ isDayRecordLoading: false });
   },
 
@@ -891,9 +920,15 @@ export const useStore = create<AppState>((set, get) => ({
       if (optimistic.tasksDone) score += 1;
       optimistic.dailyScore = Math.min(score, 10);
       set({ dayRecord: optimistic });
+      void cacheDayRecord(optimistic);
     }
 
-    if (!networkStatus.isOnline) return [];
+    if (!networkStatus.isOnline) {
+      // Queue for the next sync so offline check-ins are not lost.
+      await enqueueSync('dayRecords', 'update', { date, ...fields }, '/api/day-record');
+      void get().refreshPendingCount();
+      return [];
+    }
     try {
       const body: Record<string, unknown> = { date };
       for (const [k, v] of Object.entries(fields)) { body[k] = v; }
@@ -905,23 +940,9 @@ export const useStore = create<AppState>((set, get) => ({
       if (res.ok) {
         const data = await res.json();
         if (data.record) {
-          const r = data.record;
-          const updated: DayRecord = {
-            id: r.id, userId: r.user_id, date: r.date,
-            focusHours: Number(r.focus_hours ?? 0), focusGoal: Number(r.focus_goal ?? 6),
-            noReels: Boolean(r.no_reels), noMasturbation: Boolean(r.no_masturbation),
-            lowSugar: Boolean(r.low_sugar), noMusic: Boolean(r.no_music), noYapping: Boolean(r.no_yapping),
-            fajr: Boolean(r.fajr), dhuhr: Boolean(r.dhuhr), asr: Boolean(r.asr),
-            maghrib: Boolean(r.maghrib), isha: Boolean(r.isha),
-            quran: Boolean(r.quran), dhikrMorning: Boolean(r.dhikr_morning),
-            dhikrEvening: Boolean(r.dhikr_evening), nightPrayer: Boolean(r.night_prayer),
-            sunnahPrayer: Boolean(r.sunnah_prayer),
-            sleepHours: Number(r.sleep_hours ?? 0), sleepGoal: Number(r.sleep_goal ?? 7),
-            tasksDone: Boolean(r.tasks_done),
-            dailyScore: Number(r.daily_score ?? 0),
-            notes: r.notes || null, createdAt: r.created_at, updatedAt: r.updated_at,
-          };
+          const updated = mapDayRecordRow(data.record);
           set({ dayRecord: updated });
+          void cacheDayRecord(updated);
         }
         const newKeys: string[] = data.newAchievements || [];
         if (newKeys.length > 0) {

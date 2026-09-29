@@ -23,7 +23,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           onClick={reset}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
         >
-          <span className="material-symbols-outlined text-[18px]">refresh</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">refresh</span>
           Retry
         </button>
       </div>

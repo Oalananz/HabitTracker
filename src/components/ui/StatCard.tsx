@@ -29,7 +29,7 @@ export default function StatCard({ label, value, unit, subtitle, icon, variant =
           {label}
         </span>
         {icon && (
-          <span className="material-symbols-outlined text-[18px] text-on-surface-variant/50 group-hover:text-on-surface-variant transition-colors duration-300">
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-on-surface-variant/50 group-hover:text-on-surface-variant transition-colors duration-300">
             {icon}
           </span>
         )}

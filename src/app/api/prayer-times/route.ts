@@ -5,21 +5,19 @@ import {
   setManualPrayerTimes,
   fetchAndStorePrayerTimes,
 } from '@/lib/services/prayerTimeService';
+import dayjs from 'dayjs';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
   try {
     const userId = await requireAuthId();
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const date = searchParams.get('date') || dayjs().format('YYYY-MM-DD');
 
     const times = await getPrayerTimes(userId, date);
     return NextResponse.json({ prayerTimes: times });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/prayer-times error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/prayer-times');
   }
 }
 
@@ -54,13 +52,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/prayer-times error:', error);
-    return NextResponse.json(
-      { error: (error as Error).message || 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse(error, 'POST /api/prayer-times');
   }
 }

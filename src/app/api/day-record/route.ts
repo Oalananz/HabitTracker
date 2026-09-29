@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthUserId } from '@/lib/auth';
+import { db } from '@/lib/db';
+import dayjs from 'dayjs';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const date = searchParams.get('date') || dayjs().format('YYYY-MM-DD');
 
   // Get or create day record
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('day_records')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .eq('date', date)
     .maybeSingle();
 
@@ -22,16 +24,16 @@ export async function GET(request: NextRequest) {
   }
 
   // Get user preferences for default goals
-  const { data: prefs } = await supabase
+  const { data: prefs } = await db
     .from('user_preferences')
     .select('focus_goal_hours, sleep_goal_hours')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle();
 
-  const { data: created, error } = await supabase
+  const { data: created, error } = await db
     .from('day_records')
     .insert({
-      user_id: user.id,
+      user_id: userId,
       date,
       focus_goal: prefs?.focus_goal_hours ?? 6,
       sleep_goal: prefs?.sleep_goal_hours ?? 7,
@@ -41,10 +43,10 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     // Might be a race condition — try to fetch again
-    const { data: retry } = await supabase
+    const { data: retry } = await db
       .from('day_records')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('date', date)
       .maybeSingle();
     return NextResponse.json({ record: retry });
@@ -54,17 +56,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   const { date, ...fields } = body;
-  const recordDate = date || new Date().toISOString().split('T')[0];
+  const recordDate = date || dayjs().format('YYYY-MM-DD');
 
   // Map camelCase keys to snake_case for the RPC
   const rpcParams: Record<string, unknown> = {
-    p_user_id: user.id,
+    p_user_id: userId,
     p_date: recordDate,
   };
 
@@ -97,11 +99,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc('upsert_day_record', rpcParams);
+  const { data, error } = await db.rpc('upsert_day_record', rpcParams);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return errorResponse(new Error(error.message), 'POST /api/day-record');
   }
 
   return NextResponse.json(data);

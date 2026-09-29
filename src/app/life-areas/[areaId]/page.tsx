@@ -71,7 +71,7 @@ export default function LifeAreaDetailPage() {
   return (
     <div className="space-y-6 animate-page-enter">
       <Link href="/life-areas" className="inline-flex items-center gap-1 font-mono text-[11px] text-on-surface-variant hover:text-primary transition-colors">
-        <span className="material-symbols-outlined text-[14px]">arrow_back</span> Life Areas
+        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">arrow_back</span> Life Areas
       </Link>
 
       {/* Header */}
@@ -93,7 +93,7 @@ export default function LifeAreaDetailPage() {
         ].map((s) => (
           <div key={s.label}>
             <div className="font-headline text-2xl font-black" style={{ color: area.color }}>{s.value}</div>
-            <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">{s.label}</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">{s.label}</div>
           </div>
         ))}
       </div>
@@ -148,7 +148,7 @@ export default function LifeAreaDetailPage() {
                     className="w-full flex items-center gap-3 bg-surface-container-lowest rounded-sm px-3 py-2 border border-outline-variant/10 text-left"
                   >
                     <span className={`w-4 h-4 rounded-[2px] border-2 flex items-center justify-center flex-shrink-0 ${t.completed ? 'border-primary bg-primary/20' : 'border-outline-variant/40'}`}>
-                      {t.completed && <span className="material-symbols-outlined text-[12px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>}
+                      {t.completed && <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>}
                     </span>
                     <span className={`font-body text-sm flex-1 truncate ${t.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>{t.title}</span>
                   </button>
@@ -165,7 +165,7 @@ export default function LifeAreaDetailPage() {
               <div className="space-y-2">
                 {areaHabits.map((h) => (
                   <div key={h.id} className="flex items-center gap-3 bg-surface-container-lowest rounded-sm px-3 py-2 border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant">cached</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-on-surface-variant">cached</span>
                     <span className="font-body text-sm text-on-surface flex-1 truncate">{h.title}</span>
                   </div>
                 ))}
@@ -196,7 +196,7 @@ export default function LifeAreaDetailPage() {
               <div className="space-y-1.5">
                 {recentCompletions.map((c) => (
                   <div key={`${c.kind}-${c.id}`} className="flex items-center gap-2 font-mono text-[11px] text-on-surface-variant">
-                    <span className="material-symbols-outlined text-[13px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[13px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     <span className="truncate flex-1">{c.label}</span>
                     <span className="text-outline">{c.kind}</span>
                   </div>

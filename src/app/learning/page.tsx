@@ -15,7 +15,6 @@ import CertificateForm from '@/components/learning/CertificateForm';
 import ResourceForm from '@/components/learning/ResourceForm';
 import { useToast } from '@/store/useToast';
 import { useConfirm } from '@/components/ui/useConfirm';
-import { downloadCsv } from '@/lib/csvExport';
 import {
   calculateCourseProgress,
   getActiveCourses,
@@ -69,6 +68,36 @@ async function postAction(
   }
 }
 
+interface LearningData {
+  summary: LearningSummary | null;
+  courses: LearningCourse[];
+  skills: Skill[];
+  sessions: StudySession[];
+  certificates: Certificate[];
+  resources: LearningResource[];
+}
+
+async function loadLearningData(): Promise<LearningData> {
+  const responses = await Promise.all([
+    fetch('/api/learning/summary'),
+    fetch('/api/learning/courses'),
+    fetch('/api/learning/skills'),
+    fetch('/api/learning/study-sessions?limit=10'),
+    fetch('/api/learning/certificates'),
+    fetch('/api/learning/resources'),
+  ]);
+  const [summaryData, coursesData, skillsData, sessionsData, certsData, resourcesData] =
+    await Promise.all(responses.map((r) => r.json()));
+  return {
+    summary: summaryData.summary ?? null,
+    courses: coursesData.courses || [],
+    skills: skillsData.skills || [],
+    sessions: sessionsData.sessions || [],
+    certificates: certsData.certificates || [],
+    resources: resourcesData.resources || [],
+  };
+}
+
 export default function LearningPage() {
   const { addToast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -84,43 +113,36 @@ export default function LearningPage() {
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [planMessage, setPlanMessage] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [summaryRes, coursesRes, skillsRes, sessionsRes, certsRes, resourcesRes] = await Promise.all([
-        fetch('/api/learning/summary'),
-        fetch('/api/learning/courses'),
-        fetch('/api/learning/skills'),
-        fetch('/api/learning/study-sessions?limit=10'),
-        fetch('/api/learning/certificates'),
-        fetch('/api/learning/resources'),
-      ]);
-      const [summaryData, coursesData, skillsData, sessionsData, certsData, resourcesData] = await Promise.all([
-        summaryRes.json(),
-        coursesRes.json(),
-        skillsRes.json(),
-        sessionsRes.json(),
-        certsRes.json(),
-        resourcesRes.json(),
-      ]);
+  const applyLearningData = useCallback((data: LearningData) => {
+    setSummary(data.summary);
+    setCourses(data.courses);
+    setSkills(data.skills);
+    setSessions(data.sessions);
+    setCertificates(data.certificates);
+    setResources(data.resources);
+  }, []);
 
-      setSummary(summaryData.summary);
-      setCourses(coursesData.courses || []);
-      setSkills(skillsData.skills || []);
-      setSessions(sessionsData.sessions || []);
-      setCertificates(certsData.certificates || []);
-      setResources(resourcesData.resources || []);
+  // Refresh after a change; current data stays on screen while it reloads.
+  const fetchAll = useCallback(async () => {
+    try {
+      applyLearningData(await loadLearningData());
     } catch (err) {
       console.error('Failed to load learning data:', err);
       addToast('Failed to load learning data', 'error');
-    } finally {
-      setLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, applyLearningData]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    let active = true;
+    loadLearningData()
+      .then((data) => { if (active) applyLearningData(data); })
+      .catch((err) => {
+        console.error('Failed to load learning data:', err);
+        if (active) addToast('Failed to load learning data', 'error');
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [addToast, applyLearningData]);
 
   const closeForm = () => setActiveForm(null);
 
@@ -248,7 +270,7 @@ export default function LearningPage() {
 
       {/* Recommended next action */}
       <div className="bg-primary/5 border border-primary/20 rounded-md p-4 flex items-start gap-3">
-        <span className="material-symbols-outlined text-[20px] text-primary flex-shrink-0">tips_and_updates</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary flex-shrink-0">tips_and_updates</span>
         <div>
           <p className="font-headline text-sm font-bold text-on-surface">Recommended next step</p>
           <p className="font-body text-xs text-on-surface-variant mt-1">
@@ -306,11 +328,11 @@ export default function LearningPage() {
                         {course.targetCompletionDate && ` · due ${dayjs(course.targetCompletionDate).format('MMM D, YYYY')}`}
                       </p>
                     </div>
-                    <button
+                    <button aria-label="Close"
                       onClick={() => handleDeleteCourse(course.id)}
                       className="text-outline hover:text-error transition-colors flex-shrink-0"
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </div>
                   <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
@@ -340,11 +362,11 @@ export default function LearningPage() {
                       {skill.level}{skill.targetLevel && ` → ${skill.targetLevel}`}
                     </p>
                   </div>
-                  <button
+                  <button aria-label="Close"
                     onClick={() => handleDeleteSkill(skill.id)}
                     className="text-outline hover:text-error transition-colors flex-shrink-0"
                   >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
                 <div className="h-1.5 bg-surface-container-low rounded-full overflow-hidden">
@@ -367,7 +389,7 @@ export default function LearningPage() {
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">schedule</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">schedule</span>
                   <div className="min-w-0">
                     <p className="font-body text-sm text-on-surface truncate">{s.title || 'Study session'}</p>
                     <p className="font-mono text-[10px] text-outline">{dayjs(s.date).format('MMM D, YYYY')}</p>
@@ -375,8 +397,8 @@ export default function LearningPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="font-mono text-sm text-on-surface-variant whitespace-nowrap">{s.durationMinutes} min</span>
-                  <button onClick={() => handleDeleteSession(s.id)} className="text-outline hover:text-error transition-colors">
-                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  <button aria-label="Close" onClick={() => handleDeleteSession(s.id)} className="text-outline hover:text-error transition-colors">
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
               </div>
@@ -395,7 +417,7 @@ export default function LearningPage() {
             {certificates.map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] text-tertiary flex-shrink-0">military_tech</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-tertiary flex-shrink-0">military_tech</span>
                   <div className="min-w-0">
                     <p className="font-body text-sm text-on-surface truncate">{c.title}</p>
                     <p className="font-mono text-[10px] text-outline">
@@ -403,8 +425,8 @@ export default function LearningPage() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => handleDeleteCertificate(c.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                <button aria-label="Close" onClick={() => handleDeleteCertificate(c.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                 </button>
               </div>
             ))}
@@ -422,14 +444,14 @@ export default function LearningPage() {
             {resources.map((r) => (
               <div key={r.id} className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">bookmark</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">bookmark</span>
                   <div className="min-w-0">
                     <p className="font-body text-sm text-on-surface truncate">{r.title}</p>
                     <p className="font-mono text-[10px] text-outline">{r.type} · {r.status.replace('_', ' ')}</p>
                   </div>
                 </div>
-                <button onClick={() => handleDeleteResource(r.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                <button aria-label="Close" onClick={() => handleDeleteResource(r.id)} className="text-outline hover:text-error transition-colors flex-shrink-0">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                 </button>
               </div>
             ))}

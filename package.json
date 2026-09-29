@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
-    "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.103.3",
     "dayjs": "^1.11.20",
     "dexie": "^4.4.3",
+    "material-symbols": "^0.47.5",
     "next": "16.2.4",
+    "pg": "^8.23.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

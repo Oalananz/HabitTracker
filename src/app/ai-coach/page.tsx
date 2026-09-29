@@ -38,7 +38,7 @@ export default function AiCoachPage() {
         {FEATURES.map((f) => (
           <Card key={f.title} className="space-y-2">
             <div className="w-9 h-9 rounded-sm bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px] text-primary">{f.icon}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary">{f.icon}</span>
             </div>
             <h3 className="font-headline text-sm font-semibold text-on-surface">{f.title}</h3>
             <p className="text-sm text-on-surface-variant">{f.description}</p>
@@ -47,7 +47,7 @@ export default function AiCoachPage() {
       </div>
 
       <div className="flex items-center gap-2 text-xs text-on-surface-variant/60">
-        <span className="material-symbols-outlined text-[16px]">lock</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">lock</span>
         Chat is disabled until it ships with its own privacy filters and backend route.
       </div>
     </div>

@@ -56,12 +56,12 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="subscription-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -72,12 +72,12 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="subscription-form-amount"
               type="number"
               min={0}
               step="0.01"
@@ -90,12 +90,12 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-currency" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENCY
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="subscription-form-currency"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
@@ -106,10 +106,10 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-billing-cycle" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; BILLING_CYCLE
           </label>
-          <select
+          <select id="subscription-form-billing-cycle"
             value={billingCycle}
             onChange={(e) => setBillingCycle(e.target.value as BillingCycle)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -122,12 +122,12 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-next-billing-date" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; NEXT_BILLING_DATE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="subscription-form-next-billing-date"
               type="date"
               value={nextBillingDate}
               onChange={(e) => setNextBillingDate(e.target.value)}
@@ -137,10 +137,10 @@ export default function SubscriptionForm({ categories, onSubmit, onCancel, initi
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="subscription-form-category-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CATEGORY (optional)
           </label>
-          <select
+          <select id="subscription-form-category-optional"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"

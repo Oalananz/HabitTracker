@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db, type AnyRow } from '../db';
 
 // Connections service for the Safe Learning Website Connections feature.
 //
@@ -29,13 +29,13 @@ export interface ConnectedLearningAccount {
 }
 
 export async function getLearningProviders(): Promise<LearningProviderRow[]> {
-  const { data, error } = await supabase
-    .from('learning_providers' as any)
+  const { data, error } = await db
+    .from('learning_providers')
     .select('*')
     .order('name', { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data || []).map((p: any) => ({
+  return (data || []).map((p: AnyRow) => ({
     id: p.id,
     name: p.name,
     type: p.type,
@@ -45,14 +45,14 @@ export async function getLearningProviders(): Promise<LearningProviderRow[]> {
 }
 
 export async function getConnectedAccounts(userId: string): Promise<ConnectedLearningAccount[]> {
-  const { data, error } = await supabase
-    .from('connected_learning_accounts' as any)
+  const { data, error } = await db
+    .from('connected_learning_accounts')
     .select('*, learning_providers(name)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data || []).map((a: any) => ({
+  return (data || []).map((a: AnyRow) => ({
     id: a.id,
     userId: a.user_id,
     providerId: a.provider_id ?? null,
@@ -66,8 +66,8 @@ export async function getConnectedAccounts(userId: string): Promise<ConnectedLea
 }
 
 export async function disconnectAccount(accountId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('connected_learning_accounts' as any)
+  const { error } = await db
+    .from('connected_learning_accounts')
     .update({
       status: 'disconnected',
       // Defensively clear any token columns — this version never wrote to
@@ -97,8 +97,8 @@ export async function createManualCourseLink(
 
   // This is the universal fallback import path — works for ANY website,
   // no API or login required. Just stores a link + manually-entered progress.
-  const { data: course, error } = await supabase
-    .from('learning_courses' as any)
+  const { data: course, error } = await db
+    .from('learning_courses')
     .insert({
       user_id: userId,
       title: data.title,

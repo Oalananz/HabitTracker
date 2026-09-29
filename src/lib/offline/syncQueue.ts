@@ -172,10 +172,25 @@ export async function compactQueue(): Promise<number> {
         removed += idsToRemove.length;
       }
     } else {
-      // Keep only the latest operation for this entity
-      const idsToRemove = ops.slice(0, -1).map((o) => o.id!).filter(Boolean);
-      await offlineDB.syncQueue.bulkDelete(idsToRemove);
-      removed += idsToRemove.length;
+      // Update payloads are partial, so a run of consecutive updates is merged
+      // (later fields win). Every other op (create, complete, …) is kept —
+      // dropping them would lose the create or earlier field changes.
+      let run: SyncQueueItem[] = [];
+      const flushRun = async () => {
+        if (run.length > 1) {
+          const merged = Object.assign({}, ...run.map((o) => o.payload));
+          await offlineDB.syncQueue.update(run[run.length - 1].id!, { payload: merged });
+          const idsToRemove = run.slice(0, -1).map((o) => o.id!).filter(Boolean);
+          await offlineDB.syncQueue.bulkDelete(idsToRemove);
+          removed += idsToRemove.length;
+        }
+        run = [];
+      };
+      for (const op of ops) {
+        if (op.action === 'update') run.push(op);
+        else await flushRun();
+      }
+      await flushRun();
     }
   }
 

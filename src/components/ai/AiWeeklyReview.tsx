@@ -84,7 +84,7 @@ export default function AiWeeklyReview({
             onClick={() => onApply(review)}
             className="mb-4 px-4 py-2 bg-scanline-gradient text-on-primary font-label text-[10px] uppercase tracking-wider font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">download</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">download</span>
             Apply to Review form
           </button>
           <AiWeeklyReviewPreview review={review} />

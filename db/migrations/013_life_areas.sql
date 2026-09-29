@@ -1,6 +1,6 @@
 -- ================================================================
 -- Migration v6: Life Areas system
--- Run in your Supabase SQL Editor AFTER the previous migrations.
+-- Runs AFTER the previous migrations.
 --
 -- Adds an optional life_area tag to goals, tasks, habits, and plans;
 -- a weekly_reviews table; and onboarding state on user_preferences.
@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS plans_life_area_idx          ON plans(user_id, life_a
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS weekly_reviews (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id               uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id               uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   week_start_date       date NOT NULL,
   week_end_date         date NOT NULL,
   wins                  text,
@@ -46,13 +46,6 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
   updated_at            timestamptz DEFAULT now(),
   UNIQUE(user_id, week_start_date)
 );
-
-ALTER TABLE weekly_reviews ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "weekly_reviews_select" ON weekly_reviews FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "weekly_reviews_insert" ON weekly_reviews FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "weekly_reviews_update" ON weekly_reviews FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "weekly_reviews_delete" ON weekly_reviews FOR DELETE USING (user_id = auth.uid());
 
 -- ----------------------------------------------------------------
 -- 3. Onboarding state on user_preferences

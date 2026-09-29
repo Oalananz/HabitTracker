@@ -69,7 +69,7 @@ export default function FocusTimeCard({ dayRecord, date }: FocusTimeCardProps) {
           <span className="text-primary">&gt;</span> Focus Time
         </h3>
         {met && (
-          <span className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider">
+          <span className="font-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider">
             ✓ Target reached
           </span>
         )}
@@ -103,7 +103,7 @@ export default function FocusTimeCard({ dayRecord, date }: FocusTimeCardProps) {
           onClick={() => setShowControls(true)}
           className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/20 hover:border-primary/40 rounded-sm font-label text-xs text-on-surface-variant hover:text-primary transition-all"
         >
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[14px]">add</span>
           Log focus time
         </button>
       ) : (
@@ -164,7 +164,7 @@ export default function FocusTimeCard({ dayRecord, date }: FocusTimeCardProps) {
               aria-label="Close focus controls"
               className="px-2 py-1.5 font-label text-xs text-on-surface-variant hover:text-on-surface transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
         </div>

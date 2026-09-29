@@ -17,6 +17,7 @@ import OnboardingPrompt from '@/components/today/OnboardingPrompt';
 import { useToast } from '@/store/useToast';
 import { pullTodayState, TODAY_STATE_HYDRATED } from '@/lib/todayState';
 import dayjs from 'dayjs';
+import { useToday } from '@/lib/useToday';
 import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
 
 export default function TodayPage() {
@@ -44,8 +45,9 @@ export default function TodayPage() {
   const [newLifeArea, setNewLifeArea] = useState<LifeAreaId | ''>('');
   const [showCompleted, setShowCompleted] = useState(false);
 
-  const today = dayjs().format('YYYY-MM-DD');
-  const dateLabel = dayjs().format('dddd, MMMM D');
+  // Re-renders with the new date at midnight, which re-runs the loaders below.
+  const today = useToday();
+  const dateLabel = dayjs(today).format('dddd, MMMM D');
 
   useEffect(() => {
     setSelectedDate(today);
@@ -62,11 +64,11 @@ export default function TodayPage() {
     });
     addActivityLog('SYSTEM', 'Daily initialization complete.');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [today]);
 
   // Keep the day-record tasks bonus in sync
   useEffect(() => {
-    if (!dayRecord) return;
+    if (!dayRecord || dayRecord.date !== today) return;
     const allTasksDone = tasks.length > 0 && tasks.every(t => t.completed);
     if (dayRecord.tasksDone !== allTasksDone) {
       void updateDayRecord(today, { tasksDone: allTasksDone });
@@ -277,7 +279,7 @@ export default function TodayPage() {
                   aria-controls="completed-tasks"
                   className="flex items-center gap-2 w-full text-left py-1.5 px-1 text-on-surface-variant hover:text-on-surface transition-colors"
                 >
-                  <span className={`material-symbols-outlined text-[16px] transition-transform ${showCompleted ? 'rotate-180' : ''}`}>
+                  <span aria-hidden="true" className={`material-symbols-outlined text-[16px] transition-transform ${showCompleted ? 'rotate-180' : ''}`}>
                     expand_more
                   </span>
                   <span className="font-label text-xs">
@@ -334,7 +336,7 @@ export default function TodayPage() {
               aria-label="Expand task form"
               className="text-on-surface-variant hover:text-primary transition-colors"
             >
-              <span className="material-symbols-outlined">add_circle</span>
+              <span aria-hidden="true" className="material-symbols-outlined">add_circle</span>
             </button>
           </div>
         ) : (

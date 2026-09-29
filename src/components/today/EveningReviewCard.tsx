@@ -166,7 +166,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
         className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-container-high/30 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className={`material-symbols-outlined text-[20px] ${evening ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <span aria-hidden="true" className={`material-symbols-outlined text-[20px] ${evening ? 'text-primary' : 'text-on-surface-variant'}`}>
             nights_stay
           </span>
           <div>
@@ -187,7 +187,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
           {!evening && !isOpen && (
             <span className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">After 6PM</span>
           )}
-          <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+          <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             expand_more
           </span>
         </div>
@@ -264,7 +264,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
               disabled={aiLoading}
               icon={aiLoading ? undefined : 'auto_awesome'}
             >
-              {aiLoading && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+              {aiLoading && <span aria-hidden="true" className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
               {aiLoading ? 'Reflecting…' : 'AI reflection'}
             </Button>
           </div>
@@ -276,11 +276,11 @@ export default function EveningReviewCard({ date }: { date: string }) {
             <div className="bg-surface-container-lowest border border-primary/25 rounded-md p-4 space-y-3 animate-fade-in">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
                   <span className="font-label text-xs font-semibold text-on-surface">AI reflection</span>
                 </div>
-                <button onClick={() => setReflection(null)} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Dismiss">
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                <button onClick={() => setReflection(null)} className="text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Dismiss" title="Dismiss">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                 </button>
               </div>
 
@@ -310,7 +310,7 @@ export default function EveningReviewCard({ date }: { date: string }) {
                   <ul className="space-y-0.5">
                     {reflection.tomorrowFocus.map((w, i) => (
                       <li key={i} className="font-body text-xs text-on-surface flex gap-1.5">
-                        <span className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{w}
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{w}
                       </li>
                     ))}
                   </ul>

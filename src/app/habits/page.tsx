@@ -6,7 +6,8 @@ import HabitForm from '@/components/habits/HabitForm';
 import LifeAreaBadge from '@/components/ui/LifeAreaBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import { useConfirm } from '@/components/ui/useConfirm';
-import { LIFE_AREAS, isLifeAreaId, type LifeAreaId } from '@/lib/lifeAreas';
+import { LIFE_AREAS, type LifeAreaId } from '@/lib/lifeAreas';
+import { getAreaQueryParam } from '@/lib/queryParam';
 
 const REPEAT_LABELS: Record<string, string> = {
   daily: 'Daily',
@@ -25,19 +26,14 @@ export default function HabitsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>('all');
+  // Deep-link: /habits?area=health filters to that area
+  const [filterArea, setFilterArea] = useState<'all' | LifeAreaId>(() => getAreaQueryParam() ?? 'all');
   const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     fetchHabits();
   }, [fetchHabits]);
 
-  // Deep-link: /habits?area=health filters to that area
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const area = new URLSearchParams(window.location.search).get('area');
-    if (area && isLifeAreaId(area)) setFilterArea(area);
-  }, []);
 
   const handleCreate = async (data: { title: string; description?: string; category?: string; priority?: string; repeatRule: { type: string; days?: number[] }; lifeArea?: string | null }) => {
     await createHabit(data);
@@ -137,7 +133,7 @@ export default function HabitsPage() {
                       <div className="flex justify-between items-start ml-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="material-symbols-outlined text-[16px] text-on-surface-variant">
+                            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-on-surface-variant">
                               {habit.category?.includes('Health') ? 'fitness_center' : habit.category?.includes('Work') ? 'code' : habit.category?.includes('Learn') ? 'menu_book' : 'cached'}
                             </span>
                             <h3 className="font-headline font-semibold text-on-surface">{habit.title}</h3>
@@ -150,21 +146,21 @@ export default function HabitsPage() {
                                 : REPEAT_LABELS[rule.type] || rule.type}
                             </span>
                             <span className="flex items-center gap-1 text-on-surface-variant">
-                              <span className="material-symbols-outlined text-[14px]">category</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[14px]">category</span>
                               {habit.category}
                             </span>
                             <span className="flex items-center gap-1 text-primary font-label">
-                              <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[14px]">local_fire_department</span>
                               TASKS: {streakCount}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button
+                          <button aria-label="Edit habit"
                             onClick={() => setEditingId(habit.id)}
                             className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-primary transition-all"
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                           </button>
                           <button
                             onClick={() => handleToggle(habit.id, habit.isActive)}
@@ -196,8 +192,8 @@ export default function HabitsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => handleToggle(habit.id, habit.isActive)} className="toggle-switch" />
-                        <button onClick={() => handleDelete(habit.id)} className="text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100">
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        <button aria-label="Delete habit" onClick={() => handleDelete(habit.id)} className="text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
                       </div>
                     </div>
@@ -228,7 +224,7 @@ export default function HabitsPage() {
                 className="w-full bg-surface-container-lowest border border-outline-variant/15 border-dashed rounded-md p-8 text-center hover:border-primary/50 transition-colors group"
                 id="add-habit-btn"
               >
-                <span className="material-symbols-outlined text-[32px] text-outline-variant group-hover:text-primary transition-colors mb-2 block">add_circle</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[32px] text-outline-variant group-hover:text-primary transition-colors mb-2 block">add_circle</span>
                 <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant group-hover:text-primary transition-colors">
                   Define New Protocol
                 </span>

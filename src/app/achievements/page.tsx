@@ -113,7 +113,7 @@ export default function AchievementsPage() {
             { label: 'Total score', value: `${userStats.totalScore}`, icon: 'grade' },
           ].map(item => (
             <div key={item.label} className="bg-surface-container-low border border-outline-variant/15 rounded-md p-3 text-center">
-              <span className="material-symbols-outlined text-primary text-[18px] block mb-1">{item.icon}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px] block mb-1">{item.icon}</span>
               <div className="font-headline text-xl font-bold text-primary">{item.value}</div>
               <div className="text-xs text-on-surface-variant/70 mt-0.5">{item.label}</div>
             </div>
@@ -163,7 +163,7 @@ export default function AchievementsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4 block">lock</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-outline-variant mb-4 block">lock</span>
           <p className="font-mono text-sm text-on-surface-variant">No achievements match current filter.</p>
         </div>
       ) : selectedCat !== 'ALL' ? (
@@ -186,7 +186,7 @@ export default function AchievementsPage() {
                   className="w-full flex items-center justify-between px-5 py-3 hover:bg-surface-container-high transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                       {CAT_ICONS[cat] || 'category'}
                     </span>
                     <span className="font-headline text-sm font-semibold text-on-surface capitalize">{cat.toLowerCase()}</span>
@@ -198,7 +198,7 @@ export default function AchievementsPage() {
                       {unlockedInCat}/{items.length}
                     </span>
                   </div>
-                  <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isExpanded ? '' : 'rotate-180'}`}>
+                  <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isExpanded ? '' : 'rotate-180'}`}>
                     expand_less
                   </span>
                 </button>

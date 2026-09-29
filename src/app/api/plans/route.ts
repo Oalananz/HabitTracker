@@ -11,6 +11,8 @@ import {
   assignPlanToPrayerBlock,
   getPlansSummary,
 } from '@/lib/services/planService';
+import dayjs from 'dayjs';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,14 +51,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Default: return today's plans
-    const plans = await getPlansByDate(userId, new Date().toISOString().split('T')[0]);
+    const plans = await getPlansByDate(userId, dayjs().format('YYYY-MM-DD'));
     return NextResponse.json({ plans });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/plans error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/plans');
   }
 }
 
@@ -121,13 +119,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/plans error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse(error, 'POST /api/plans');
   }
 }

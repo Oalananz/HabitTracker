@@ -144,7 +144,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
         >
           {saved && (
             <div className="mb-3 inline-flex items-center gap-1.5 font-mono text-[11px] text-primary bg-primary/10 px-2 py-1 rounded-[2px]">
-              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
               Saved on this device
             </div>
           )}
@@ -153,7 +153,7 @@ export default function AiDailyPlanner({ date }: { date: string }) {
               onClick={useAsPriorities}
               className="mb-4 inline-flex items-center gap-1.5 px-4 py-2 bg-scanline-gradient text-on-primary font-label text-sm font-semibold rounded-sm hover:opacity-90 transition-opacity"
             >
-              <span className="material-symbols-outlined text-[16px]">flag</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">flag</span>
               Use as top 3 priorities
             </button>
           )}

@@ -1,6 +1,5 @@
 -- =====================================================
 -- Migration: Recovery Journeys + Goals
--- Run this in the Supabase SQL Editor
 -- =====================================================
 
 -- =====================================================
@@ -43,9 +42,3 @@ CREATE TABLE IF NOT EXISTS goals (
 CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);
 CREATE INDEX IF NOT EXISTS idx_goals_type ON goals(goal_type);
 CREATE INDEX IF NOT EXISTS idx_goals_user_type ON goals(user_id, goal_type);
-
--- =====================================================
--- 3. Disable RLS on new tables
--- =====================================================
-ALTER TABLE recovery_journeys DISABLE ROW LEVEL SECURITY;
-ALTER TABLE goals DISABLE ROW LEVEL SECURITY;

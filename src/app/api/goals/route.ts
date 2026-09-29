@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiErrors';
 import {
   getGoals,
   createGoal,
@@ -25,11 +26,7 @@ export async function GET(request: NextRequest) {
     const goals = await getGoals(userId, type || undefined);
     return NextResponse.json({ goals });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/goals error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/goals');
   }
 }
 
@@ -80,10 +77,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/goals error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/goals');
   }
 }

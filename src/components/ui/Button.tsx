@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-sm text-sm font-label transition-all disabled:opacity-40 disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
       {...props}
     >
-      {icon && <span className="material-symbols-outlined text-[16px]">{icon}</span>}
+      {icon && <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{icon}</span>}
       {children}
     </button>
   );

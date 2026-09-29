@@ -11,6 +11,7 @@ import {
   generateMissingTasks,
 } from '@/lib/services/taskService';
 import dayjs from 'dayjs';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,11 +34,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/tasks error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/tasks');
   }
 }
 
@@ -106,13 +103,6 @@ export async function POST(request: NextRequest) {
         );
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/tasks error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse(error, 'POST /api/tasks');
   }
 }

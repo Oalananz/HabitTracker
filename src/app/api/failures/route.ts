@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import { getAllFailures, deleteFailureLog } from '@/lib/services/recoveryService';
 import { NextRequest } from 'next/server';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET() {
   try {
@@ -9,11 +10,7 @@ export async function GET() {
     const logs = await getAllFailures(userId);
     return NextResponse.json({ failures: logs });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/failures error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/failures');
   }
 }
 
@@ -29,10 +26,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/failures error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/failures');
   }
 }

@@ -28,7 +28,7 @@ export default function AchievementCard({
   if (compact) {
     return (
       <div className={`border ${s.border} ${s.bg} rounded-sm p-2 flex items-center gap-2 ${!unlocked ? 'opacity-50 grayscale' : ''}`}>
-        <span
+        <span aria-hidden="true"
           className="material-symbols-outlined text-[20px]"
           style={{ fontVariationSettings: unlocked ? "'FILL' 1" : "'FILL' 0", color: unlocked ? 'var(--color-primary)' : 'var(--color-outline-variant)' }}
         >
@@ -52,7 +52,7 @@ export default function AchievementCard({
         <div className="flex items-start gap-3 flex-1 min-w-0">
           {/* Icon */}
           <div className={`w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0 ${s.badgeBg}`}>
-            <span
+            <span aria-hidden="true"
               className="material-symbols-outlined text-[22px]"
               style={{
                 fontVariationSettings: unlocked ? "'FILL' 1" : "'FILL' 0",

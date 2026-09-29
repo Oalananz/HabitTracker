@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import { getStudySessions, createStudySession, deleteStudySession } from '@/lib/services/learningService';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +18,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json({ sessions });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/learning/study-sessions error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/learning/study-sessions');
   }
 }
 
@@ -51,10 +48,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/learning/study-sessions error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/learning/study-sessions');
   }
 }

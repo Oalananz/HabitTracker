@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import dayjs from 'dayjs';
+import { errorResponse } from '@/lib/apiErrors';
 
-// The today_state table is added by a migration that may post-date the
-// generated database types, so we access it through an untyped handle.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any;
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,11 +31,7 @@ export async function GET(request: NextRequest) {
         : null,
     });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/today-state error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/today-state');
   }
 }
 
@@ -63,10 +56,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/today-state error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/today-state');
   }
 }

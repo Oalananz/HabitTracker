@@ -156,7 +156,7 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
           href="/recovery"
           className="font-label text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-wider flex items-center gap-1 transition-colors"
         >
-          <span className="material-symbols-outlined text-[13px]">tune</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[13px]">tune</span>
           History
         </Link>
       </div>
@@ -166,7 +166,7 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
           href="/recovery"
           className="flex flex-col items-center text-center gap-1 py-4 border border-dashed border-outline-variant/25 rounded-sm hover:border-primary/40 hover:text-primary transition-colors"
         >
-          <span className="material-symbols-outlined text-[22px] text-outline">add_circle</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[22px] text-outline">add_circle</span>
           <span className="font-body text-xs text-on-surface-variant">No active recovery journeys — start one in Recovery</span>
         </Link>
       ) : (
@@ -187,9 +187,9 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
                   <div className="min-w-0">
                     <span className="font-label text-xs font-bold text-on-surface block truncate">{j.title}</span>
                     {!failed ? (
-                      <span className="font-mono text-[9px] text-primary/80">🔥 {cleanDays}d clean</span>
+                      <span className="font-mono text-[10px] text-primary/80">🔥 {cleanDays}d clean</span>
                     ) : (
-                      <span className="font-mono text-[9px] text-error">Slip recorded today</span>
+                      <span className="font-mono text-[10px] text-error">Slip recorded today</span>
                     )}
                   </div>
 
@@ -228,7 +228,7 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
                 disabled={analyzing}
                 className="inline-flex items-center gap-1 font-label text-[10px] text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-[12px]">insights</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[12px]">insights</span>
                 {analyzing ? 'Analyzing…' : showInsight ? 'Hide insight' : 'Risk insight'}
               </button>
             )}
@@ -243,11 +243,11 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
                 <div className="bg-surface-container-lowest border border-primary/25 rounded-md p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
                       <span className="font-label text-xs font-bold text-on-surface uppercase tracking-wide">AI Risk Insight</span>
                     </div>
-                    <button onClick={() => { setInsight(null); setShowInsight(false); }} className="text-on-surface-variant hover:text-on-surface transition-colors" title="Dismiss">
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    <button onClick={() => { setInsight(null); setShowInsight(false); }} className="text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Dismiss" title="Dismiss">
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </div>
 
@@ -272,7 +272,7 @@ export default function RecoveryTodayCard({ dayRecord, date }: RecoveryTodayCard
                       <ul className="space-y-0.5">
                         {insight.recommendations.map((r, i) => (
                           <li key={i} className="font-body text-xs text-on-surface flex gap-1.5">
-                            <span className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{r}
+                            <span aria-hidden="true" className="material-symbols-outlined text-[13px] text-primary">arrow_right</span>{r}
                           </li>
                         ))}
                       </ul>

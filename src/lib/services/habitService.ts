@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 
 type HabitRow = Database['public']['Tables']['habits']['Row'];
@@ -15,7 +15,7 @@ export async function createHabit(
     lifeArea?: string | null;
   }
 ) {
-  const { data: habit, error } = await supabase
+  const { data: habit, error } = await db
     .from('habits')
     .insert({
       user_id: userId,
@@ -53,7 +53,7 @@ export async function updateHabit(
   if (data.repeatRule !== undefined) updateData.repeat_rule = data.repeatRule;
   if (data.lifeArea !== undefined) updateData.life_area = data.lifeArea;
 
-  const { data: habit, error } = await supabase
+  const { data: habit, error } = await db
     .from('habits')
     .update(updateData)
     .eq('id', habitId)
@@ -66,7 +66,7 @@ export async function updateHabit(
 }
 
 export async function deactivateHabit(habitId: string, userId: string) {
-  const { data: habit, error } = await supabase
+  const { data: habit, error } = await db
     .from('habits')
     .update({ is_active: false })
     .eq('id', habitId)
@@ -79,7 +79,7 @@ export async function deactivateHabit(habitId: string, userId: string) {
 }
 
 export async function activateHabit(habitId: string, userId: string) {
-  const { data: habit, error } = await supabase
+  const { data: habit, error } = await db
     .from('habits')
     .update({ is_active: true })
     .eq('id', habitId)
@@ -92,7 +92,7 @@ export async function activateHabit(habitId: string, userId: string) {
 }
 
 export async function getHabits(userId: string) {
-  const { data: habits, error } = await supabase
+  const { data: habits, error } = await db
     .from('habits')
     .select('*')
     .eq('user_id', userId)
@@ -105,7 +105,7 @@ export async function getHabits(userId: string) {
 
   const habitIds = habitRows.map((habit) => habit.id);
 
-  const { data: completedTaskRows, error: completedError } = await supabase
+  const { data: completedTaskRows, error: completedError } = await db
     .from('task_instances')
     .select('habit_id')
     .eq('user_id', userId)
@@ -127,7 +127,7 @@ export async function getHabits(userId: string) {
 }
 
 export async function getHabit(habitId: string, userId: string) {
-  const { data: habit, error } = await supabase
+  const { data: habit, error } = await db
     .from('habits')
     .select('*')
     .eq('id', habitId)
@@ -136,7 +136,7 @@ export async function getHabit(habitId: string, userId: string) {
 
   if (error) throw new Error(error.message);
 
-  const { data: tasks } = await supabase
+  const { data: tasks } = await db
     .from('task_instances')
     .select('*')
     .eq('habit_id', habitId)
@@ -150,7 +150,7 @@ export async function getHabit(habitId: string, userId: string) {
 }
 
 export async function deleteHabit(habitId: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await db
     .from('habits')
     .delete()
     .eq('id', habitId)

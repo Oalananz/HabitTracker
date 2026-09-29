@@ -53,12 +53,12 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="budget-form-month" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; MONTH
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="budget-form-month"
               type="month"
               value={monthStr}
               onChange={(e) => setMonthStr(e.target.value)}
@@ -68,10 +68,10 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="budget-form-category-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CATEGORY (optional)
           </label>
-          <select
+          <select id="budget-form-category-optional"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -86,12 +86,12 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="budget-form-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="budget-form-amount"
               type="number"
               min={0}
               step="0.01"
@@ -104,12 +104,12 @@ export default function BudgetForm({ categories, onSubmit, onCancel, initial }: 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="budget-form-currency" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENCY
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="budget-form-currency"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}

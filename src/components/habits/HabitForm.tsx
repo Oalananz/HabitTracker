@@ -63,14 +63,14 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
   return (
     <TerminalWindow title="init_protocol.sh" className="animate-fade-in" bodyClassName="p-6">
         <h3 className="font-headline text-lg font-bold text-primary mb-6 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[20px]">add_box</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">add_box</span>
           {initialData ? 'Edit Protocol' : 'Define New Protocol'}
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Protocol Name */}
           <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+            <label htmlFor="habit-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
               &gt; PROTOCOL NAME
             </label>
             <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
@@ -89,7 +89,7 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
 
           {/* Description */}
           <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+            <label htmlFor="habit-description" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
               &gt; DESCRIPTION
             </label>
             <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 focus-within:border-primary/50 transition-colors">
@@ -106,7 +106,7 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
 
           {/* Sector (Category) */}
           <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+            <label htmlFor="habit-category" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
               &gt; SECTOR
             </label>
             <select
@@ -128,10 +128,10 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
 
           {/* Execution Frequency */}
           <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+            <p id="habit-frequency-label" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
               &gt; EXECUTION FREQUENCY
-            </label>
-            <div className="flex gap-2">
+            </p>
+            <div role="group" aria-labelledby="habit-frequency-label" className="flex gap-2">
               {['daily', 'weekdays', 'weekends', 'custom'].map((type) => (
                 <button
                   key={type}
@@ -172,10 +172,10 @@ export default function HabitForm({ onSubmit, onCancel, initialData }: HabitForm
 
           {/* Priority Level */}
           <div>
-            <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+            <p id="habit-priority-label" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
               &gt; PRIORITY LEVEL
-            </label>
-            <div className="flex items-center gap-4">
+            </p>
+            <div role="group" aria-labelledby="habit-priority-label" className="flex items-center gap-4">
               {[
                 { value: 'low', label: 'LOW', color: 'text-on-surface-variant' },
                 { value: 'nominal', label: 'NOMINAL', color: 'text-secondary' },

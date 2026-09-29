@@ -36,7 +36,7 @@ export default function WeeklyReviewNudge() {
 
   return (
     <div className="bg-surface-container-low border border-tertiary/30 rounded-md p-4 flex items-center gap-4 animate-fade-in">
-      <span className="material-symbols-outlined text-[24px] text-tertiary flex-shrink-0">fact_check</span>
+      <span aria-hidden="true" className="material-symbols-outlined text-[24px] text-tertiary flex-shrink-0">fact_check</span>
       <div className="flex-1 min-w-0">
         <h3 className="font-headline text-sm font-bold text-on-surface">Weekly review due</h3>
         <p className="font-body text-xs text-on-surface-variant">You haven&apos;t reviewed this week yet — reflect across your six life areas.</p>

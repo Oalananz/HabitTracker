@@ -59,6 +59,64 @@ function statusFor(progress: number, hasData: boolean): { label: string; color: 
 
 interface WeekTask { id: string; completed: boolean; lifeArea?: string | null; sourceType: string }
 
+async function fetchReviews(): Promise<SavedReview[] | null> {
+  try {
+    const res = await fetch('/api/weekly-review');
+    const data = await res.json();
+    return res.ok ? data.reviews || [] : null;
+  } catch {
+    return null; // offline
+  }
+}
+
+async function fetchWeekForm(start: string): Promise<ReviewForm> {
+  try {
+    const res = await fetch(`/api/weekly-review?weekStart=${start}`);
+    const data = await res.json();
+    if (!res.ok || !data.review) return EMPTY;
+    const r = data.review as SavedReview;
+    return {
+      wins: r.wins, problems: r.problems, lessons: r.lessons, nextWeekPriorities: r.nextWeekPriorities,
+      healthReview: r.healthReview, moneyReview: r.moneyReview, workBusinessReview: r.workBusinessReview,
+      learningReview: r.learningReview, familySocialReview: r.familySocialReview, personalReview: r.personalReview,
+    };
+  } catch {
+    return EMPTY;
+  }
+}
+
+async function fetchWeekTasks(start: string, end: string): Promise<WeekTask[]> {
+  try {
+    const res = await fetch(`/api/tasks/range?start=${start}&end=${end}`);
+    const data = await res.json();
+    return res.ok ? data.tasks || [] : [];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchMoneyBalance(): Promise<{ value: number; currency: string } | null> {
+  try {
+    const res = await fetch('/api/money/summary');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchStudyMinutes(): Promise<number | null> {
+  try {
+    const res = await fetch('/api/learning/summary');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.summary?.studyTimeThisWeekMinutes ?? 0;
+  } catch {
+    return null;
+  }
+}
+
 export default function WeeklyReviewPage() {
   const { goals, fetchGoals, habits, fetchHabits } = useStore();
   const { addToast } = useToast();
@@ -78,72 +136,39 @@ export default function WeeklyReviewPage() {
 
   const set = (key: keyof ReviewForm, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
+  // Refresh the saved-reviews list (e.g. after saving).
   const loadReviews = useCallback(async () => {
-    try {
-      const res = await fetch('/api/weekly-review');
-      const data = await res.json();
-      if (res.ok) setReviews(data.reviews || []);
-    } catch { /* offline */ }
-  }, []);
-
-  // Prefill the form when the selected week changes
-  const loadWeek = useCallback(async (start: string) => {
-    try {
-      const res = await fetch(`/api/weekly-review?weekStart=${start}`);
-      const data = await res.json();
-      if (res.ok && data.review) {
-        const r = data.review as SavedReview;
-        setForm({
-          wins: r.wins, problems: r.problems, lessons: r.lessons, nextWeekPriorities: r.nextWeekPriorities,
-          healthReview: r.healthReview, moneyReview: r.moneyReview, workBusinessReview: r.workBusinessReview,
-          learningReview: r.learningReview, familySocialReview: r.familySocialReview, personalReview: r.personalReview,
-        });
-      } else {
-        setForm(EMPTY);
-      }
-    } catch { setForm(EMPTY); }
+    const list = await fetchReviews();
+    if (list) setReviews(list);
   }, []);
 
   useEffect(() => {
     void fetchGoals();
     void fetchHabits();
-    void loadReviews();
 
     // Best-effort — a failed fetch (e.g. tables not migrated yet) must
     // never break the rest of the weekly review page. Fired in parallel.
-    (async () => {
-      try {
-        const res = await fetch('/api/money/summary');
-        if (res.ok) {
-          const data = await res.json();
-          setMoneyBalance({ value: data.summary?.netBalance ?? 0, currency: data.summary?.currency ?? 'JOD' });
-        }
-      } catch { /* ignore */ }
-    })();
-    (async () => {
-      try {
-        const res = await fetch('/api/learning/summary');
-        if (res.ok) {
-          const data = await res.json();
-          setStudyTimeMinutes(data.summary?.studyTimeThisWeekMinutes ?? 0);
-        }
-      } catch { /* ignore */ }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let active = true;
+    fetchReviews().then((list) => { if (active && list) setReviews(list); });
+    fetchMoneyBalance().then((balance) => { if (active && balance) setMoneyBalance(balance); });
+    fetchStudyMinutes().then((minutes) => { if (active && minutes !== null) setStudyTimeMinutes(minutes); });
+    return () => { active = false; };
+  }, [fetchGoals, fetchHabits]);
 
+  const weekStartKey = weekStart.format('YYYY-MM-DD');
+  const weekEndKey = weekEnd.format('YYYY-MM-DD');
+
+  // Prefill the form and load tasks for the selected week. Responses for a
+  // week the user has already navigated away from are discarded, so the form
+  // can never show (and then save) another week's review.
   useEffect(() => {
-    void loadWeek(weekStart.format('YYYY-MM-DD'));
-    // Fetch the selected week's tasks for accurate weekly counts
-    (async () => {
-      try {
-        const res = await fetch(`/api/tasks/range?start=${weekStart.format('YYYY-MM-DD')}&end=${weekEnd.format('YYYY-MM-DD')}`);
-        const data = await res.json();
-        if (res.ok) setTasks(data.tasks || []);
-      } catch { setTasks([]); } finally { setPageLoading(false); }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekStart, loadWeek]);
+    let active = true;
+    fetchWeekForm(weekStartKey).then((f) => { if (active) setForm(f); });
+    fetchWeekTasks(weekStartKey, weekEndKey)
+      .then((list) => { if (active) setTasks(list); })
+      .finally(() => { if (active) setPageLoading(false); });
+    return () => { active = false; };
+  }, [weekStartKey, weekEndKey]);
 
   // ── Summary + breakdown (computed from available store data) ──────
   const breakdown = useMemo(() => {
@@ -268,16 +293,16 @@ export default function WeeklyReviewPage() {
         description="Reflect on your week across the six life areas."
         actions={
           <div className="flex items-center gap-3">
-            <button onClick={() => setWeekStart(weekStart.subtract(1, 'week'))} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+            <button aria-label="Previous week" onClick={() => setWeekStart(weekStart.subtract(1, 'week'))} className="text-on-surface-variant hover:text-primary transition-colors">
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">chevron_left</span>
             </button>
             <div className="text-sm text-on-surface whitespace-nowrap">{weekStart.format('MMM D')} – {weekEnd.format('MMM D, YYYY')}</div>
-            <button
+            <button aria-label="Next week"
               onClick={() => setWeekStart(weekStart.add(1, 'week'))}
               disabled={weekStart.add(1, 'week').isAfter(today)}
               className="text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30"
             >
-              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">chevron_right</span>
             </button>
           </div>
         }
@@ -305,10 +330,10 @@ export default function WeeklyReviewPage() {
                 className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-container-lowest/30 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-[18px] text-primary">{s.icon}</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">{s.icon}</span>
                   <span className="font-headline text-sm font-semibold text-on-surface">{s.label}</span>
                 </div>
-                <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`}>
                   expand_more
                 </span>
               </button>
@@ -332,7 +357,7 @@ export default function WeeklyReviewPage() {
                         <div key={b.area.id} className="bg-surface-container-lowest border rounded-md p-4" style={{ borderColor: `${b.area.color}33` }}>
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <span className="material-symbols-outlined text-[18px]" style={{ color: b.area.color }}>{b.area.icon}</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[18px]" style={{ color: b.area.color }}>{b.area.icon}</span>
                               <span className="font-headline text-sm font-semibold text-on-surface">{b.area.label}</span>
                             </div>
                             <span className="text-xs px-1.5 py-0.5 rounded-[2px]" style={{ color: b.color, backgroundColor: `${b.color}1a` }}>{b.label}</span>
@@ -354,8 +379,8 @@ export default function WeeklyReviewPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {REFLECTION_FIELDS.map((f) => (
                         <div key={f.key}>
-                          <label className="text-xs text-on-surface-variant/80 block mb-1.5">{f.label}</label>
-                          <Textarea
+                          <label htmlFor={`review-${f.key}`} className="text-xs text-on-surface-variant/80 block mb-1.5">{f.label}</label>
+                          <Textarea id={`review-${f.key}`}
                             value={form[f.key]}
                             onChange={(e) => set(f.key, e.target.value)}
                             placeholder={f.placeholder}
@@ -368,8 +393,8 @@ export default function WeeklyReviewPage() {
 
                   {s.key === 'nextWeek' && (
                     <div>
-                      <label className="text-xs text-on-surface-variant/80 block mb-1.5">Next week priorities</label>
-                      <Textarea
+                      <label htmlFor="page-next-week-priorities" className="text-xs text-on-surface-variant/80 block mb-1.5">Next week priorities</label>
+                      <Textarea id="page-next-week-priorities"
                         value={form.nextWeekPriorities}
                         onChange={(e) => set('nextWeekPriorities', e.target.value)}
                         placeholder="Choose 3 important priorities for next week."
@@ -409,7 +434,7 @@ export default function WeeklyReviewPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs text-on-surface-variant/50">{dayjs(r.createdAt).format('MMM D')}</span>
-                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">edit</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-on-surface-variant">edit</span>
                 </div>
               </button>
             ))}

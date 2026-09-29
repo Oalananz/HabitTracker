@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dayjs from 'dayjs';
 
 interface CertificateFormProps {
   onSubmit: (data: {
@@ -12,7 +13,7 @@ interface CertificateFormProps {
   onCancel: () => void;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => dayjs().format('YYYY-MM-DD');
 
 export default function CertificateForm({ onSubmit, onCancel }: CertificateFormProps) {
   const [title, setTitle] = useState('');
@@ -38,12 +39,12 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="certificate-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="certificate-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -54,12 +55,12 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="certificate-form-provider-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROVIDER (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="certificate-form-provider-optional"
               type="text"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -70,12 +71,12 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="certificate-form-issue-date-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; ISSUE_DATE (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="certificate-form-issue-date-optional"
               type="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
@@ -85,12 +86,12 @@ export default function CertificateForm({ onSubmit, onCancel }: CertificateFormP
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="certificate-form-certificate-url-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CERTIFICATE_URL (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="certificate-form-certificate-url-optional"
               type="url"
               value={certificateUrl}
               onChange={(e) => setCertificateUrl(e.target.value)}

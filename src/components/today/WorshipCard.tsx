@@ -70,7 +70,7 @@ function PrayerRow({
     >
       <span className={`w-4 h-4 rounded-[2px] border flex items-center justify-center flex-shrink-0 transition-all ${s.checkbox}`}>
         {checked && (
-          <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
             check
           </span>
         )}
@@ -80,12 +80,12 @@ function PrayerRow({
         <span className="font-mono text-[10px] text-on-surface-variant/60">{prayerTime}</span>
       )}
       {status === 'upcoming' && s.badge && (
-        <span className={`font-label text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] ${s.badge}`}>
+        <span className={`font-label text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] ${s.badge}`}>
           Upcoming
         </span>
       )}
       {status === 'missed' && s.badge && (
-        <span className={`font-label text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] ${s.badge}`}>
+        <span className={`font-label text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] ${s.badge}`}>
           Missed
         </span>
       )}
@@ -164,7 +164,7 @@ export default function WorshipCard({ dayRecord, date }: WorshipCardProps) {
         </h3>
         <div className="flex items-center gap-2">
           {allPrayersDone && (
-            <span className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider animate-fade-in">
+            <span className="font-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider animate-fade-in">
               ✓ All prayers done
             </span>
           )}
@@ -204,7 +204,7 @@ export default function WorshipCard({ dayRecord, date }: WorshipCardProps) {
                       >
                         <span className={`w-3.5 h-3.5 rounded-[2px] border flex items-center justify-center flex-shrink-0 ${t.completed ? 'border-primary bg-primary' : 'border-outline-variant/40'}`}>
                           {t.completed && (
-                            <span className="material-symbols-outlined text-[10px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[10px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
                           )}
                         </span>
                         <span className={`font-body text-xs ${t.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>{t.title}</span>
@@ -302,7 +302,7 @@ export default function WorshipCard({ dayRecord, date }: WorshipCardProps) {
           aria-controls="sunnah-section"
           className="flex items-center gap-2 w-full text-left group"
         >
-          <span className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${showSunnah ? 'rotate-180' : ''}`}>
+          <span aria-hidden="true" className={`material-symbols-outlined text-[16px] text-on-surface-variant transition-transform ${showSunnah ? 'rotate-180' : ''}`}>
             expand_more
           </span>
           <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant group-hover:text-on-surface transition-colors">
@@ -311,7 +311,7 @@ export default function WorshipCard({ dayRecord, date }: WorshipCardProps) {
           {(() => {
             const done = worshipExtras.filter(e => dayRecord[e.field]).length;
             return done > 0 ? (
-              <span className="font-mono text-[9px] text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded-[2px]">
+              <span className="font-mono text-[10px] text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded-[2px]">
                 {done}/{worshipExtras.length}
               </span>
             ) : null;
@@ -339,7 +339,7 @@ export default function WorshipCard({ dayRecord, date }: WorshipCardProps) {
                   dayRecord[field] ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant/40 bg-transparent'
                 }`}>
                   {dayRecord[field] && (
-                    <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                       check
                     </span>
                   )}

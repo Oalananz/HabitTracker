@@ -128,41 +128,41 @@ export default function AiGoalBreaker({
     <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-5 space-y-4">
       {ConfirmDialog}
       <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
         <h3 className="font-headline text-sm font-bold text-on-surface uppercase tracking-wide">AI Goal Breaker</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="md:col-span-2">
-          <label className={labelCls}>&gt; GOAL_TITLE</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. Finish a course, Build a project" />
+          <label htmlFor="ai-goal-breaker-goal-title" className={labelCls}>&gt; GOAL_TITLE</label>
+          <input id="ai-goal-breaker-goal-title" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. Finish a course, Build a project" />
         </div>
         <div className="md:col-span-2">
-          <label className={labelCls}>&gt; DESCRIPTION (optional)</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={`${inputCls} resize-none`} placeholder="Any detail you want the AI to consider" />
+          <label htmlFor="ai-goal-breaker-description-optional" className={labelCls}>&gt; DESCRIPTION (optional)</label>
+          <textarea id="ai-goal-breaker-description-optional" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={`${inputCls} resize-none`} placeholder="Any detail you want the AI to consider" />
         </div>
         <div>
-          <label className={labelCls}>&gt; LIFE_AREA</label>
-          <select value={lifeArea} onChange={(e) => setLifeArea(e.target.value as LifeAreaId | '')} className={inputCls}>
+          <label htmlFor="ai-goal-breaker-life-area" className={labelCls}>&gt; LIFE_AREA</label>
+          <select id="ai-goal-breaker-life-area" value={lifeArea} onChange={(e) => setLifeArea(e.target.value as LifeAreaId | '')} className={inputCls}>
             <option value="">Unassigned</option>
             {LIFE_AREAS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
           </select>
         </div>
         <div>
-          <label className={labelCls}>&gt; DEADLINE (optional)</label>
-          <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className={inputCls} />
+          <label htmlFor="ai-goal-breaker-deadline-optional" className={labelCls}>&gt; DEADLINE (optional)</label>
+          <input id="ai-goal-breaker-deadline-optional" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>&gt; DIFFICULTY</label>
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')} className={inputCls}>
+          <label htmlFor="ai-goal-breaker-difficulty" className={labelCls}>&gt; DIFFICULTY</label>
+          <select id="ai-goal-breaker-difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')} className={inputCls}>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
         </div>
         <div>
-          <label className={labelCls}>&gt; TIME_PER_DAY</label>
-          <select value={timePerDay} onChange={(e) => setTimePerDay(parseInt(e.target.value))} className={inputCls}>
+          <label htmlFor="ai-goal-breaker-time-per-day" className={labelCls}>&gt; TIME_PER_DAY</label>
+          <select id="ai-goal-breaker-time-per-day" value={timePerDay} onChange={(e) => setTimePerDay(parseInt(e.target.value))} className={inputCls}>
             <option value={15}>15 min</option>
             <option value={30}>30 min</option>
             <option value={60}>60 min</option>

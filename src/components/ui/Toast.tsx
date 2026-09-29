@@ -37,7 +37,7 @@ export default function ToastContainer() {
             toast.exiting ? 'animate-toast-out' : 'animate-toast-in'
           }`}
         >
-          <span
+          <span aria-hidden="true"
             className="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5"
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
@@ -46,11 +46,11 @@ export default function ToastContainer() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-body text-on-surface leading-snug">{toast.message}</p>
           </div>
-          <button
+          <button aria-label="Dismiss notification"
             onClick={() => removeToast(toast.id)}
             className="text-on-surface-variant/50 hover:text-on-surface transition-colors flex-shrink-0"
           >
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
           </button>
           {/* Progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden rounded-b-md">

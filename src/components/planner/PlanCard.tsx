@@ -79,10 +79,11 @@ export default function PlanCard({
         {/* Status toggle button */}
         <button
           onClick={() => onStatusChange?.(id, STATUS_CYCLE[status] || 'planned')}
+          aria-label={`Status: ${status} — click to advance`}
           title={`Status: ${status} — click to advance`}
           className="mt-0.5 flex-shrink-0 hover:scale-110 transition-transform"
         >
-          <span className={`material-symbols-outlined text-[18px] ${
+          <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${
             isCompleted ? 'text-primary' : isCancelled ? 'text-error' :
             status === 'in_progress' ? 'text-tertiary' : 'text-outline'
           }`} style={status === 'in_progress' ? { fontVariationSettings: "'FILL' 1" } : undefined}>
@@ -102,13 +103,13 @@ export default function PlanCard({
             {/* Action buttons — show on hover */}
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
               {onEdit && (
-                <button onClick={() => onEdit(id)} className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-sm" title="Edit">
-                  <span className="material-symbols-outlined text-[15px]">edit</span>
+                <button onClick={() => onEdit(id)} className="p-1 text-on-surface-variant hover:text-primary transition-colors rounded-sm" aria-label="Edit" title="Edit">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px]">edit</span>
                 </button>
               )}
               {onDelete && (
-                <button onClick={() => onDelete(id)} className="p-1 text-on-surface-variant hover:text-error transition-colors rounded-sm" title="Delete">
-                  <span className="material-symbols-outlined text-[15px]">delete</span>
+                <button onClick={() => onDelete(id)} className="p-1 text-on-surface-variant hover:text-error transition-colors rounded-sm" aria-label="Delete" title="Delete">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px]">delete</span>
                 </button>
               )}
             </div>
@@ -123,12 +124,12 @@ export default function PlanCard({
             {/* Priority dot */}
             <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[priority] || PRIORITY_DOT.nominal}`} title={`Priority: ${priority}`} />
 
-            <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[9px] uppercase tracking-wide ${st.badge}`}>
+            <span className={`px-1.5 py-0.5 rounded-[2px] font-label text-[10px] uppercase tracking-wide ${st.badge}`}>
               {status.replace('_', ' ')}
             </span>
 
             {category && (
-              <span className="px-1.5 py-0.5 rounded-[2px] bg-surface-container-highest font-label text-[9px] text-on-surface-variant uppercase tracking-wide">
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-surface-container-highest font-label text-[10px] text-on-surface-variant uppercase tracking-wide">
                 {category}
               </span>
             )}
@@ -136,23 +137,23 @@ export default function PlanCard({
             <LifeAreaBadge lifeArea={lifeArea} />
 
             {planType === 'weekly' && weekdayLabel && (
-              <span className="px-1.5 py-0.5 rounded-[2px] bg-secondary/10 font-label text-[9px] text-secondary uppercase tracking-wide">
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-secondary/10 font-label text-[10px] text-secondary uppercase tracking-wide">
                 {weekdayLabel}
               </span>
             )}
 
             {prayerBlock && (
-              <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/10 font-label text-[9px] text-primary uppercase tracking-wide">
+              <span className="px-1.5 py-0.5 rounded-[2px] bg-primary/10 font-label text-[10px] text-primary uppercase tracking-wide">
                 {PRAYER_EMOJI[prayerBlock] || '🕌'} {prayerBlock}
               </span>
             )}
 
             {timeLabel && (
-              <span className="font-mono text-[9px] text-outline ml-auto">⏱ {timeLabel}</span>
+              <span className="font-mono text-[10px] text-outline ml-auto">⏱ {timeLabel}</span>
             )}
 
             {!compact && !timeLabel && (
-              <span className="font-mono text-[9px] text-outline ml-auto">
+              <span className="font-mono text-[10px] text-outline ml-auto">
                 {planType} · {startDate}{endDate && endDate !== startDate ? ` → ${endDate}` : ''}
               </span>
             )}

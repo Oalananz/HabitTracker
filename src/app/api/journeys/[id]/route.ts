@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiErrors';
 import {
   addJourneyConsequence,
   addJourneyReaction,
@@ -75,11 +76,7 @@ export async function POST(
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/journeys/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/journeys/[id]');
   }
 }
 
@@ -94,11 +91,7 @@ export async function DELETE(
     await deleteJourney(id, userId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('DELETE /api/journeys/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'DELETE /api/journeys/[id]');
   }
 }
 
@@ -121,10 +114,6 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('PUT /api/journeys/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'PUT /api/journeys/[id]');
   }
 }

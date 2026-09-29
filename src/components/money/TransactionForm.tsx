@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { MoneyCategory, MoneyTransactionType } from '@/lib/money';
+import dayjs from 'dayjs';
 
 interface TransactionFormInitial {
   type?: MoneyTransactionType;
@@ -32,7 +33,7 @@ interface TransactionFormProps {
   initial?: TransactionFormInitial;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => dayjs().format('YYYY-MM-DD');
 
 export default function TransactionForm({ categories, onSubmit, onCancel, initial }: TransactionFormProps) {
   const [type, setType] = useState<MoneyTransactionType>(initial?.type || 'expense');
@@ -69,10 +70,10 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
       </h3>
 
       <div>
-        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+        <p id="transaction-type-label" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
           &gt; TYPE
-        </label>
-        <div className="flex gap-2">
+        </p>
+        <div role="group" aria-labelledby="transaction-type-label" className="flex gap-2">
           {(['income', 'expense', 'transfer'] as const).map((t) => (
             <button
               key={t}
@@ -91,12 +92,12 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="transaction-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -107,12 +108,12 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="transaction-form-amount"
               type="number"
               min={0}
               step="0.01"
@@ -125,12 +126,12 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-currency" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENCY
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="transaction-form-currency"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
@@ -141,10 +142,10 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-category" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CATEGORY
           </label>
-          <select
+          <select id="transaction-form-category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -159,12 +160,12 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-date" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; DATE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="transaction-form-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -174,12 +175,12 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="transaction-form-payment-method-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PAYMENT_METHOD (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="transaction-form-payment-method-optional"
               type="text"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
@@ -191,11 +192,11 @@ export default function TransactionForm({ categories, onSubmit, onCancel, initia
       </div>
 
       <div>
-        <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+        <label htmlFor="transaction-form-notes-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
           &gt; NOTES (optional)
         </label>
         <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 focus-within:border-primary/50 transition-colors">
-          <textarea
+          <textarea id="transaction-form-notes-optional"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full bg-transparent text-on-surface text-sm font-body placeholder:text-outline border-none p-0 focus:ring-0 resize-none"

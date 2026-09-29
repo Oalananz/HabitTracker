@@ -100,7 +100,7 @@ export default function RecoveryPage() {
             <h3 className="font-headline text-sm font-semibold text-on-surface">New journey</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Journey title</label>
+                <label htmlFor="journey-title" className="text-xs text-on-surface-variant/80 block mb-1.5">Journey title</label>
                 <Input
                   type="text"
                   value={newTitle}
@@ -110,7 +110,7 @@ export default function RecoveryPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-on-surface-variant/80 block mb-1.5">Start time</label>
+                <label htmlFor="journey-start-time" className="text-xs text-on-surface-variant/80 block mb-1.5">Start time</label>
                 <Input
                   type="datetime-local"
                   value={newStartTime}
@@ -120,7 +120,7 @@ export default function RecoveryPage() {
               </div>
             </div>
             <div>
-              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Description (optional)</label>
+              <label htmlFor="journey-desc" className="text-xs text-on-surface-variant/80 block mb-1.5">Description (optional)</label>
               <Textarea
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
@@ -166,7 +166,7 @@ export default function RecoveryPage() {
                     onClick={() => setExpandedJourney(isExpanded ? null : journey.id)}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-[20px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                         healing
                       </span>
                       <div>
@@ -187,7 +187,7 @@ export default function RecoveryPage() {
                         if (todayFailure) {
                           return (
                             <span className="hidden sm:flex items-center gap-1 text-xs text-error px-2 py-0.5 bg-error/10 rounded-[2px]">
-                              <span className="material-symbols-outlined text-[12px]">cancel</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[12px]">cancel</span>
                               Failure logged
                             </span>
                           );
@@ -195,7 +195,7 @@ export default function RecoveryPage() {
                         if (noMasClean || !todayFailure) {
                           return (
                             <span className="hidden sm:flex items-center gap-1 text-xs text-primary px-2 py-0.5 bg-primary/10 rounded-[2px]">
-                              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                               Clean today
                             </span>
                           );
@@ -209,7 +209,7 @@ export default function RecoveryPage() {
                       <span className="text-xs text-on-surface-variant">
                         {journey.failureCount} fail{journey.failureCount !== 1 ? 's' : ''}
                       </span>
-                      <span className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                      <span aria-hidden="true" className={`material-symbols-outlined text-[18px] text-on-surface-variant transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                         expand_more
                       </span>
                     </div>
@@ -270,9 +270,9 @@ export default function RecoveryPage() {
                           <button
                             onClick={async () => { if (await confirm({ message: 'Delete this journey?' })) deleteJourney(journey.id); }}
                             className="p-2 text-on-surface-variant/60 hover:text-error transition-colors ml-auto"
-                            title="Delete journey"
+                            aria-label="Delete journey"  title="Delete journey"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                           </button>
                         </div>
                       </div>

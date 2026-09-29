@@ -227,19 +227,19 @@ export default function JourneyDetails({
           {/* Stats Grid - 4 columns */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="bg-surface-container-lowest/60 border border-outline-variant/10 rounded-sm p-2.5">
-              <div className="font-mono text-[9px] text-on-surface-variant/70 uppercase">Participants</div>
+              <div className="font-mono text-[10px] text-on-surface-variant/70 uppercase">Participants</div>
               <div className="font-headline text-base font-bold text-primary mt-1">{activeParticipants.length}</div>
             </div>
             <div className="bg-surface-container-lowest/60 border border-outline-variant/10 rounded-sm p-2.5">
-              <div className="font-mono text-[9px] text-on-surface-variant/70 uppercase">Total Fails</div>
+              <div className="font-mono text-[10px] text-on-surface-variant/70 uppercase">Total Fails</div>
               <div className="font-headline text-base font-bold text-error mt-1">{details.recentFailures.length}</div>
             </div>
             <div className="bg-surface-container-lowest/60 border border-outline-variant/10 rounded-sm p-2.5">
-              <div className="font-mono text-[9px] text-on-surface-variant/70 uppercase">Rules</div>
+              <div className="font-mono text-[10px] text-on-surface-variant/70 uppercase">Rules</div>
               <div className="font-headline text-base font-bold text-tertiary mt-1">{details.consequences.length}</div>
             </div>
             <div className="bg-surface-container-lowest/60 border border-outline-variant/10 rounded-sm p-2.5">
-              <div className="font-mono text-[9px] text-on-surface-variant/70 uppercase">Max Fails</div>
+              <div className="font-mono text-[10px] text-on-surface-variant/70 uppercase">Max Fails</div>
               <div className="font-headline text-base font-bold text-secondary mt-1">
                 {details.ruleSummary.maxFailures ?? '∞'}
               </div>
@@ -257,7 +257,7 @@ export default function JourneyDetails({
           ) : (
             <p className="font-mono text-xs text-outline">No rule summary provided.</p>
           )}
-          <div className="grid grid-cols-2 gap-1.5 font-mono text-[9px] text-on-surface-variant/80 border-t border-outline-variant/10 pt-2">
+          <div className="grid grid-cols-2 gap-1.5 font-mono text-[10px] text-on-surface-variant/80 border-t border-outline-variant/10 pt-2">
             <div><span className="text-outline">Weekly limit:</span> {details.ruleSummary.structured.noMoreThanFailuresPerWeek ?? 'off'}</div>
             <div><span className="text-outline">Streak reset:</span> {details.ruleSummary.structured.resetStreakOnFailure === false ? 'off' : 'on'}</div>
             <div><span className="text-outline">Check-in:</span> {details.ruleSummary.structured.mandatoryDailyCheckIn ? 'on' : 'off'}</div>
@@ -287,7 +287,7 @@ export default function JourneyDetails({
                         {participant.username}
                         {participant.role === 'owner' ? ' 👑' : ''}
                       </div>
-                      <div className="font-mono text-[9px] text-on-surface-variant/80">
+                      <div className="font-mono text-[10px] text-on-surface-variant/80">
                         {participant.totalFailures} fails{' '}
                         {participantConsequenceStates.length > 0 && (
                           <span className="text-error">• {participantConsequenceStates.length} consequence(s)</span>
@@ -344,7 +344,7 @@ export default function JourneyDetails({
                       {consequence.symbol ? <span className="mr-1.5">{consequence.symbol}</span> : ''}
                       {consequence.description}
                     </div>
-                    <div className="font-mono text-[9px] text-on-surface-variant/80 mt-0.5">
+                    <div className="font-mono text-[10px] text-on-surface-variant/80 mt-0.5">
                       @ {consequence.failureThreshold} fail{consequence.failureThreshold !== 1 ? 's' : ''} • {consequence.consequenceType}
                     </div>
                   </div>
@@ -506,10 +506,10 @@ export default function JourneyDetails({
                               <div className="font-body text-on-surface font-medium truncate">
                                 {invite.inviteeUsername || invite.inviteeEmail || 'link invite'}
                               </div>
-                              <div className="font-mono text-[9px] text-on-surface-variant/80 truncate">
+                              <div className="font-mono text-[10px] text-on-surface-variant/80 truncate">
                                 {invite.inviteLinkPath}
                               </div>
-                              <div className="font-mono text-[9px] text-on-surface-variant/60 mt-0.5">
+                              <div className="font-mono text-[10px] text-on-surface-variant/60 mt-0.5">
                                 {invite.status}
                               </div>
                             </div>
@@ -517,7 +517,7 @@ export default function JourneyDetails({
                               onClick={() => {
                                 void copyInviteLink(invite.inviteLinkPath);
                               }}
-                              className="px-2 py-1 rounded-sm bg-secondary/20 text-secondary font-label text-[9px] uppercase font-bold whitespace-nowrap shrink-0"
+                              className="px-2 py-1 rounded-sm bg-secondary/20 text-secondary font-label text-[10px] uppercase font-bold whitespace-nowrap shrink-0"
                             >
                               Copy
                             </button>

@@ -53,12 +53,12 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="skill-form-skill-name" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; SKILL_NAME
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="skill-form-skill-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -69,12 +69,12 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="skill-form-category-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CATEGORY (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="skill-form-category-optional"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -85,10 +85,10 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="skill-form-current-level" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENT_LEVEL
           </label>
-          <select
+          <select id="skill-form-current-level"
             value={level}
             onChange={(e) => setLevel(e.target.value as SkillLevel)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -102,12 +102,12 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="skill-form-target-level-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TARGET_LEVEL (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="skill-form-target-level-optional"
               type="text"
               value={targetLevel}
               onChange={(e) => setTargetLevel(e.target.value)}
@@ -118,12 +118,12 @@ export default function SkillForm({ onSubmit, onCancel, initial }: SkillFormProp
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="skill-form-progress" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROGRESS_%
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="skill-form-progress"
               type="number"
               min={0}
               max={100}

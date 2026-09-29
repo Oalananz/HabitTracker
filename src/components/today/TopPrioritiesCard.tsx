@@ -216,7 +216,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
                   p.completed ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant/40'
                 }`}>
                   {p.completed && (
-                    <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                       check
                     </span>
                   )}
@@ -233,7 +233,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
                 aria-label={`Remove priority: ${p.title}`}
                 className="text-on-surface-variant hover:text-error transition-colors flex-shrink-0"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
           ))}
@@ -258,7 +258,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
               aria-label="More options for priorities"
               className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant/20 hover:border-primary/40 rounded-sm font-label text-xs text-on-surface-variant hover:text-primary transition-all"
             >
-              <span className="material-symbols-outlined text-[16px]">more_horiz</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">more_horiz</span>
             </button>
             {showMoreMenu && (
               <div className="absolute left-0 top-full mt-1 bg-surface-container-high border border-outline-variant/20 rounded-md shadow-lg z-20 min-w-[180px] py-1 animate-fade-in">
@@ -266,7 +266,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
                   onClick={() => { setShowPicker(v => !v); setShowAdd(false); setShowMoreMenu(false); }}
                   className="flex items-center gap-2 w-full text-left px-3 py-2 font-body text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[14px]">checklist</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">checklist</span>
                   Choose from tasks
                 </button>
                 <button
@@ -274,7 +274,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
                   disabled={aiLoading}
                   className="flex items-center gap-2 w-full text-left px-3 py-2 font-body text-xs text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-colors disabled:opacity-50"
                 >
-                  <span className={`material-symbols-outlined text-[14px] ${aiLoading ? 'animate-spin' : ''}`}>
+                  <span aria-hidden="true" className={`material-symbols-outlined text-[14px] ${aiLoading ? 'animate-spin' : ''}`}>
                     {aiLoading ? 'progress_activity' : 'auto_awesome'}
                   </span>
                   {aiLoading ? 'Suggesting…' : 'AI Suggest'}
@@ -308,7 +308,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
             aria-label="Cancel"
             className="px-2 py-1.5 font-label text-xs text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
       )}
@@ -326,7 +326,7 @@ export default function TopPrioritiesCard({ date }: { date: string }) {
                 onClick={() => addFromTask(t.id)}
                 className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-sm hover:bg-surface-container-lowest transition-colors min-h-[36px]"
               >
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant">add</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-on-surface-variant">add</span>
                 <span className="font-body text-xs text-on-surface truncate">{t.title}</span>
               </button>
             ))

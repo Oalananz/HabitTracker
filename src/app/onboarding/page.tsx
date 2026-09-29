@@ -114,7 +114,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const Progress = () => (
+  const progress = (
     <div className="flex items-center gap-1.5 mb-8">
       {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
         <div
@@ -148,12 +148,12 @@ export default function OnboardingPage() {
   return (
     <div className="max-w-2xl mx-auto animate-page-enter">
       <div className="bg-surface-container-low border border-outline-variant/15 rounded-md p-6 md:p-8">
-        <Progress />
+        {progress}
 
         {/* Step 1 — Welcome */}
         {step === 1 && (
           <div className="text-center space-y-4 py-4">
-            <span className="material-symbols-outlined text-[48px] text-primary">grid_view</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-primary">grid_view</span>
             <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tighter text-on-surface">Build your Life System</h1>
             <p className="font-body text-on-surface-variant max-w-md mx-auto">
               Organize your goals, habits, tasks, and reviews across the six areas of your life.
@@ -180,12 +180,12 @@ export default function OnboardingPage() {
                       backgroundColor: selected ? `${area.color}12` : 'transparent',
                     }}
                   >
-                    <span className="material-symbols-outlined text-[22px]" style={{ color: area.color }}>{area.icon}</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[22px]" style={{ color: area.color }}>{area.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-headline text-sm font-bold text-on-surface">{area.label}</div>
                       <div className="font-body text-[11px] text-on-surface-variant truncate">{area.description}</div>
                     </div>
-                    <span className={`material-symbols-outlined text-[18px] ${selected ? 'text-primary' : 'text-outline'}`} style={{ fontVariationSettings: selected ? "'FILL' 1" : undefined }}>
+                    <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${selected ? 'text-primary' : 'text-outline'}`} style={{ fontVariationSettings: selected ? "'FILL' 1" : undefined }}>
                       {selected ? 'check_circle' : 'radio_button_unchecked'}
                     </span>
                   </button>
@@ -203,8 +203,8 @@ export default function OnboardingPage() {
             <p className="font-body text-sm text-on-surface-variant mb-5">Optional — you can skip and add goals later.</p>
             <div className="space-y-4">
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; GOAL_TITLE</label>
-                <input
+                <label htmlFor="page-goal-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; GOAL_TITLE</label>
+                <input id="page-goal-title"
                   type="text"
                   value={goalTitle}
                   onChange={(e) => setGoalTitle(e.target.value)}
@@ -214,8 +214,8 @@ export default function OnboardingPage() {
               </div>
               <LifeAreaSelect value={goalArea} onChange={setGoalArea} />
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; DUE_DATE (optional)</label>
-                <input
+                <label htmlFor="page-due-date-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; DUE_DATE (optional)</label>
+                <input id="page-due-date-optional"
                   type="date"
                   value={goalDue}
                   onChange={(e) => setGoalDue(e.target.value)}
@@ -234,8 +234,8 @@ export default function OnboardingPage() {
             <p className="font-body text-sm text-on-surface-variant mb-5">Optional — small, repeatable actions build the system.</p>
             <div className="space-y-4">
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; HABIT_TITLE</label>
-                <input
+                <label htmlFor="page-habit-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; HABIT_TITLE</label>
+                <input id="page-habit-title"
                   type="text"
                   value={habitTitle}
                   onChange={(e) => setHabitTitle(e.target.value)}
@@ -245,8 +245,8 @@ export default function OnboardingPage() {
               </div>
               <LifeAreaSelect value={habitArea} onChange={setHabitArea} />
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FREQUENCY</label>
-                <div className="flex gap-2">
+                <p id="onboarding-frequency-label" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FREQUENCY</p>
+                <div role="group" aria-labelledby="onboarding-frequency-label" className="flex gap-2">
                   {(['daily', 'weekdays', 'weekends'] as const).map((f) => (
                     <button
                       key={f}
@@ -272,8 +272,8 @@ export default function OnboardingPage() {
             <p className="font-body text-sm text-on-surface-variant mb-5">Optional — skip any or all of these and set them up later from the Money and Learning pages.</p>
             <div className="space-y-5">
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; MONTHLY_BUDGET_TARGET (optional)</label>
-                <input
+                <label htmlFor="page-monthly-budget-target-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; MONTHLY_BUDGET_TARGET (optional)</label>
+                <input id="page-monthly-budget-target-optional"
                   type="number"
                   min={0}
                   step="0.01"
@@ -284,8 +284,8 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; SAVINGS_GOAL_AMOUNT (optional)</label>
-                <input
+                <label htmlFor="page-savings-goal-amount-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; SAVINGS_GOAL_AMOUNT (optional)</label>
+                <input id="page-savings-goal-amount-optional"
                   type="number"
                   min={0}
                   step="0.01"
@@ -296,8 +296,8 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_COURSE_TITLE (optional)</label>
-                <input
+                <label htmlFor="page-first-course-title-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_COURSE_TITLE (optional)</label>
+                <input id="page-first-course-title-optional"
                   type="text"
                   value={firstCourseTitle}
                   onChange={(e) => setFirstCourseTitle(e.target.value)}
@@ -306,8 +306,8 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; COURSE_LINK (optional)</label>
-                <input
+                <label htmlFor="page-course-link-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; COURSE_LINK (optional)</label>
+                <input id="page-course-link-optional"
                   type="url"
                   value={firstCourseUrl}
                   onChange={(e) => setFirstCourseUrl(e.target.value)}
@@ -316,8 +316,8 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_SKILL (optional)</label>
-                <input
+                <label htmlFor="page-first-skill-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">&gt; FIRST_SKILL (optional)</label>
+                <input id="page-first-skill-optional"
                   type="text"
                   value={firstSkillName}
                   onChange={(e) => setFirstSkillName(e.target.value)}
@@ -333,7 +333,7 @@ export default function OnboardingPage() {
         {/* Step 6 — Finish */}
         {step === 6 && (
           <div className="text-center space-y-4 py-4">
-            <span className="material-symbols-outlined text-[48px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
             <h1 className="font-headline text-3xl font-bold tracking-tighter text-on-surface">Your system is ready.</h1>
             <p className="font-body text-on-surface-variant">Start tracking today, or explore your life areas.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -354,7 +354,7 @@ export default function OnboardingPage() {
                   onClick={() => router.push('/planner?view=prayer')}
                   className="flex items-center gap-2 p-3 rounded-sm border border-outline-variant/15 hover:border-primary/30 transition-colors text-left"
                 >
-                  <span className="material-symbols-outlined text-[18px] text-primary">mosque</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">mosque</span>
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-on-surface">Prayer view</div>
                     <div className="text-[11px] text-on-surface-variant/70">Structure your day around prayer times, in Planner</div>
@@ -364,10 +364,10 @@ export default function OnboardingPage() {
                   onClick={() => router.push('/recovery')}
                   className="flex items-center gap-2 p-3 rounded-sm border border-outline-variant/15 hover:border-primary/30 transition-colors text-left"
                 >
-                  <span className="material-symbols-outlined text-[18px] text-primary">healing</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">healing</span>
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-on-surface">Recovery</div>
-                    <div className="text-[11px] text-on-surface-variant/70">Track a habit you're trying to quit</div>
+                    <div className="text-[11px] text-on-surface-variant/70">Track a habit you&apos;re trying to quit</div>
                   </div>
                 </button>
               </div>

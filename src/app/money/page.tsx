@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, type ComponentProps } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type ComponentProps } from 'react';
 import dayjs from 'dayjs';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
@@ -41,10 +41,17 @@ interface MoneySummary {
   upcomingBillsCount: number;
   activeSubscriptionsCount: number;
   currency: string;
+  otherCurrencies?: string[];
 }
 
 type ActiveForm = 'income' | 'expense' | 'budget' | 'savings' | 'debt' | 'subscription' | null;
 type DateRangeMode = 'this_month' | 'last_month' | 'custom';
+
+const RANGE_LABELS: Record<DateRangeMode, string> = {
+  this_month: 'This month',
+  last_month: 'Last month',
+  custom: 'Custom range',
+};
 
 type TransactionData = Parameters<ComponentProps<typeof TransactionForm>['onSubmit']>[0];
 type BudgetData = Parameters<ComponentProps<typeof BudgetForm>['onSubmit']>[0];
@@ -78,6 +85,42 @@ async function postAction(
   }
 }
 
+interface MoneyData {
+  summary: MoneySummary | null;
+  categories: MoneyCategory[];
+  budgets: Budget[];
+  savingsGoals: SavingsGoal[];
+  debts: Debt[];
+  subscriptions: Subscription[];
+}
+
+async function loadMoneyData(month: number, year: number): Promise<MoneyData> {
+  const responses = await Promise.all([
+    fetch('/api/money/summary'),
+    fetch('/api/money/categories'),
+    fetch(`/api/money/budgets?month=${month}&year=${year}`),
+    fetch('/api/money/savings-goals'),
+    fetch('/api/money/debts'),
+    fetch('/api/money/subscriptions'),
+  ]);
+  const [summaryData, categoriesData, budgetsData, savingsData, debtsData, subsData] =
+    await Promise.all(responses.map((r) => r.json()));
+  return {
+    summary: summaryData.summary ?? null,
+    categories: categoriesData.categories || [],
+    budgets: budgetsData.budgets || [],
+    savingsGoals: savingsData.savingsGoals || [],
+    debts: debtsData.debts || [],
+    subscriptions: subsData.subscriptions || [],
+  };
+}
+
+async function loadTransactions(query: string): Promise<MoneyTransaction[]> {
+  const res = await fetch(`/api/money/transactions?${query}`);
+  const data = await res.json();
+  return data.transactions || [];
+}
+
 export default function MoneyPage() {
   const [summary, setSummary] = useState<MoneySummary | null>(null);
   const [transactions, setTransactions] = useState<MoneyTransaction[]>([]);
@@ -105,48 +148,40 @@ export default function MoneyPage() {
   const currentMonth = now.month() + 1;
   const currentYear = now.year();
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [summaryRes, categoriesRes, budgetsRes, savingsRes, debtsRes, subsRes] = await Promise.all([
-        fetch('/api/money/summary'),
-        fetch('/api/money/categories'),
-        fetch(`/api/money/budgets?month=${currentMonth}&year=${currentYear}`),
-        fetch('/api/money/savings-goals'),
-        fetch('/api/money/debts'),
-        fetch('/api/money/subscriptions'),
-      ]);
-
-      const [summaryData, categoriesData, budgetsData, savingsData, debtsData, subsData] = await Promise.all([
-        summaryRes.json(),
-        categoriesRes.json(),
-        budgetsRes.json(),
-        savingsRes.json(),
-        debtsRes.json(),
-        subsRes.json(),
-      ]);
-
-      setSummary(summaryData.summary);
-      setCategories(categoriesData.categories || []);
-      setBudgets(budgetsData.budgets || []);
-      setSavingsGoals(savingsData.savingsGoals || []);
-      setDebts(debtsData.debts || []);
-      setSubscriptions(subsData.subscriptions || []);
-    } catch (err) {
-      console.error('Failed to load money data:', err);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const applyMoneyData = useCallback((data: MoneyData) => {
+    setSummary(data.summary);
+    setCategories(data.categories);
+    setBudgets(data.budgets);
+    setSavingsGoals(data.savingsGoals);
+    setDebts(data.debts);
+    setSubscriptions(data.subscriptions);
   }, []);
 
-  const fetchTransactions = useCallback(async () => {
+  // Refresh after a change; current data stays on screen while it reloads.
+  const fetchAll = useCallback(async () => {
+    try {
+      applyMoneyData(await loadMoneyData(currentMonth, currentYear));
+    } catch (err) {
+      console.error('Failed to load money data:', err);
+    }
+  }, [applyMoneyData, currentMonth, currentYear]);
+
+  useEffect(() => {
+    let active = true;
+    loadMoneyData(currentMonth, currentYear)
+      .then((data) => { if (active) applyMoneyData(data); })
+      .catch((err) => console.error('Failed to load money data:', err))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [applyMoneyData, currentMonth, currentYear]);
+
+  const transactionsQuery = useMemo(() => {
     const params = new URLSearchParams();
     if (rangeMode === 'this_month') {
       params.set('month', String(currentMonth));
       params.set('year', String(currentYear));
     } else if (rangeMode === 'last_month') {
-      const last = now.subtract(1, 'month');
+      const last = dayjs().subtract(1, 'month');
       params.set('month', String(last.month() + 1));
       params.set('year', String(last.year()));
     } else if (rangeMode === 'custom') {
@@ -157,24 +192,31 @@ export default function MoneyPage() {
     if (filterCategory !== 'all') params.set('categoryId', filterCategory);
     if (filterPaymentMethod !== 'all') params.set('paymentMethod', filterPaymentMethod);
     if (filterCurrency !== 'all') params.set('currency', filterCurrency);
+    return params.toString();
+  }, [rangeMode, customFrom, customTo, filterType, filterCategory, filterPaymentMethod, filterCurrency, currentMonth, currentYear]);
 
+  // Latest filter query; results for an older query are discarded so a slow
+  // response can't overwrite the list for filters chosen after it.
+  const latestQuery = useRef(transactionsQuery);
+
+  useEffect(() => {
+    latestQuery.current = transactionsQuery;
+    let active = true;
+    loadTransactions(transactionsQuery)
+      .then((rows) => { if (active) setTransactions(rows); })
+      .catch((err) => console.error('Failed to load transactions:', err));
+    return () => { active = false; };
+  }, [transactionsQuery]);
+
+  const fetchTransactions = useCallback(async () => {
+    const query = latestQuery.current;
     try {
-      const res = await fetch(`/api/money/transactions?${params.toString()}`);
-      const data = await res.json();
-      setTransactions(data.transactions || []);
+      const rows = await loadTransactions(query);
+      if (latestQuery.current === query) setTransactions(rows);
     } catch (err) {
       console.error('Failed to load transactions:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rangeMode, customFrom, customTo, filterType, filterCategory, filterPaymentMethod, filterCurrency]);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  }, []);
 
   const closeForm = () => setActiveForm(null);
 
@@ -258,10 +300,8 @@ export default function MoneyPage() {
     if (ok) fetchAll();
   };
 
-  const expenseByCategory = getExpenseByCategory(
-    transactions.filter((t) => rangeMode === 'this_month'),
-    categories
-  );
+  // Transactions are already limited to the selected date range by the API.
+  const expenseByCategory = getExpenseByCategory(transactions, categories);
 
   const upcomingBills = getUpcomingBills(subscriptions, 7);
   const warningBudgets = budgets.filter((b) => calculateBudgetUsage(b, transactions).percentage > 90);
@@ -299,7 +339,7 @@ export default function MoneyPage() {
       {/* Budget warning banner */}
       {warningBudgets.length > 0 && (
         <div className="bg-error/10 border border-error/30 text-error rounded-md p-4 flex items-start gap-3">
-          <span className="material-symbols-outlined text-[20px] flex-shrink-0">warning</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px] flex-shrink-0">warning</span>
           <div>
             <p className="font-headline text-sm font-semibold">Budget alert</p>
             <p className="font-body text-xs mt-1">
@@ -336,6 +376,11 @@ export default function MoneyPage() {
           <StatCard label="Debt Remaining" value={fmt(summary?.debtRemaining || 0)} unit={summary?.currency} icon="credit_card" />
           <StatCard label="Upcoming Bills" value={summary?.upcomingBillsCount ?? 0} icon="event_upcoming" />
           <StatCard label="Subscriptions" value={summary?.activeSubscriptionsCount ?? 0} icon="subscriptions" />
+          {summary?.otherCurrencies && summary.otherCurrencies.length > 0 && (
+            <p className="col-span-2 md:col-span-4 text-xs text-on-surface-variant">
+              Totals are in {summary.currency}. Entries in {summary.otherCurrencies.join(', ')} are not included.
+            </p>
+          )}
         </div>
       )}
 
@@ -388,7 +433,7 @@ export default function MoneyPage() {
       )}
 
       {/* Expense breakdown chart */}
-      <ExpenseBreakdownChart data={expenseByCategory} />
+      <ExpenseBreakdownChart data={expenseByCategory} periodLabel={RANGE_LABELS[rangeMode]} />
 
       {/* Filters */}
       <div className="bg-surface-container-low rounded-md border border-outline-variant/15 p-4 space-y-3">
@@ -453,7 +498,7 @@ export default function MoneyPage() {
           rightContent={
             transactions.length > 0 ? (
               <button onClick={handleExportTransactions} className="text-primary hover:underline flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">download</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">download</span>
                 Export CSV
               </button>
             ) : undefined
@@ -469,7 +514,7 @@ export default function MoneyPage() {
                 className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-sm hover:bg-surface-container-high transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span
+                  <span aria-hidden="true"
                     className={`material-symbols-outlined text-[18px] flex-shrink-0 ${
                       t.type === 'income' ? 'text-primary' : t.type === 'expense' ? 'text-error' : 'text-secondary'
                     }`}
@@ -490,11 +535,11 @@ export default function MoneyPage() {
                     {t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}
                     {fmt(t.amount)} {t.currency}
                   </span>
-                  <button
+                  <button aria-label="Close"
                     onClick={() => handleDeleteTransaction(t.id)}
                     className="text-outline hover:text-error transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
               </div>
@@ -526,15 +571,15 @@ export default function MoneyPage() {
                       <button
                         onClick={() => handleIncrementSavings(goal.id)}
                         className="w-7 h-7 rounded-sm bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
-                        title="Add funds"
+                        aria-label="Add funds"  title="Add funds"
                       >
-                        <span className="material-symbols-outlined text-[16px]">add</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
                       </button>
-                      <button
+                      <button aria-label="Close"
                         onClick={() => handleDeleteSavingsGoal(goal.id)}
                         className="text-outline hover:text-error transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[16px]">close</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                       </button>
                     </div>
                   </div>
@@ -572,15 +617,15 @@ export default function MoneyPage() {
                       <button
                         onClick={() => handleDecrementDebt(debt.id)}
                         className="w-7 h-7 rounded-sm bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
-                        title="Record payment"
+                        aria-label="Record payment"  title="Record payment"
                       >
-                        <span className="material-symbols-outlined text-[16px]">payments</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">payments</span>
                       </button>
-                      <button
+                      <button aria-label="Close"
                         onClick={() => handleDeleteDebt(debt.id)}
                         className="text-outline hover:text-error transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[16px]">close</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                       </button>
                     </div>
                   </div>
@@ -612,7 +657,7 @@ export default function MoneyPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${isUpcoming ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+                    <span aria-hidden="true" className={`material-symbols-outlined text-[18px] flex-shrink-0 ${isUpcoming ? 'text-tertiary' : 'text-on-surface-variant'}`}>
                       receipt_long
                     </span>
                     <div className="min-w-0">
@@ -627,11 +672,11 @@ export default function MoneyPage() {
                     <span className="font-mono text-sm text-on-surface-variant whitespace-nowrap">
                       {fmt(sub.amount ?? 0)} {sub.currency}
                     </span>
-                    <button
+                    <button aria-label="Close"
                       onClick={() => handleDeleteSubscription(sub.id)}
                       className="text-outline hover:text-error transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </div>
                 </div>

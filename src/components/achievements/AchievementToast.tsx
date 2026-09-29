@@ -5,25 +5,25 @@ import { useStore } from '@/store/useStore';
 
 export default function AchievementToast() {
   const { newlyUnlockedAchievements, clearNewAchievements } = useStore();
-  const [visible, setVisible] = useState(false);
-  const [current, setCurrent] = useState<{ name: string; desc: string; rarity: string } | null>(null);
+  // The toast shows the head of the store's unlock queue.
+  const current = newlyUnlockedAchievements[0] ?? null;
+  const currentKey = current?.key ?? null;
+  // Key of the toast that has animated in; null while entering or leaving.
+  const [shownKey, setShownKey] = useState<string | null>(null);
+  const visible = currentKey !== null && shownKey === currentKey;
 
   useEffect(() => {
-    if (newlyUnlockedAchievements.length === 0) return;
-    const ach = newlyUnlockedAchievements[0];
-    setCurrent({ name: ach.name, desc: ach.desc, rarity: ach.rarity });
-    setVisible(true);
-
-    const timer = setTimeout(() => {
-      setVisible(false);
-      setTimeout(() => {
-        clearNewAchievements();
-        setCurrent(null);
-      }, 400);
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, [newlyUnlockedAchievements, clearNewAchievements]);
+    if (!currentKey) return;
+    // Enter on the next frame so the slide/progress transitions run.
+    const enter = requestAnimationFrame(() => setShownKey(currentKey));
+    const leave = setTimeout(() => setShownKey(null), 4000);
+    const clear = setTimeout(clearNewAchievements, 4400);
+    return () => {
+      cancelAnimationFrame(enter);
+      clearTimeout(leave);
+      clearTimeout(clear);
+    };
+  }, [currentKey, clearNewAchievements]);
 
   if (!current) return null;
 
@@ -42,7 +42,7 @@ export default function AchievementToast() {
         style={{ borderLeftColor: rarityColor }}>
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high">
-          <span
+          <span aria-hidden="true"
             className="material-symbols-outlined text-[18px]"
             style={{ fontVariationSettings: "'FILL' 1", color: rarityColor }}
           >
@@ -57,7 +57,7 @@ export default function AchievementToast() {
           <div className="font-headline text-sm font-bold text-on-surface uppercase tracking-wide">{current.name}</div>
           <div className="font-body text-xs text-on-surface-variant mt-0.5">{current.desc}</div>
           <div className="mt-2 flex items-center gap-2">
-            <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-surface-container-highest"
+            <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-surface-container-highest"
               style={{ color: rarityColor }}>
               {current.rarity}
             </span>

@@ -41,7 +41,7 @@ function doPush(date: string, useBeacon = false) {
   const body = JSON.stringify(snapshot(date));
   try {
     if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      // Same-origin: Supabase auth cookies ride along, so the route can auth.
+      // Same-origin: the session cookie rides along, so the route can auth.
       navigator.sendBeacon('/api/today-state', new Blob([body], { type: 'application/json' }));
       return;
     }

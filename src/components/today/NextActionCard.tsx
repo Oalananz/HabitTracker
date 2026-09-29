@@ -60,7 +60,7 @@ export default function NextActionCard({ dayRecord, date }: NextActionCardProps)
       aria-label="Next Action"
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="material-symbols-outlined text-[16px] text-primary">bolt</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">bolt</span>
         <h2 className="font-label text-[11px] uppercase tracking-widest text-on-surface-variant font-bold">
           Next Action
         </h2>
@@ -77,7 +77,7 @@ export default function NextActionCard({ dayRecord, date }: NextActionCardProps)
             href="/ai-coach"
             className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/30 hover:border-primary/60 rounded-sm font-label text-xs text-primary transition-all"
           >
-            <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[14px]">auto_awesome</span>
             Plan Day
           </Link>
         </div>
@@ -87,7 +87,7 @@ export default function NextActionCard({ dayRecord, date }: NextActionCardProps)
           {nextPrayer && !nextPrayer.done && (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="material-symbols-outlined text-[20px] text-primary flex-shrink-0">mosque</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary flex-shrink-0">mosque</span>
                 <div className="min-w-0">
                   <p className="font-headline text-sm font-bold text-on-surface">
                     {nextPrayer.label}
@@ -129,7 +129,7 @@ export default function NextActionCard({ dayRecord, date }: NextActionCardProps)
               className={`flex items-center justify-between gap-3 ${nextPrayer && !nextPrayer.done ? 'border-t border-outline-variant/10 pt-3' : ''}`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="material-symbols-outlined text-[20px] text-on-surface-variant flex-shrink-0">task_alt</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-on-surface-variant flex-shrink-0">task_alt</span>
                 <div className="min-w-0">
                   <p className="font-headline text-sm font-bold text-on-surface truncate">{topTask.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">

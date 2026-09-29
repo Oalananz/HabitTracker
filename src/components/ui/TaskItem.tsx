@@ -176,7 +176,7 @@ export default function TaskItem({
         id={`task-toggle-${id}`}
       >
         {completed && (
-          <span className="material-symbols-outlined text-[14px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
             check
           </span>
         )}
@@ -195,12 +195,12 @@ export default function TaskItem({
           <div className="flex gap-1.5 flex-shrink-0 items-center">
             <LifeAreaBadge lifeArea={lifeArea} />
             {!completed && (
-              <span className={`px-1.5 py-0.5 bg-surface-container-lowest ${priorityColor} font-label text-[9px] uppercase rounded-[2px] border border-outline-variant/15`}>
+              <span className={`px-1.5 py-0.5 bg-surface-container-lowest ${priorityColor} font-label text-[10px] uppercase rounded-[2px] border border-outline-variant/15`}>
                 {priorityLabel}
               </span>
             )}
             {category && (
-              <span className="px-1.5 py-0.5 bg-surface-container-lowest text-on-surface-variant font-label text-[9px] uppercase rounded-[2px] border border-outline-variant/15">
+              <span className="px-1.5 py-0.5 bg-surface-container-lowest text-on-surface-variant font-label text-[10px] uppercase rounded-[2px] border border-outline-variant/15">
                 {category}
               </span>
             )}
@@ -218,9 +218,9 @@ export default function TaskItem({
             onClick={() => setIsEditing(true)}
             className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-sm hover:bg-primary/10"
             id={`task-edit-${id}`}
-            title="Edit task"
+            aria-label="Edit task"  title="Edit task"
           >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit</span>
           </button>
         )}
         {sourceType === 'manual' && onDelete && (
@@ -228,9 +228,9 @@ export default function TaskItem({
             onClick={() => onDelete(id)}
             className="text-on-surface-variant hover:text-error transition-colors p-1 rounded-sm hover:bg-error/10"
             id={`task-delete-${id}`}
-            title="Delete task"
+            aria-label="Delete task"  title="Delete task"
           >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">delete</span>
           </button>
         )}
       </div>

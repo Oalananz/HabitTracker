@@ -55,7 +55,7 @@ export default function SleepCard({ dayRecord, date }: SleepCardProps) {
           <span className="text-primary">&gt;</span> Sleep
         </h3>
         {met && logged && (
-          <span className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider">
+          <span className="font-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-[2px] uppercase tracking-wider">
             ✓ Target reached
           </span>
         )}
@@ -92,7 +92,7 @@ export default function SleepCard({ dayRecord, date }: SleepCardProps) {
             onClick={() => { setShowEntry(true); setInputHours(logged ? String(dayRecord.sleepHours) : ''); }}
             className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/20 hover:border-primary/40 rounded-sm font-label text-xs text-on-surface-variant hover:text-primary transition-all min-h-[36px]"
           >
-            <span className="material-symbols-outlined text-[14px]">{logged ? 'edit' : 'add'}</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[14px]">{logged ? 'edit' : 'add'}</span>
             {logged ? 'Edit' : 'Log sleep'}
           </button>
         </div>

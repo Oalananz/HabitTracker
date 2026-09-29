@@ -37,12 +37,12 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="resource-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="resource-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -53,12 +53,12 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="resource-form-url" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; URL
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="resource-form-url"
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -69,10 +69,10 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="resource-form-type" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TYPE
           </label>
-          <select
+          <select id="resource-form-type"
             value={type}
             onChange={(e) => setType(e.target.value as ResourceType)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -86,12 +86,12 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="resource-form-provider-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; PROVIDER (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="resource-form-provider-optional"
               type="text"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -102,10 +102,10 @@ export default function ResourceForm({ onSubmit, onCancel }: ResourceFormProps) 
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="resource-form-status" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; STATUS
           </label>
-          <select
+          <select id="resource-form-status"
             value={status}
             onChange={(e) => setStatus(e.target.value as ResourceStatus)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 text-on-surface text-sm font-body focus:border-primary/50 transition-colors appearance-none cursor-pointer"

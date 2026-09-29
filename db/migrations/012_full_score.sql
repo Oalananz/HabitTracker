@@ -1,6 +1,6 @@
 -- ================================================================
 -- Migration v5: Comprehensive daily score
--- Run in your Supabase SQL Editor AFTER migration_v3.
+-- Runs AFTER migration_v3.
 --
 -- Rebalances daily_score (still 0-10) to reflect ALL of the day's
 -- tracked data — every worship extra, discipline, sleep, focus, and a
@@ -76,7 +76,15 @@ $$ LANGUAGE plpgsql;
 
 -- ----------------------------------------------------------------
 -- 3. Extend upsert_day_record to accept p_tasks_done
+--    Drop the v3 overload first: with both present, any call that omits
+--    p_tasks_done matches two functions and fails as ambiguous.
 -- ----------------------------------------------------------------
+DROP FUNCTION IF EXISTS upsert_day_record(
+  uuid, date, numeric, boolean, boolean, boolean, boolean, boolean,
+  boolean, boolean, boolean, boolean, boolean, boolean, boolean, boolean,
+  boolean, boolean, numeric, numeric, numeric
+);
+
 CREATE OR REPLACE FUNCTION upsert_day_record(
   p_user_id         uuid,
   p_date            date,
@@ -140,4 +148,4 @@ BEGIN
     'newAchievements', v_achievements
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;

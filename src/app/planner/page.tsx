@@ -14,6 +14,7 @@ import type { TimelineEvent } from '@/components/planner/DayTimeline';
 import { downloadCsv } from '@/lib/csvExport';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import { getQueryParam } from '@/lib/queryParam';
 
 dayjs.extend(isoWeek);
 
@@ -54,7 +55,8 @@ export default function PlannerPage() {
     dayRecord, fetchDayRecord, updateDayRecord,
   } = useStore();
 
-  const [view, setView] = useState<ViewMode>('weekly');
+  // Deep-link: /planner?view=prayer opens straight into the Prayer tab
+  const [view, setView] = useState<ViewMode>(() => (getQueryParam('view') === 'prayer' ? 'prayer' : 'weekly'));
   const [weekAnchor, setWeekAnchor] = useState(() => dayjs().startOf('week'));
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'));
   const [showForm, setShowForm] = useState(false);
@@ -70,12 +72,6 @@ export default function PlannerPage() {
   const [editTimes, setEditTimes] = useState<Record<string, string>>({});
   const geoResolvedRef = useRef(false);
 
-  // Deep-link: /planner?view=prayer opens straight into the Prayer tab
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const v = new URLSearchParams(window.location.search).get('view');
-    if (v === 'prayer') setView('prayer');
-  }, []);
 
   // Derived week range (stable strings for deps)
   const weekStartStr = weekAnchor.startOf('week').format('YYYY-MM-DD');
@@ -382,7 +378,7 @@ export default function PlannerPage() {
               }`}
               id={`view-${v}`}
             >
-              {v === 'prayer' && <span className="material-symbols-outlined text-[14px]">mosque</span>}
+              {v === 'prayer' && <span aria-hidden="true" className="material-symbols-outlined text-[14px]">mosque</span>}
               {v}
             </button>
           ))}
@@ -392,8 +388,8 @@ export default function PlannerPage() {
         <div className="flex items-center gap-2 pl-4">
           {(view === 'daily' || view === 'prayer') && (
             <>
-              <button onClick={() => setPlannerDate(dayjs(plannerDate).subtract(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <button aria-label="Previous day" onClick={() => setPlannerDate(dayjs(plannerDate).subtract(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
               <input
                 type="date"
@@ -401,8 +397,8 @@ export default function PlannerPage() {
                 onChange={e => setPlannerDate(e.target.value)}
                 className="bg-surface-container-lowest border border-outline-variant/15 rounded-sm px-2 py-1 text-xs font-mono text-on-surface"
               />
-              <button onClick={() => setPlannerDate(dayjs(plannerDate).add(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              <button aria-label="Next day" onClick={() => setPlannerDate(dayjs(plannerDate).add(1, 'day').format('YYYY-MM-DD'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
               {plannerDate !== today && (
                 <button onClick={() => setPlannerDate(today)} className="text-xs text-on-surface-variant hover:text-primary transition-colors">
@@ -414,14 +410,14 @@ export default function PlannerPage() {
 
           {view === 'weekly' && (
             <>
-              <button onClick={goWeekPrev} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-prev">
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <button aria-label="Previous week" onClick={goWeekPrev} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-prev">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
               <span className="font-headline text-xs font-semibold text-on-surface min-w-[160px] text-center">
                 {weekStart.format('MMM D')} – {weekEnd.format('MMM D')}
               </span>
-              <button onClick={goWeekNext} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-next">
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              <button aria-label="Next week" onClick={goWeekNext} className="text-on-surface-variant hover:text-primary transition-colors p-1" id="week-next">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
               {!isCurrentWeek && (
                 <button onClick={goWeekToday} className="text-xs text-on-surface-variant hover:text-primary transition-colors">
@@ -433,14 +429,14 @@ export default function PlannerPage() {
 
           {view === 'monthly' && (
             <>
-              <button onClick={() => setCurrentMonth(m => m.subtract(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <button aria-label="Previous month" onClick={() => setCurrentMonth(m => m.subtract(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
               <span className="font-headline text-xs font-semibold text-on-surface min-w-[120px] text-center">
                 {currentMonth.format('MMM YYYY')}
               </span>
-              <button onClick={() => setCurrentMonth(m => m.add(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              <button aria-label="Next month" onClick={() => setCurrentMonth(m => m.add(1, 'month'))} className="text-on-surface-variant hover:text-primary transition-colors p-1">
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
             </>
           )}
@@ -450,7 +446,7 @@ export default function PlannerPage() {
         {view !== 'prayer' && (
           <div className="flex items-center gap-2 w-full sm:w-auto pl-4">
             <div className="relative flex-1 min-w-[180px]">
-              <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-outline">search</span>
+              <span aria-hidden="true" className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-outline">search</span>
               <input
                 type="text"
                 value={searchQuery}
@@ -509,9 +505,9 @@ export default function PlannerPage() {
                 setShowTimeEditor(!showTimeEditor);
               }}
               className="text-on-surface-variant hover:text-primary transition-colors p-1"
-              title="Edit prayer times"
+              aria-label="Edit prayer times"  title="Edit prayer times"
             >
-              <span className="material-symbols-outlined text-[20px]">schedule</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">schedule</span>
             </button>
           </div>
         )}
@@ -678,7 +674,7 @@ export default function PlannerPage() {
                         className="flex items-center justify-center gap-1 py-1.5 text-xs font-label text-on-surface-variant/60 hover:text-primary hover:bg-surface-container-low/30 transition-colors rounded-b-md border-t border-outline-variant/10"
                         title={`Add plan for ${day.format('ddd D')}`}
                       >
-                        <span className="material-symbols-outlined text-[12px]">add</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[12px]">add</span>
                         Add
                       </button>
                     </div>
@@ -725,7 +721,7 @@ export default function PlannerPage() {
                         </span>
                         <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
                           {dayPlans.slice(0, 3).map(p => (
-                            <div key={p.occurrenceKey || p.id} className={`text-[7px] font-label truncate px-1 py-0.5 rounded-[1px] ${
+                            <div key={p.occurrenceKey || p.id} className={`text-[10px] font-label truncate px-1 py-0.5 rounded-[1px] ${
                               p.status === 'completed' ? 'bg-primary/20 text-primary' :
                               p.status === 'in_progress' ? 'bg-tertiary/20 text-tertiary' :
                               p.status === 'cancelled' ? 'bg-error/15 text-error' :
@@ -735,7 +731,7 @@ export default function PlannerPage() {
                             </div>
                           ))}
                           {dayPlans.length > 3 && (
-                            <span className="text-[7px] text-outline font-mono">+{dayPlans.length - 3} more</span>
+                            <span className="text-[10px] text-outline font-mono">+{dayPlans.length - 3} more</span>
                           )}
                         </div>
                       </button>
@@ -752,7 +748,7 @@ export default function PlannerPage() {
               {/* All Prayers Complete Banner */}
               {isToday && allPrayersPerformed && (
                 <div className="border border-primary/40 bg-primary/5 rounded-sm px-4 py-3 flex items-center gap-2 animate-fade-in">
-                  <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>mosque</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>mosque</span>
                   <span className="text-sm text-primary font-medium">All prayers complete — worship layer secured ✓</span>
                 </div>
               )}
@@ -766,10 +762,10 @@ export default function PlannerPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                     {PRAYER_ORDER.map(prayer => (
                       <div key={prayer}>
-                        <label className="text-xs text-on-surface-variant/80 block mb-1">
+                        <label htmlFor={`prayer-time-${prayer}`} className="text-xs text-on-surface-variant/80 block mb-1">
                           {PRAYER_LABELS[prayer]}
                         </label>
-                        <input
+                        <input id={`prayer-time-${prayer}`}
                           type="time"
                           value={editTimes[prayer] || (prayerTimes ? prayerTimes[prayer] : '')}
                           onChange={(e) => setEditTimes({ ...editTimes, [prayer]: e.target.value })}
@@ -804,7 +800,7 @@ export default function PlannerPage() {
                       {/* Prayer Header */}
                       <div className={`bg-gradient-to-r ${meta.gradient} px-5 py-3 flex justify-between items-center`}>
                         <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[22px] text-on-surface-variant">
+                          <span aria-hidden="true" className="material-symbols-outlined text-[22px] text-on-surface-variant">
                             {meta.icon}
                           </span>
                           <div>
@@ -836,17 +832,17 @@ export default function PlannerPage() {
                               }`}
                               title="Mark prayer as performed"
                             >
-                              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: dayRecord[prayerToField[prayer]] ? "'FILL' 1" : "'FILL' 0" }}>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: dayRecord[prayerToField[prayer]] ? "'FILL' 1" : "'FILL' 0" }}>
                                 mosque
                               </span>
                               {dayRecord[prayerToField[prayer]] ? 'Performed ✓' : 'Mark done'}
                             </button>
                           )}
-                          <button
+                          <button aria-label="Add plan to this prayer block"
                             onClick={() => setShowFormFor(showFormFor === prayer ? null : prayer)}
                             className="text-on-surface-variant hover:text-primary transition-colors"
                           >
-                            <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[20px]">add_circle</span>
                           </button>
                         </div>
                       </div>
@@ -918,7 +914,7 @@ export default function PlannerPage() {
                   <div className="rounded-md border border-outline-variant/15 overflow-hidden">
                     <div className="bg-surface-container-low px-5 py-3 flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[22px] text-outline">event_note</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[22px] text-outline">event_note</span>
                         <div>
                           <h3 className="font-headline text-sm font-semibold text-on-surface-variant">
                             Unassigned

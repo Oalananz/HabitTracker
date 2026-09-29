@@ -41,22 +41,26 @@ export default function SettingsPage() {
   const [sleepGoal, setSleepGoal] = useState(7);
   const [alerts, setAlerts] = useState(true);
 
-  useEffect(() => {
+  // Re-seed the profile form whenever a different user object arrives
+  // (adjusting state during render, not in an effect).
+  const [profileSource, setProfileSource] = useState<typeof user | undefined>(undefined);
+  if (profileSource !== user) {
+    setProfileSource(user);
     setUsername(user?.username || '');
     setStatusMsg(user?.statusMessage || '');
-  }, [user]);
+  }
 
   useEffect(() => {
     void fetchUserPreferences();
   }, [fetchUserPreferences]);
 
-  useEffect(() => {
-    if (userPreferences) {
-      setFocusGoal(userPreferences.focusGoalHours);
-      setSleepGoal(userPreferences.sleepGoalHours);
-      setAlerts(userPreferences.achievementAlerts);
-    }
-  }, [userPreferences]);
+  const [prefsSource, setPrefsSource] = useState<typeof userPreferences>(null);
+  if (userPreferences && prefsSource !== userPreferences) {
+    setPrefsSource(userPreferences);
+    setFocusGoal(userPreferences.focusGoalHours);
+    setSleepGoal(userPreferences.sleepGoalHours);
+    setAlerts(userPreferences.achievementAlerts);
+  }
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -66,12 +70,12 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), statusMessage: statusMsg.trim() || null }),
       });
-      if (!res.ok) throw new Error('Failed to save');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to save profile');
       setUser(data.user);
       addToast('Profile saved', 'success', 2000);
-    } catch {
-      addToast('Failed to save profile', 'error');
+    } catch (err) {
+      addToast((err as Error).message, 'error');
     } finally {
       setSaving(false);
     }
@@ -128,7 +132,7 @@ export default function SettingsPage() {
                 : 'text-on-surface-variant/70 border-transparent hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{tab.icon}</span>
             {tab.label}
           </button>
         ))}
@@ -162,12 +166,12 @@ export default function SettingsPage() {
         <Card className="max-w-lg space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Focus goal (hours/day)</label>
-              <Input type="number" min={0} max={24} step={0.5} value={focusGoal} onChange={(e) => setFocusGoal(parseFloat(e.target.value) || 0)} />
+              <label htmlFor="page-focus-goal-hours-day" className="text-xs text-on-surface-variant/80 block mb-1.5">Focus goal (hours/day)</label>
+              <Input id="page-focus-goal-hours-day" type="number" min={0} max={24} step={0.5} value={focusGoal} onChange={(e) => setFocusGoal(parseFloat(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="text-xs text-on-surface-variant/80 block mb-1.5">Sleep goal (hours/night)</label>
-              <Input type="number" min={0} max={24} step={0.5} value={sleepGoal} onChange={(e) => setSleepGoal(parseFloat(e.target.value) || 0)} />
+              <label htmlFor="page-sleep-goal-hours-night" className="text-xs text-on-surface-variant/80 block mb-1.5">Sleep goal (hours/night)</label>
+              <Input id="page-sleep-goal-hours-night" type="number" min={0} max={24} step={0.5} value={sleepGoal} onChange={(e) => setSleepGoal(parseFloat(e.target.value) || 0)} />
             </div>
           </div>
           <div className="flex justify-between items-center">
@@ -185,7 +189,7 @@ export default function SettingsPage() {
 
       {activeTab === 'life-areas' && (
         <Card className="max-w-lg space-y-4">
-          <p className="text-sm text-on-surface-variant">Areas you're currently focused on. Others stay hidden from quick-add menus.</p>
+          <p className="text-sm text-on-surface-variant">Areas you&apos;re currently focused on. Others stay hidden from quick-add menus.</p>
           <div className="flex flex-wrap gap-1.5">
             {LIFE_AREAS.map((area) => {
               const on = focusAreas.length === 0 || focusAreas.includes(area.id);
@@ -213,12 +217,12 @@ export default function SettingsPage() {
       {activeTab === 'data' && (
         <Card className="max-w-lg space-y-3">
           <div className="flex items-center gap-2 text-primary">
-            <span className="material-symbols-outlined text-[20px]">cloud_done</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[20px]">cloud_done</span>
             <span className="text-sm font-medium text-on-surface">Auto-sync is on</span>
           </div>
           <p className="text-sm text-on-surface-variant">
             Your data saves locally first and syncs to the cloud automatically — when the
-            app goes idle, when you switch tabs, or as soon as you're back online. There's
+            app goes idle, when you switch tabs, or as soon as you&apos;re back online. There&apos;s
             nothing to back up manually.
           </p>
         </Card>
@@ -237,7 +241,7 @@ export default function SettingsPage() {
         <Card className="max-w-lg space-y-3">
           <h3 className="text-sm font-medium text-on-surface">Clear local cache & re-sync</h3>
           <p className="text-sm text-on-surface-variant">
-            Clears this device's offline cache and re-syncs from the server. Your account
+            Clears this device&apos;s offline cache and re-syncs from the server. Your account
             data is not deleted.
           </p>
           <Button variant="secondary" onClick={handleClearLocalCache}>
@@ -250,7 +254,7 @@ export default function SettingsPage() {
       <div className="flex justify-between items-center pt-4 border-t border-outline-variant/10">
         <div className="text-xs text-on-surface-variant/50">Version 2.0.0</div>
         <button onClick={handleLogout} className="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors text-sm" id="settings-logout">
-          <span className="material-symbols-outlined text-[16px]">logout</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">logout</span>
           Log out
         </button>
       </div>

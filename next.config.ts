@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['@supabase/ssr'],
+  // Self-contained server bundle for the Docker image (see Dockerfile).
+  output: 'standalone',
   async redirects() {
     return [
       {

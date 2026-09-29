@@ -20,7 +20,7 @@ function AreaCard({ label, area, reason, tone }: { label: string; area?: string;
   const color = lifeAreaColor(lifeAreaLabelToId(area));
   return (
     <div className="bg-surface-container-lowest rounded-sm p-3 border" style={{ borderColor: `${color}33` }}>
-      <div className="font-mono text-[9px] uppercase tracking-widest" style={{ color: tone }}>{label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-widest" style={{ color: tone }}>{label}</div>
       <div className="font-headline text-sm font-bold text-on-surface mt-0.5">{area}</div>
       {reason && <p className="font-body text-[11px] text-on-surface-variant mt-1">{reason}</p>}
     </div>
@@ -36,7 +36,7 @@ export default function AiWeeklyReviewPreview({ review }: { review: WeeklyReview
         <div className="flex-1">{review.summary && <p className="font-body text-sm text-on-surface">{review.summary}</p>}</div>
         <div className="text-right flex-shrink-0">
           <div className={`font-headline text-4xl font-black tracking-tighter ${scoreColor}`}>{review.score}<span className="text-lg text-on-surface-variant/40">/10</span></div>
-          <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant">SCORE</div>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">SCORE</div>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export default function AiWeeklyReviewPreview({ review }: { review: WeeklyReview
 
       {review.suggestedWeeklyTheme && (
         <div className="bg-primary/5 border border-primary/20 rounded-sm p-3 text-center">
-          <div className="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant mb-1">SUGGESTED THEME</div>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">SUGGESTED THEME</div>
           <div className="font-headline text-base font-bold text-primary">{review.suggestedWeeklyTheme}</div>
         </div>
       )}

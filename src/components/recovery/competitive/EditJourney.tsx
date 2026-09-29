@@ -58,10 +58,10 @@ export default function EditJourney({ details, onClose, onSave }: EditJourneyPro
         <div className="space-y-4">
           {/* Journey Name */}
           <div>
-            <label className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            <label htmlFor="edit-journey-journey-name" className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
               Journey Name *
             </label>
-            <input
+            <input id="edit-journey-journey-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -73,10 +73,10 @@ export default function EditJourney({ details, onClose, onSave }: EditJourneyPro
 
           {/* Description */}
           <div>
-            <label className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            <label htmlFor="edit-journey-description" className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
               Description
             </label>
-            <textarea
+            <textarea id="edit-journey-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isSaving}
@@ -88,10 +88,10 @@ export default function EditJourney({ details, onClose, onSave }: EditJourneyPro
 
           {/* Rules Text */}
           <div>
-            <label className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            <label htmlFor="edit-journey-rules-summary" className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
               Rules Summary
             </label>
-            <textarea
+            <textarea id="edit-journey-rules-summary"
               value={rulesText}
               onChange={(e) => setRulesText(e.target.value)}
               disabled={isSaving}
@@ -104,10 +104,10 @@ export default function EditJourney({ details, onClose, onSave }: EditJourneyPro
 
           {/* Consequence Rules */}
           <div>
-            <label className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            <label htmlFor="edit-journey-consequence-rules-notes" className="block font-label text-xs uppercase tracking-wider text-on-surface-variant mb-2">
               Consequence Rules Notes
             </label>
-            <textarea
+            <textarea id="edit-journey-consequence-rules-notes"
               value={consequenceRules}
               onChange={(e) => setConsequenceRules(e.target.value)}
               disabled={isSaving}

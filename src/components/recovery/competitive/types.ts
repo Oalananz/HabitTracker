@@ -61,7 +61,6 @@ export interface JourneyParticipant {
   journeyId: string;
   userId: string;
   username: string;
-  email: string;
   role: 'owner' | 'member';
   status: 'active' | 'left' | 'failed';
   joinedAt: string;
@@ -75,7 +74,6 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   username: string;
-  email: string;
   role: 'owner' | 'member';
   status: 'active' | 'left' | 'failed';
   currentStreak: number;

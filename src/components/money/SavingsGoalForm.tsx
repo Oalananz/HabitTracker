@@ -42,12 +42,12 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="savings-goal-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="savings-goal-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -58,12 +58,12 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="savings-goal-form-target-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TARGET_AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="savings-goal-form-target-amount"
               type="number"
               min={0}
               step="0.01"
@@ -76,12 +76,12 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="savings-goal-form-current-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENT_AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="savings-goal-form-current-amount"
               type="number"
               min={0}
               step="0.01"
@@ -94,12 +94,12 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="savings-goal-form-currency" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENCY
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="savings-goal-form-currency"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
@@ -110,12 +110,12 @@ export default function SavingsGoalForm({ onSubmit, onCancel, initial }: Savings
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="savings-goal-form-target-date-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TARGET_DATE (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="savings-goal-form-target-date-optional"
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}

@@ -1,6 +1,5 @@
 -- =====================================================
 -- Add missing columns to plans table
--- Run this in the Supabase SQL Editor
 -- =====================================================
 
 ALTER TABLE plans

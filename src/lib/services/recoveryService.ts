@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 
 type JourneyRow = Database['public']['Tables']['recovery_journeys']['Row'];
@@ -9,7 +9,7 @@ type FailureRow = Database['public']['Tables']['failure_logs']['Row'];
 // =====================================================
 
 export async function getJourneys(userId: string) {
-  const { data: journeys, error } = await supabase
+  const { data: journeys, error } = await db
     .from('recovery_journeys')
     .select('*')
     .eq('user_id', userId)
@@ -22,7 +22,7 @@ export async function getJourneys(userId: string) {
 
   const journeyIds = journeyRows.map((journey) => journey.id);
 
-  const { data: failureRows, error: failureError } = await supabase
+  const { data: failureRows, error: failureError } = await db
     .from('failure_logs')
     .select('journey_id')
     .eq('user_id', userId)
@@ -43,7 +43,7 @@ export async function getJourneys(userId: string) {
 }
 
 export async function getJourney(journeyId: string, userId: string) {
-  const { data: journey, error } = await supabase
+  const { data: journey, error } = await db
     .from('recovery_journeys')
     .select('*')
     .eq('id', journeyId)
@@ -52,7 +52,7 @@ export async function getJourney(journeyId: string, userId: string) {
 
   if (error) throw new Error(error.message);
 
-  const { count } = await supabase
+  const { count } = await db
     .from('failure_logs')
     .select('*', { count: 'exact', head: true })
     .eq('journey_id', journeyId);
@@ -70,7 +70,7 @@ export async function createJourney(
   const startDate = new Date(data.startTime);
   if (isNaN(startDate.getTime())) throw new Error('Invalid start time');
 
-  const { data: journey, error } = await supabase
+  const { data: journey, error } = await db
     .from('recovery_journeys')
     .insert({
       user_id: userId,
@@ -99,7 +99,7 @@ export async function updateJourney(
     updateData.start_time = startDate.toISOString();
   }
 
-  const { data: journey, error } = await supabase
+  const { data: journey, error } = await db
     .from('recovery_journeys')
     .update(updateData)
     .eq('id', journeyId)
@@ -113,7 +113,7 @@ export async function updateJourney(
 
 export async function deleteJourney(journeyId: string, userId: string) {
   // Failure logs cascade-delete automatically
-  const { error } = await supabase
+  const { error } = await db
     .from('recovery_journeys')
     .delete()
     .eq('id', journeyId)
@@ -124,7 +124,7 @@ export async function deleteJourney(journeyId: string, userId: string) {
 
 export async function recordJourneyFailure(journeyId: string, userId: string, note?: string) {
   // Insert failure log
-  const { data: log, error: logError } = await supabase
+  const { data: log, error: logError } = await db
     .from('failure_logs')
     .insert({
       user_id: userId,
@@ -138,7 +138,7 @@ export async function recordJourneyFailure(journeyId: string, userId: string, no
   if (logError) throw new Error(logError.message);
 
   // Fetch the journey without resetting start time
-  const { data: journey, error: journeyError } = await supabase
+  const { data: journey, error: journeyError } = await db
     .from('recovery_journeys')
     .select('*')
     .eq('id', journeyId)
@@ -155,14 +155,14 @@ export async function recordJourneyFailure(journeyId: string, userId: string, no
 
 export async function resetJourney(journeyId: string, userId: string, clearLogs: boolean = false) {
   if (clearLogs) {
-    await supabase
+    await db
       .from('failure_logs')
       .delete()
       .eq('journey_id', journeyId)
       .eq('user_id', userId);
   }
 
-  const { data: journey, error } = await supabase
+  const { data: journey, error } = await db
     .from('recovery_journeys')
     .update({ start_time: new Date().toISOString() })
     .eq('id', journeyId)
@@ -179,7 +179,7 @@ export async function resetJourney(journeyId: string, userId: string, clearLogs:
 // =====================================================
 
 export async function getJourneyFailures(journeyId: string, userId: string, limit: number = 50) {
-  const { data: logs, error } = await supabase
+  const { data: logs, error } = await db
     .from('failure_logs')
     .select('*')
     .eq('journey_id', journeyId)
@@ -192,7 +192,7 @@ export async function getJourneyFailures(journeyId: string, userId: string, limi
 }
 
 export async function getAllFailures(userId: string, limit: number = 50) {
-  const { data: logs, error } = await supabase
+  const { data: logs, error } = await db
     .from('failure_logs')
     .select('*')
     .eq('user_id', userId)
@@ -204,7 +204,7 @@ export async function getAllFailures(userId: string, limit: number = 50) {
 }
 
 export async function deleteFailureLog(id: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await db
     .from('failure_logs')
     .delete()
     .eq('id', id)
@@ -218,13 +218,13 @@ export async function deleteFailureLog(id: string, userId: string) {
 // =====================================================
 
 export async function getRecoveryState(userId: string) {
-  const { data: state } = await supabase
+  const { data: state } = await db
     .from('recovery_states')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
 
-  const { count: failureCount } = await supabase
+  const { count: failureCount } = await db
     .from('failure_logs')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);

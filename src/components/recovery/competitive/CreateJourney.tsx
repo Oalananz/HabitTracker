@@ -129,10 +129,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-journey-name" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Journey Name
           </label>
-          <input
+          <input id="create-journey-journey-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-sm text-on-surface"
@@ -140,10 +140,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
           />
         </div>
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-visibility" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Visibility
           </label>
-          <select
+          <select id="create-journey-visibility"
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as JourneyVisibility)}
             className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2 text-sm text-on-surface"
@@ -155,10 +155,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
       </div>
 
       <div>
-        <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+        <label htmlFor="create-journey-description" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
           Description
         </label>
-        <textarea
+        <textarea id="create-journey-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
@@ -169,10 +169,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-start-date" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Start Date
           </label>
-          <input
+          <input id="create-journey-start-date"
             type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -180,10 +180,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
           />
         </div>
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-end-date-optional" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             End Date (optional)
           </label>
-          <input
+          <input id="create-journey-end-date-optional"
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -191,10 +191,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
           />
         </div>
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-max-allowed-failures" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Max Allowed Failures
           </label>
-          <input
+          <input id="create-journey-max-allowed-failures"
             type="number"
             min={0}
             value={maxFailures}
@@ -207,10 +207,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-rule-text-summary" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Rule Text Summary
           </label>
-          <textarea
+          <textarea id="create-journey-rule-text-summary"
             value={rulesText}
             onChange={(e) => setRulesText(e.target.value)}
             rows={3}
@@ -219,10 +219,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
           />
         </div>
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-consequence-rule-notes" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Consequence Rule Notes
           </label>
-          <textarea
+          <textarea id="create-journey-consequence-rule-notes"
             value={consequenceRules}
             onChange={(e) => setConsequenceRules(e.target.value)}
             rows={3}
@@ -234,10 +234,10 @@ export default function CreateJourney({ onCreateJourney }: CreateJourneyProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
-          <label className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
+          <label htmlFor="create-journey-failure-limit-week" className="font-label text-[11px] uppercase tracking-wider text-on-surface-variant block mb-1.5">
             Failure Limit / Week
           </label>
-          <input
+          <input id="create-journey-failure-limit-week"
             type="number"
             min={1}
             value={noMoreThanFailuresPerWeek}

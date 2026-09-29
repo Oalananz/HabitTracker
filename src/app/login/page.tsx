@@ -1,45 +1,20 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
-import { createClient } from '@/utils/supabase/client';
 import Logo from '@/components/ui/Logo';
 import TerminalWindow from '@/components/ui/TerminalWindow';
 
-function LoginContent() {
+export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, register } = useStore();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const authCallbackError = searchParams.get('error') === 'auth-callback-failed'
-    ? 'Authentication failed. Please try again.'
-    : '';
-
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError((err as Error).message);
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,11 +29,7 @@ function LoginContent() {
       }
       router.push('/today');
     } catch (err) {
-      if ((err as Error).message.includes('Check your email')) {
-        setMessage('Registration successful! Please check your email for the confirmation link.');
-      } else {
-        setError((err as Error).message);
-      }
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -86,18 +57,11 @@ function LoginContent() {
               <span className="text-secondary">STATUS:</span>{' '}
               Awaiting credentials...
             </div>
-            {(error || authCallbackError) && (
+            {error && (
               <div className="text-error animate-fade-in">
                 <span className="text-outline">[err]</span>{' '}
                 <span className="text-error">DENIED:</span>{' '}
-                {error || authCallbackError}
-              </div>
-            )}
-            {message && (
-              <div className="text-primary animate-fade-in">
-                <span className="text-outline">[sys]</span>{' '}
-                <span className="text-primary">INFO:</span>{' '}
-                {message}
+                {error}
               </div>
             )}
           </div>
@@ -105,7 +69,7 @@ function LoginContent() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
-              <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+              <label htmlFor="login-email" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
                 &gt; EMAIL_ADDRESS
               </label>
               <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
@@ -125,7 +89,7 @@ function LoginContent() {
             {/* Username Field (Register only) */}
             {isRegister && (
               <div className="animate-fade-in">
-                <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+                <label htmlFor="login-username" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
                   &gt; USERNAME_ALIAS
                 </label>
                 <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
@@ -145,7 +109,7 @@ function LoginContent() {
 
             {/* Password Field */}
             <div>
-              <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+              <label htmlFor="login-password" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
                 &gt; ACCESS_KEY
               </label>
               <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
@@ -180,23 +144,6 @@ function LoginContent() {
             </button>
           </form>
 
-          {/* Google OAuth Button */}
-          <div className="mt-4">
-            <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full bg-surface-container-high text-on-surface font-headline font-bold py-3 px-4 rounded-sm hover:bg-surface-container-highest transition-all disabled:opacity-50 uppercase tracking-wider text-sm flex items-center justify-center gap-2 border border-outline-variant/30"
-              type="button"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              AUTHENTICATE VIA GOOGLE
-            </button>
-          </div>
 
           {/* Toggle Register/Login */}
           <div className="mt-6 text-center">
@@ -228,12 +175,5 @@ function LoginContent() {
           </div>
       </TerminalWindow>
     </div>
-  );
-}
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center p-4 text-primary font-mono text-xs animate-pulse">Loading system protocols...</div>}>
-      <LoginContent />
-    </Suspense>
   );
 }

@@ -40,7 +40,7 @@ export default function StreakMatrix({ userStats }: StreakMatrixProps) {
             <div key={row.label} className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[15px] text-on-surface-variant">{row.icon}</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-on-surface-variant">{row.icon}</span>
                   <span className="font-mono text-[10px] uppercase tracking-wide text-on-surface-variant">{row.label}</span>
                 </div>
                 <div className="flex items-center gap-3">

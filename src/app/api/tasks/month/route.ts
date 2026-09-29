@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dayjs from 'dayjs';
 import { requireAuthId } from '@/lib/auth';
 import { getTaskSummaryForRange } from '@/lib/services/taskService';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,10 +27,6 @@ export async function GET(request: NextRequest) {
       summary,
     });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/tasks/month error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/tasks/month');
   }
 }

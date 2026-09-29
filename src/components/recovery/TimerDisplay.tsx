@@ -28,7 +28,7 @@ export default function TimerDisplay({ startTime, now }: TimerDisplayProps) {
       {/* Header */}
       <div className="px-5 py-3 flex justify-between items-center border-b border-outline-variant/10">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-secondary">timer</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">timer</span>
           <span className="font-mono text-xs text-on-surface-variant">
             &gt; system/timer --since=&apos;{dayjs(startTime).format('YYYY-MM-DD')}&apos;
           </span>

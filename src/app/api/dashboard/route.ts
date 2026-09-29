@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import { calculateMetrics } from '@/lib/services/dashboardService';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET() {
   try {
@@ -10,10 +11,6 @@ export async function GET() {
     response.headers.set('Cache-Control', 'private, s-maxage=30, stale-while-revalidate=120');
     return response;
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/dashboard error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/dashboard');
   }
 }

@@ -76,7 +76,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
   const [priority,    setPriority]    = useState(initialData?.priority || 'nominal');
   const [category,    setCategory]    = useState(initialData?.category || '');
   const [notes,       setNotes]       = useState(initialData?.notes || '');
-  const [startDate,   setStartDate]   = useState(initialData?.startDate || new Date().toISOString().split('T')[0]);
+  const [startDate,   setStartDate]   = useState(initialData?.startDate || dayjs().format('YYYY-MM-DD'));
   const [startTime,   setStartTime]   = useState(initialData?.startTime || '');
   const [endDate,     setEndDate]     = useState(initialData?.endDate || '');
   const [endTime,     setEndTime]     = useState(initialData?.endTime || '');
@@ -139,16 +139,16 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
             {isEdit ? 'Edit Plan' : 'New Plan'}
           </span>
         </div>
-        <button onClick={onCancel} className="text-on-surface-variant hover:text-on-surface transition-colors p-1">
-          <span className="material-symbols-outlined text-[18px]">close</span>
+        <button aria-label="Close" onClick={onCancel} className="text-on-surface-variant hover:text-on-surface transition-colors p-1">
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         {/* Title */}
         <div>
-          <label className={labelCls}>Title *</label>
-          <input
+          <label htmlFor="plan-form-title" className={labelCls}>Title *</label>
+          <input id="plan-form-title"
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
@@ -161,8 +161,8 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
 
         {/* Description */}
         <div>
-          <label className={labelCls}>Description</label>
-          <textarea
+          <label htmlFor="plan-form-description" className={labelCls}>Description</label>
+          <textarea id="plan-form-description"
             value={description}
             onChange={e => setDescription(e.target.value)}
             className={`${inputCls} resize-none`}
@@ -174,20 +174,20 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         {/* Row 1: Type · Status · Priority */}
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={labelCls}>Type</label>
-            <select value={planType} onChange={e => { setPlanType(e.target.value); if (e.target.value !== 'weekly') setSelectedDays([]); }} className={selectCls}>
+            <label htmlFor="plan-form-type" className={labelCls}>Type</label>
+            <select id="plan-form-type" value={planType} onChange={e => { setPlanType(e.target.value); if (e.target.value !== 'weekly') setSelectedDays([]); }} className={selectCls}>
               {PLAN_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelCls}>Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} className={selectCls}>
+            <label htmlFor="plan-form-status" className={labelCls}>Status</label>
+            <select id="plan-form-status" value={status} onChange={e => setStatus(e.target.value)} className={selectCls}>
               {STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelCls}>Priority</label>
-            <select value={priority} onChange={e => setPriority(e.target.value)} className={selectCls}>
+            <label htmlFor="plan-form-priority" className={labelCls}>Priority</label>
+            <select id="plan-form-priority" value={priority} onChange={e => setPriority(e.target.value)} className={selectCls}>
               {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
@@ -196,22 +196,22 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         {/* Row 2: Category · Prayer Block */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>Category</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className={selectCls}>
+            <label htmlFor="plan-form-category" className={labelCls}>Category</label>
+            <select id="plan-form-category" value={category} onChange={e => setCategory(e.target.value)} className={selectCls}>
               <option value="">None</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelCls}>Life Area</label>
-            <select value={lifeArea} onChange={e => setLifeArea(e.target.value)} className={selectCls}>
+            <label htmlFor="plan-form-life-area" className={labelCls}>Life Area</label>
+            <select id="plan-form-life-area" value={lifeArea} onChange={e => setLifeArea(e.target.value)} className={selectCls}>
               <option value="">Unassigned</option>
               {LIFE_AREAS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelCls}>Prayer Block</label>
-            <select value={prayerBlock} onChange={e => setPrayerBlock(e.target.value)} className={selectCls}>
+            <label htmlFor="plan-form-prayer-block" className={labelCls}>Prayer Block</label>
+            <select id="plan-form-prayer-block" value={prayerBlock} onChange={e => setPrayerBlock(e.target.value)} className={selectCls}>
               {PRAYER_BLOCKS.map(pb => (
                 <option key={pb.value} value={pb.value}>{pb.emoji ? `${pb.emoji} ` : ''}{pb.label}</option>
               ))}
@@ -222,8 +222,8 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         {/* Day of week (weekly type only) */}
         {planType === 'weekly' && (
           <div>
-            <label className={labelCls}>Days of Week</label>
-            <div className="flex gap-1">
+            <p id="plan-days-label" className={labelCls}>Days of Week</p>
+            <div role="group" aria-labelledby="plan-days-label" className="flex gap-1">
               {DAYS_OF_WEEK.map(d => (
                 <button
                   type="button"
@@ -249,12 +249,12 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
         {/* Row 3: Dates */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>Start Date *</label>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputCls} required />
+            <label htmlFor="plan-form-start-date" className={labelCls}>Start Date *</label>
+            <input id="plan-form-start-date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputCls} required />
           </div>
           <div>
-            <label className={labelCls}>End Date</label>
-            <input type="date" value={endDate} min={startDate} onChange={e => setEndDate(e.target.value)} className={inputCls} />
+            <label htmlFor="plan-form-end-date" className={labelCls}>End Date</label>
+            <input id="plan-form-end-date" type="date" value={endDate} min={startDate} onChange={e => setEndDate(e.target.value)} className={inputCls} />
           </div>
         </div>
 
@@ -264,7 +264,7 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
           onClick={() => setShowAdvanced(v => !v)}
           className="flex items-center gap-1.5 text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors"
         >
-          <span className="material-symbols-outlined text-[14px]">{showAdvanced ? 'expand_less' : 'expand_more'}</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[14px]">{showAdvanced ? 'expand_less' : 'expand_more'}</span>
           {showAdvanced ? 'Hide' : 'Show'} time &amp; notes
         </button>
 
@@ -273,19 +273,19 @@ export default function PlanForm({ onSubmit, onCancel, initialData, isEdit }: Pl
             {/* Times */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Start Time</label>
-                <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputCls} />
+                <label htmlFor="plan-form-start-time" className={labelCls}>Start Time</label>
+                <input id="plan-form-start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>End Time</label>
-                <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputCls} />
+                <label htmlFor="plan-form-end-time" className={labelCls}>End Time</label>
+                <input id="plan-form-end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputCls} />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className={labelCls}>Notes</label>
-              <textarea
+              <label htmlFor="plan-form-notes" className={labelCls}>Notes</label>
+              <textarea id="plan-form-notes"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 className={`${inputCls} resize-none`}

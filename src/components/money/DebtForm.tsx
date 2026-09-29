@@ -52,12 +52,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-title" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TITLE
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -68,12 +68,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-total-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; TOTAL_AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-total-amount"
               type="number"
               min={0}
               step="0.01"
@@ -86,12 +86,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-remaining-amount" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; REMAINING_AMOUNT
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-remaining-amount"
               type="number"
               min={0}
               step="0.01"
@@ -104,12 +104,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-monthly-payment-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; MONTHLY_PAYMENT (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-monthly-payment-optional"
               type="number"
               min={0}
               step="0.01"
@@ -122,12 +122,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-due-date-optional" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; DUE_DATE (optional)
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-due-date-optional"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
@@ -137,12 +137,12 @@ export default function DebtForm({ onSubmit, onCancel, initial }: DebtFormProps)
         </div>
 
         <div>
-          <label className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
+          <label htmlFor="debt-form-currency" className="font-label text-xs uppercase tracking-widest text-on-surface-variant block mb-2">
             &gt; CURRENCY
           </label>
           <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-sm px-3 py-2.5 flex items-center gap-2 focus-within:border-primary/50 transition-colors">
             <span className="text-primary font-mono text-sm">&gt;</span>
-            <input
+            <input id="debt-form-currency"
               type="text"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}

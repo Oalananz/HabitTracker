@@ -7,7 +7,7 @@
 
   Track discipline, worship, recovery, focus, and habits — all in one place. Online or offline.
 
-  <sub>Next.js 16 · TypeScript · Supabase · Tailwind CSS v4 · Offline-first PWA</sub>
+  <sub>Next.js 16 · TypeScript · PostgreSQL · Docker · Tailwind CSS v4 · Offline-first PWA</sub>
 </div>
 
 ---
@@ -22,16 +22,16 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 
 ### 🧠 Daily Discipline System (v2.0)
 - **Day Record** — One unified record per day capturing focus, worship, discipline, and sleep. Auto-scored 0–10 every time it's updated.
-- **DayStatusBanner** — Green / yellow / red status bar: `DAY SECURED` (≥8), `IN PROGRESS` (4–7), `NOT SECURED` (<4 after 8pm).
-- **DisciplineCard** — 4-layer tracking panel:
-  - **FOCUS_LAYER** — Log hours with +1h/+2h/+4h buttons, custom input, and a terminal block-bar progress display.
-  - **WORSHIP_LAYER** — Toggle all 5 daily prayers (Fajr/Dhuhr/Asr/Maghrib/Isha) individually or all at once, plus Quran, Dhikr (morning/evening), Night Prayer, and 12 Sunnah Rakahs.
-  - **DISCIPLINE_LAYER** — No Reels / No Masturbation / Low Sugar / No Music / No Yapping toggles, each showing journey-linked streak badges.
-  - **SLEEP_LAYER** — Sleep hour stepper with goal progress bar.
+- **Today page** — a focused daily command center:
+  - **FocusTimeCard** — log focus hours against your daily goal.
+  - **WorshipCard** — all 5 daily prayers (Fajr/Dhuhr/Asr/Maghrib/Isha), plus Quran, Dhikr (morning/evening), Night Prayer, and 12 Sunnah Rakahs.
+  - **RecoveryTodayCard** — No Reels / No Masturbation / Low Sugar / No Music / No Yapping toggles with journey-linked streaks.
+  - **SleepCard** — sleep hours against your sleep goal.
+  - **TopPrioritiesCard / EveningReviewCard** — the day's top priorities and an end-of-day review.
 - **ScoreDisplay** — Live 0–10 score with per-category point breakdown and streak counters.
 - **ActivityLog** — Terminal-style scrolling event log of all actions taken today.
 
-### 🏆 Achievements (42 Total)
+### 🏆 Achievements (47 Total)
 - 6 categories: STREAK / SCORE / WORSHIP / FOCUS / DISCIPLINE / COMPOUND
 - 5 rarity tiers: COMMON → UNCOMMON → RARE → EPIC → LEGENDARY
 - Progress bars for locked achievements, unlock dates for completed ones
@@ -55,7 +55,7 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 - **TODAY CLEAN ✓** / **FAILURE LOGGED ✗** status tag on each journey card
 - Competitive shared journeys — join, leave, compare against other participants
 
-### 🕌 Prayer Planner
+### 🕌 Prayer Planner (Planner → Prayer view)
 - Day plans organized by prayer block (Fajr / Dhuhr / Asr / Maghrib / Isha)
 - Real prayer times via browser geolocation (falls back to stored defaults)
 - **PERFORMED ✓** toggle on each prayer block — synced directly with the day record
@@ -72,10 +72,10 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 - Trend charts and completion rates
 
 ### 📅 Calendar / History
-- Month view with daily score and completion indicators
+- Planner month view with plans per day; dashboard heatmap and 7-day report for history
 
 ### 🔐 Auth
-- Supabase Auth (email + Google OAuth) with secure server-side sessions
+- Email + password (scrypt-hashed) with HTTP-only, database-backed sessions
 
 ### 📡 Offline-first PWA
 - Local IndexedDB cache (Dexie), sync queue, and service worker
@@ -90,7 +90,7 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 | All 5 prayers done | +2 |
 | Quran + at least one Dhikr | +1 |
 | Night prayer + 12 sunnah rakahs | +1 |
-| Discipline (all recovery journeys clean today) | +2 |
+| Discipline (No Reels + No Masturbation + No Music) | +2 |
 | Sleep ≥ goal hours | +1 |
 | All of today's tasks/habits done | +1 |
 | **Max** | **10** |
@@ -106,7 +106,9 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 | State | Zustand |
 | Charts | Recharts |
 | Dates | dayjs |
-| Backend / DB / Auth | Supabase (PostgreSQL + Auth) |
+| Database | PostgreSQL 17 (`pg`) |
+| Auth | Local email/password + DB sessions |
+| Runtime | Docker Compose (app + db) |
 | Offline storage | Dexie (IndexedDB) + service worker |
 
 ---
@@ -115,43 +117,38 @@ HabitTerminal is a full-stack, responsive web app designed around the concept of
 
 ### Prerequisites
 
-- Node.js 18+
-- A [Supabase](https://supabase.com) project (free tier is fine)
+- Docker with the Compose plugin
+- `make` (on Windows use WSL or Git Bash with make installed — or run the `docker compose` commands from the table below directly)
 
-### 1. Install
+### Run it
+
+```bash
+make up
+```
+
+On first run this copies `.env.example` to `.env` (edit `POSTGRES_PASSWORD`, and optionally `GEMINI_API_KEY`, `TZ`, `PRAYER_CALC_METHOD`), builds the app image, starts Postgres, applies the SQL migrations in `db/migrations/`, and serves the app at **http://localhost:3000**. Register an account on the login page.
+
+| Command | What it does | Equivalent |
+|---------|--------------|------------|
+| `make up` | Build and start app + database | `docker compose up -d --build` |
+| `make down` | Stop the containers (kept; `make up` resumes) | `docker compose stop` |
+| `make clean` | Stop and delete containers, network and app image — **database kept** | `docker compose down --remove-orphans --rmi local` |
+| `make fclean` | `clean` + delete the database volume — **all data lost** | `docker compose down --remove-orphans --rmi local --volumes` |
+| `make re` | `fclean` then `up` | |
+| `make migrate` | Apply any new SQL migrations to the running database | `docker compose run --rm migrate` |
+| `make logs` / `make ps` | Follow logs / list containers | |
+
+### Database migrations
+
+Migrations live in `db/migrations/`. On every `make up`, a one-shot `migrate` container applies any file not yet recorded in the `schema_migrations` table, in filename order, each in its own transaction — so to change the schema, add a new higher-numbered file and run `make up` (or `make migrate`).
+
+### Local development (hot reload)
 
 ```bash
 npm install
+make up                # or just: docker compose up -d db
+npm run dev            # uses DATABASE_URL from .env → the container DB on localhost:5433
 ```
-
-### 2. Configure environment
-
-Copy the example file and fill in your Supabase credentials (found under **Settings → API** in the Supabase dashboard):
-
-```bash
-cp .env.example .env.local
-```
-
-### 3. Set up the database
-
-In the Supabase **SQL Editor**, run the migrations **in order**:
-
-1. `supabase/migration.sql` — core schema (users, habits, tasks, recovery)
-2. `supabase/auth_integration.sql` — auth profile triggers
-3. `supabase/migration_v2_journeys_goals.sql` — journeys & goals
-4. Files in `supabase/migrations/` — planner / prayer / competitive features
-5. `supabase-migration.sql` — RPCs (`increment_goal_progress`, `increment_journey_failure`)
-6. **`supabase/migration_v3_day_records_achievements.sql`** — v2.0 system (day records, achievements, user stats, preferences, scoring trigger, streak calculator)
-7. **`supabase/migration_v5_full_score.sql`** — comprehensive daily score (all worship extras + tasks/habits bonus, `tasks_done` column)
-8. **`supabase/migration_v6_life_areas.sql`** — Life Areas system (`life_area` on goals/tasks/habits/plans, `weekly_reviews` table, onboarding state on `user_preferences`)
-
-### 4. Run the dev server
-
-```bash
-npm run dev
-```
-
-Visit **http://localhost:3000**.
 
 ---
 
@@ -187,7 +184,7 @@ If `GEMINI_API_KEY` is unset, the app still runs normally and AI buttons show a 
 
 **Privacy:** only minimized, non-identifying data is sent to Gemini — generic item titles, life-area labels, statuses, due dates, priorities, completion rates, and (optionally) prayer-time labels. Emails, passwords, tokens, user ids, notes, and descriptions are never sent. Filtering lives in `src/lib/ai/privacy.ts` (plus Zod stripping in `schemas.ts`); raw prompts/responses are never logged.
 
-**Deploy on Vercel:** add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) under **Project → Settings → Environment Variables**, then redeploy.
+**Docker:** set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in `.env`, then `make up` again to recreate the app container.
 
 ---
 
@@ -200,35 +197,36 @@ src/
 │   │   ├── tasks/            # Task CRUD + monthly aggregation
 │   │   ├── habits/           # Habit management
 │   │   ├── day-record/       # Daily discipline record (GET + POST)
-│   │   ├── achievements/     # 42 achievement definitions + unlock status
+│   │   ├── achievements/     # 47 achievement definitions + unlock status
 │   │   ├── user-stats/       # Streak matrix + cumulative totals
 │   │   ├── user-preferences/ # Focus/sleep goals + notifications
 │   │   ├── journeys/         # Recovery + competitive journeys
 │   │   ├── goals/            # Goal progress
 │   │   └── …
-│   ├── today/                # Today page (DisciplineCard + tasks)
-│   ├── achievements/         # Achievements page (42 with rarity + progress)
+│   ├── today/                # Today page (daily command center)
+│   ├── achievements/         # Achievements page (47 with rarity + progress)
 │   ├── dashboard/            # Analytics + streak matrix + 7-day report
-│   ├── prayer-planner/       # Prayer-block day planner
 │   ├── recovery/             # Recovery journeys
-│   ├── goals/  calendar/  habits/  settings/  login/  planner/
+│   ├── planner/              # Daily / weekly / monthly / prayer-block planner
+│   ├── goals/  habits/  money/  learning/  life-areas/  weekly-review/  settings/  login/
 │   ├── layout.tsx            # Root layout (PWA manifest, fonts)
 │   └── globals.css           # Design-system tokens
 ├── components/
-│   ├── today/                # DisciplineCard, DayStatusBanner, ScoreDisplay, ActivityLog
+│   ├── today/                # FocusTimeCard, WorshipCard, RecoveryTodayCard, ScoreDisplay, …
 │   ├── achievements/         # AchievementCard, AchievementToast
 │   ├── dashboard/            # StreakMatrix, SevenDayReport, ChartWidgets, Heatmap
 │   ├── recovery/             # TimerDisplay, FailureLogList, CompetitiveMode
 │   ├── planner/              # PlanCard, PlanForm
-│   ├── layout/               # Sidebar, TopBar
+│   ├── layout/               # Sidebar, AppShell, RootFrame
 │   └── ui/                   # TaskItem (inline edit), StatCard, SectionHeader, …
 ├── lib/
 │   ├── services/
 │   │   └── dayRecordService.ts  # Typed day record CRUD + RPC wrapper
 │   └── offline/              # Dexie cache + sync queue + network status
 ├── store/useStore.ts          # Zustand store (tasks, day record, achievements, stats, …)
-└── middleware.ts              # Session refresh
-supabase/                      # SQL schema, auth, migrations
+├── lib/db/                    # Postgres pool + chainable query builder
+└── lib/auth.ts                # Password hashing + session cookies
+db/migrations/                 # SQL schema + RPCs, applied in order on first DB start
 ```
 
 ---

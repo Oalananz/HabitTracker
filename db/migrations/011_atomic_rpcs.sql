@@ -1,6 +1,5 @@
 -- =============================================================
--- Migration: Fix race conditions + remove password column
--- Run this in your Supabase SQL editor (Dashboard > SQL Editor)
+-- Migration: atomic increment RPCs (prevent race conditions)
 -- =============================================================
 
 -- 1. Atomic goal progress increment (prevents race conditions)
@@ -28,7 +27,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- 2. Atomic journey failure increment (prevents race conditions)
 CREATE OR REPLACE FUNCTION increment_journey_failure(
@@ -48,8 +47,4 @@ BEGIN
 
   RETURN v_result;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 3. Remove password column from public users table
--- (Supabase Auth stores passwords in auth.users, not public.users)
-ALTER TABLE public.users DROP COLUMN IF EXISTS password;
+$$ LANGUAGE plpgsql;

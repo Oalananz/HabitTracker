@@ -1,13 +1,12 @@
 -- ================================================================
 -- Migration v3: Day Records, Achievements, User Stats
--- Run this in your Supabase SQL Editor AFTER all previous migrations
 -- ================================================================
 
 -- ----------------------------------------------------------------
 -- 1. user_preferences (goal defaults + notification settings)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_preferences (
-  user_id                uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id                uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   focus_goal_hours       numeric(4,1) DEFAULT 6,
   sleep_goal_hours       numeric(3,1) DEFAULT 7,
   achievement_alerts     boolean DEFAULT true,
@@ -15,19 +14,12 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   updated_at             timestamptz DEFAULT now()
 );
 
-ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "user_preferences_select" ON user_preferences FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "user_preferences_insert" ON user_preferences FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "user_preferences_update" ON user_preferences FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "user_preferences_delete" ON user_preferences FOR DELETE USING (user_id = auth.uid());
-
 -- ----------------------------------------------------------------
 -- 2. day_records (one row per user per calendar day)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS day_records (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id          uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id          uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   date             date NOT NULL,
   focus_hours      numeric(4,1) DEFAULT 0,
   focus_goal       numeric(4,1) DEFAULT 6,
@@ -55,36 +47,22 @@ CREATE TABLE IF NOT EXISTS day_records (
   UNIQUE(user_id, date)
 );
 
-ALTER TABLE day_records ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "day_records_select" ON day_records FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "day_records_insert" ON day_records FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "day_records_update" ON day_records FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "day_records_delete" ON day_records FOR DELETE USING (user_id = auth.uid());
-
 -- ----------------------------------------------------------------
 -- 3. achievements (unlock log)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS achievements (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id          uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id          uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   achievement_key  text NOT NULL,
   unlocked_at      timestamptz DEFAULT now(),
   UNIQUE(user_id, achievement_key)
 );
 
-ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "achievements_select" ON achievements FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "achievements_insert" ON achievements FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "achievements_update" ON achievements FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "achievements_delete" ON achievements FOR DELETE USING (user_id = auth.uid());
-
 -- ----------------------------------------------------------------
 -- 4. user_stats (one row per user, upsert pattern)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_stats (
-  user_id                     uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id                     uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   total_score                 integer DEFAULT 0,
   total_focus_hours           numeric(8,1) DEFAULT 0,
   focus_streak                integer DEFAULT 0,
@@ -98,13 +76,6 @@ CREATE TABLE IF NOT EXISTS user_stats (
   best_full_discipline_streak integer DEFAULT 0,
   updated_at                  timestamptz DEFAULT now()
 );
-
-ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "user_stats_select" ON user_stats FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "user_stats_insert" ON user_stats FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "user_stats_update" ON user_stats FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "user_stats_delete" ON user_stats FOR DELETE USING (user_id = auth.uid());
 
 -- ----------------------------------------------------------------
 -- 5. Function: recalculate_day_score
@@ -287,7 +258,7 @@ BEGIN
     best_full_discipline_streak = EXCLUDED.best_full_discipline_streak,
     updated_at = now();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ----------------------------------------------------------------
 -- 7. Function: check_and_unlock_achievements
@@ -590,7 +561,7 @@ BEGIN
 
   RETURN to_jsonb(v_newly_unlocked);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ----------------------------------------------------------------
 -- 8. Trigger: after day_records INSERT/UPDATE, update stats + achievements
@@ -602,7 +573,7 @@ BEGIN
   PERFORM check_and_unlock_achievements(NEW.user_id, NEW.date);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_after_day_record_upsert ON day_records;
 CREATE TRIGGER trg_after_day_record_upsert
@@ -676,4 +647,4 @@ BEGIN
     'newAchievements', v_achievements
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;

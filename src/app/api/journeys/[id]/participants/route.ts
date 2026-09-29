@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
 import { getJourneyParticipants } from '@/lib/services/competitiveJourneyService';
+import { errorResponse } from '@/lib/apiErrors';
 
 export async function GET(
   _request: Request,
@@ -12,10 +13,6 @@ export async function GET(
     const participants = await getJourneyParticipants(id, userId);
     return NextResponse.json({ participants });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/journeys/[id]/participants error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/journeys/[id]/participants');
   }
 }

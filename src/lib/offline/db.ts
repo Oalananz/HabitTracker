@@ -1,6 +1,6 @@
 /**
  * Offline-first local database using Dexie.js (IndexedDB wrapper).
- * Mirrors the Supabase schema so data can be stored/read locally
+ * Mirrors the server database schema so data can be stored/read locally
  * and synced to the server when the user presses "Backup Data".
  */
 import Dexie, { type EntityTable } from 'dexie';

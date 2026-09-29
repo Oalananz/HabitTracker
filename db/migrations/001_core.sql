@@ -1,9 +1,8 @@
 -- =====================================================
--- Supabase SQL Migration for Habit Tracker
--- Run this in the Supabase SQL Editor to create all tables
+-- Core schema for Habit Tracker
 -- =====================================================
 
--- Enable UUID extension (usually enabled by default on Supabase)
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- =====================================================
@@ -13,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE NOT NULL,
   username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
   status_message TEXT DEFAULT 'Compiling habits...',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -56,9 +55,10 @@ CREATE TABLE IF NOT EXISTS task_instances (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Unique constraint: one task per habit per date
-CREATE UNIQUE INDEX IF NOT EXISTS idx_task_instances_habit_date
-  ON task_instances(habit_id, date) WHERE habit_id IS NOT NULL;
+-- One task per habit per date (NULL habit_id = manual task, never conflicts).
+-- A full constraint (not a partial index) so ON CONFLICT (habit_id, date) works.
+ALTER TABLE task_instances
+  ADD CONSTRAINT task_instances_habit_date_key UNIQUE (habit_id, date);
 
 CREATE INDEX IF NOT EXISTS idx_task_instances_date ON task_instances(date);
 CREATE INDEX IF NOT EXISTS idx_task_instances_user_id ON task_instances(user_id);
@@ -103,15 +103,3 @@ CREATE TRIGGER update_recovery_states_updated_at
   BEFORE UPDATE ON recovery_states
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
--- =====================================================
--- Row Level Security (RLS) Policies
--- Since we use custom JWT auth (not Supabase Auth),
--- we disable RLS to allow server-side access.
--- The API routes handle authorization via JWT middleware.
--- =====================================================
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE habits DISABLE ROW LEVEL SECURITY;
-ALTER TABLE task_instances DISABLE ROW LEVEL SECURITY;
-ALTER TABLE recovery_states DISABLE ROW LEVEL SECURITY;
-ALTER TABLE failure_logs DISABLE ROW LEVEL SECURITY;

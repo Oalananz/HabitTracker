@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthUserId } from '@/lib/auth';
+import { db } from '@/lib/db';
 
-// All 42 achievement definitions with metadata
+// All achievement definitions with metadata (keys must match the SQL unlock functions)
 export const ACHIEVEMENT_DEFINITIONS = [
   // STREAK
   { key: 'streak_focus_3',       name: 'Lock In',              desc: 'Focus streak: 3 consecutive days',    cat: 'STREAK',      rarity: 'COMMON',     condition: 'focus_streak >= 3' },
@@ -59,17 +60,19 @@ export const ACHIEVEMENT_DEFINITIONS = [
 ];
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await getAuthUserId();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Recovery milestones are earned by time passing, so check them on read too.
+  await db.rpc('unlock_recovery_achievements', { p_user_id: userId });
 
   const { searchParams } = new URL(request.url);
   const summaryOnly = searchParams.get('summary') === 'true';
 
-  const { data: unlocked } = await supabase
+  const { data: unlocked } = await db
     .from('achievements')
     .select('achievement_key, unlocked_at')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('unlocked_at', { ascending: false });
 
   const unlockedMap = new Map((unlocked || []).map(a => [a.achievement_key, a.unlocked_at]));
@@ -87,10 +90,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Get user stats for progress calculations
-  const { data: stats } = await supabase
+  const { data: stats } = await db
     .from('user_stats')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle();
 
   const achievements = ACHIEVEMENT_DEFINITIONS.map(def => {

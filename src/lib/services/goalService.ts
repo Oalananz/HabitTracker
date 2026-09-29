@@ -1,11 +1,11 @@
-import { supabase } from '../supabase';
+import { db } from '../db';
 import type { Database } from '../database.types';
 import dayjs from 'dayjs';
 
 type GoalRow = Database['public']['Tables']['goals']['Row'];
 
 export async function getGoals(userId: string, type?: string) {
-  let query = supabase
+  let query = db
     .from('goals')
     .select('*')
     .eq('user_id', userId)
@@ -21,7 +21,7 @@ export async function getGoals(userId: string, type?: string) {
 }
 
 export async function getGoal(goalId: string, userId: string) {
-  const { data: goal, error } = await supabase
+  const { data: goal, error } = await db
     .from('goals')
     .select('*')
     .eq('id', goalId)
@@ -43,7 +43,7 @@ export async function createGoal(
     lifeArea?: string | null;
   }
 ) {
-  const { data: goal, error } = await supabase
+  const { data: goal, error } = await db
     .from('goals')
     .insert({
       user_id: userId,
@@ -88,7 +88,7 @@ export async function updateGoal(
     // Auto-complete if count meets target
   }
 
-  const { data: goal, error } = await supabase
+  const { data: goal, error } = await db
     .from('goals')
     .update(updateData)
     .eq('id', goalId)
@@ -101,12 +101,12 @@ export async function updateGoal(
 }
 
 export async function incrementGoalProgress(goalId: string, userId: string, amount: number = 1) {
-  const { data: goal, error } = await supabase
+  const { data: goal, error } = await db
     .rpc('increment_goal_progress', {
       p_goal_id: goalId,
       p_user_id: userId,
       p_amount: amount,
-    } as any);
+    });
 
   if (error) throw new Error(error.message);
   if (!goal) throw new Error('Goal not found');
@@ -114,7 +114,7 @@ export async function incrementGoalProgress(goalId: string, userId: string, amou
 }
 
 export async function toggleGoalComplete(goalId: string, userId: string) {
-  const { data: current, error: fetchError } = await supabase
+  const { data: current, error: fetchError } = await db
     .from('goals')
     .select('completed')
     .eq('id', goalId)
@@ -123,7 +123,7 @@ export async function toggleGoalComplete(goalId: string, userId: string) {
 
   if (fetchError || !current) throw new Error('Goal not found');
 
-  const { data: goal, error } = await supabase
+  const { data: goal, error } = await db
     .from('goals')
     .update({
       completed: !current.completed,
@@ -139,7 +139,7 @@ export async function toggleGoalComplete(goalId: string, userId: string) {
 }
 
 export async function deleteGoal(goalId: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await db
     .from('goals')
     .delete()
     .eq('id', goalId)
@@ -149,7 +149,7 @@ export async function deleteGoal(goalId: string, userId: string) {
 }
 
 export async function getGoalsSummary(userId: string) {
-  const { data: goals, error } = await supabase
+  const { data: goals, error } = await db
     .from('goals')
     .select('*')
     .eq('user_id', userId)

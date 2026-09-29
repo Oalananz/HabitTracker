@@ -77,7 +77,7 @@ export default function ContributionHeatmap({ data }: ContributionHeatmapProps) 
               const nextCol = months[i + 1]?.col ?? weeks.length;
               const span = nextCol - m.col;
               return (
-                <div key={i} className="font-label text-[9px] text-on-surface-variant" style={{ width: `${span * 13}px` }}>
+                <div key={i} className="font-label text-[10px] text-on-surface-variant" style={{ width: `${span * 13}px` }}>
                   {m.label}
                 </div>
               );
@@ -85,7 +85,7 @@ export default function ContributionHeatmap({ data }: ContributionHeatmapProps) 
           </div>
           {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
             <div key={dayIndex} className="flex items-center gap-[2px] mb-[2px]">
-              <span className="font-label text-[9px] text-on-surface-variant w-7 text-right pr-1">{dayLabels[dayIndex]}</span>
+              <span className="font-label text-[10px] text-on-surface-variant w-7 text-right pr-1">{dayLabels[dayIndex]}</span>
               {weeks.map((week, wi) => {
                 const cell = week[dayIndex];
                 if (!cell || !cell.date) return <div key={wi} className="w-[11px] h-[11px]" />;
@@ -102,11 +102,11 @@ export default function ContributionHeatmap({ data }: ContributionHeatmapProps) 
         </div>
       </div>
       <div className="flex items-center justify-end gap-1.5 mt-2">
-        <span className="font-label text-[9px] text-on-surface-variant">Less</span>
+        <span className="font-label text-[10px] text-on-surface-variant">Less</span>
         {['bg-surface-container-lowest', 'bg-primary/20', 'bg-primary/40', 'bg-primary/60', 'bg-primary/90'].map((c, i) => (
           <div key={i} className={`w-[11px] h-[11px] rounded-[2px] ${c}`} />
         ))}
-        <span className="font-label text-[9px] text-on-surface-variant">More</span>
+        <span className="font-label text-[10px] text-on-surface-variant">More</span>
       </div>
     </div>
   );

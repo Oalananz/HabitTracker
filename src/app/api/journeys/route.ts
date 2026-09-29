@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiErrors';
 import {
   createJourney,
   getJourneyCatalog,
@@ -11,12 +12,7 @@ export async function GET() {
     const data = await getJourneyCatalog(userId);
     return NextResponse.json(data);
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    console.error('GET /api/journeys error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/journeys');
   }
 }
 
@@ -44,10 +40,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ journey }, { status: 201 });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/journeys error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/journeys');
   }
 }

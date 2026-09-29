@@ -162,15 +162,3 @@ CREATE TABLE IF NOT EXISTS journey_check_ins (
 
 CREATE INDEX IF NOT EXISTS idx_journey_check_ins_journey_id ON journey_check_ins(journey_id);
 CREATE INDEX IF NOT EXISTS idx_journey_check_ins_user_id ON journey_check_ins(user_id);
-
--- =====================================================
--- Disable RLS to match existing server-only authorization model
--- =====================================================
-ALTER TABLE competitive_journeys DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_participants DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_failures DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_consequences DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_consequence_statuses DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_invites DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_reactions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE journey_check_ins DISABLE ROW LEVEL SECURITY;

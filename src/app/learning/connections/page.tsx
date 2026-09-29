@@ -43,6 +43,16 @@ function parseCsv(text: string): CsvRow[] {
   }).filter((r) => r.title && r.courseUrl);
 }
 
+interface ConnectionsResponse {
+  providers?: LearningProvider[];
+  connectedAccounts?: ConnectedAccount[];
+}
+
+async function loadConnections(): Promise<ConnectionsResponse> {
+  const res = await fetch('/api/learning/connections');
+  return res.json();
+}
+
 export default function LearningConnectionsPage() {
   const { addToast } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -54,23 +64,28 @@ export default function LearningConnectionsPage() {
   const [csvImporting, setCsvImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchConnections = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/learning/connections');
-      const data = await res.json();
-      setProviders(data.providers || []);
-      setConnectedAccounts(data.connectedAccounts || []);
-    } catch (err) {
-      console.error('Failed to load connections:', err);
-    } finally {
-      setLoading(false);
-    }
+  const applyConnections = useCallback((data: ConnectionsResponse) => {
+    setProviders(data.providers || []);
+    setConnectedAccounts(data.connectedAccounts || []);
   }, []);
 
+  // Refresh after a change; the list stays on screen while it reloads.
+  const fetchConnections = useCallback(async () => {
+    try {
+      applyConnections(await loadConnections());
+    } catch (err) {
+      console.error('Failed to load connections:', err);
+    }
+  }, [applyConnections]);
+
   useEffect(() => {
-    fetchConnections();
-  }, [fetchConnections]);
+    let active = true;
+    loadConnections()
+      .then((data) => { if (active) applyConnections(data); })
+      .catch((err) => console.error('Failed to load connections:', err))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [applyConnections]);
 
   const oauthProviders = providers.filter((p) => p.type !== 'manual');
 
@@ -195,7 +210,7 @@ export default function LearningConnectionsPage() {
             <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
               <span className="text-primary">&gt;</span> MANUAL_COURSE_LINK
             </h3>
-            <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-primary bg-primary/10 border border-primary/30">
+            <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-primary bg-primary/10 border border-primary/30">
               Available now
             </span>
           </div>
@@ -206,7 +221,7 @@ export default function LearningConnectionsPage() {
             onClick={() => setShowManualForm((v) => !v)}
             className="w-fit flex items-center gap-2 px-4 py-2 bg-scanline-gradient text-on-primary font-headline font-bold text-xs uppercase tracking-wider rounded-sm hover:opacity-90 transition-opacity"
           >
-            <span className="material-symbols-outlined text-[16px]">add_link</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add_link</span>
             Add Course Link
           </button>
         </div>
@@ -217,7 +232,7 @@ export default function LearningConnectionsPage() {
             <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
               <span className="text-primary">&gt;</span> CSV_/_MANUAL_IMPORT
             </h3>
-            <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-primary bg-primary/10 border border-primary/30">
+            <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-primary bg-primary/10 border border-primary/30">
               Available now
             </span>
           </div>
@@ -251,7 +266,7 @@ export default function LearningConnectionsPage() {
             <h3 className="font-headline text-sm font-semibold text-on-surface uppercase tracking-wide">
               <span className="text-primary">&gt;</span> BROWSER_EXTENSION
             </h3>
-            <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-outline border border-outline-variant/20">
+            <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] text-outline border border-outline-variant/20">
               Coming soon
             </span>
           </div>
@@ -262,7 +277,7 @@ export default function LearningConnectionsPage() {
             disabled
             className="w-fit flex items-center gap-2 px-4 py-2 bg-surface-container-high text-on-surface-variant font-headline font-bold text-xs uppercase tracking-wider rounded-sm opacity-50 cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[16px]">extension</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">extension</span>
             Coming Soon
           </button>
         </div>

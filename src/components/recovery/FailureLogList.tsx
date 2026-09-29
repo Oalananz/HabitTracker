@@ -39,7 +39,7 @@ export default function FailureLogList({ failures, startTime }: FailureLogListPr
       {/* Header */}
       <div className="px-4 py-3 border-b border-outline-variant/10">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-error">error</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-error">error</span>
           <span className="font-label text-xs uppercase tracking-widest text-error">
             &gt; LOGS/FAILURE_EVENTS
           </span>

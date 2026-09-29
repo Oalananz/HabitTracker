@@ -165,7 +165,7 @@ export default function DashboardPage() {
                       className="rounded-sm p-3 border transition-all hover:translate-y-[-2px]"
                       style={{ borderColor: `${area.color}33` }}
                     >
-                      <span className="material-symbols-outlined text-[20px]" style={{ color: area.color }}>{area.icon}</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[20px]" style={{ color: area.color }}>{area.icon}</span>
                       <div className="font-headline text-xs font-semibold text-on-surface mt-1 truncate">{area.shortLabel}</div>
                       <div className="text-xs text-on-surface-variant/80">{g} goals · {h} habits</div>
                     </Link>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                         className="p-4 rounded-md border border-outline-variant/15 bg-surface-container-lowest"
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="material-symbols-outlined text-[16px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                             healing
                           </span>
                           <span className="font-headline text-sm font-bold text-on-surface truncate">{j.title}</span>
@@ -311,7 +311,7 @@ export default function DashboardPage() {
                     .slice(0, 3)
                     .map(a => (
                       <div key={a.key} className="bg-surface-container-low border border-outline-variant/15 rounded-sm p-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
                         <div className="min-w-0">
                           <div className="font-headline text-xs font-semibold text-on-surface truncate">{a.name}</div>
                           <div className="text-xs text-on-surface-variant/70 capitalize">{a.rarity}</div>

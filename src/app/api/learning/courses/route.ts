@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthId } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiErrors';
 import {
   getLearningCourses,
   createLearningCourse,
@@ -7,17 +8,13 @@ import {
   deleteLearningCourse,
 } from '@/lib/services/learningService';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const userId = await requireAuthId();
     const courses = await getLearningCourses(userId);
     return NextResponse.json({ courses });
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('GET /api/learning/courses error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'GET /api/learning/courses');
   }
 }
 
@@ -64,10 +61,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    if ((error as Error).message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('POST /api/learning/courses error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(error, 'POST /api/learning/courses');
   }
 }

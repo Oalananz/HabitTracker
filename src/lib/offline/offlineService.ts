@@ -7,6 +7,7 @@
 import { offlineDB, setMeta, type LocalTask, type LocalHabit, type LocalGoal, type LocalJourney, type LocalFailure, type LocalPlan, type LocalPrayerTimes, type LocalRecoveryState } from './db';
 import { enqueueSync } from './syncQueue';
 import { networkStatus } from './networkStatus';
+import dayjs from 'dayjs';
 
 // ─── UUID generation ────────────────────────────────────────────────
 
@@ -578,7 +579,7 @@ export async function pullAllDataFromServer(): Promise<boolean> {
       journeysRes,
       failuresRes,
     ] = await Promise.allSettled([
-      fetch('/api/tasks?date=' + new Date().toISOString().split('T')[0]),
+      fetch('/api/tasks?date=' + dayjs().format('YYYY-MM-DD')),
       fetch('/api/habits'),
       fetch('/api/goals'),
       fetch('/api/recovery'),
