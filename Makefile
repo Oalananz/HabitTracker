@@ -1,17 +1,29 @@
 COMPOSE := docker compose
 
+# Recipes must work in both a POSIX shell and Windows cmd.exe (native make
+# on Windows runs recipes through cmd), so avoid shell-specific syntax.
+ifeq ($(OS),Windows_NT)
+  COPY := copy /Y
+else
+  COPY := cp
+endif
+
+# Read settings such as APP_PORT from .env (created on first run).
+-include .env
+APP_URL := http://localhost:$(or $(APP_PORT),3000)
+
 .PHONY: up down clean fclean re migrate url logs ps
 
 ## up: build the app image and start the app + database in the background
 up: .env
 	$(COMPOSE) up -d --build
-	@$(MAKE) --no-print-directory url
+	@echo App running at $(APP_URL)
 
 ## down: stop the containers (they are kept, so `make up` resumes them)
 down:
 	$(COMPOSE) stop
 
-## clean: stop and delete the containers, network and app image — keeps the database volume
+## clean: stop and delete the containers, network and app image - keeps the database volume
 clean:
 	$(COMPOSE) down --remove-orphans --rmi local
 
@@ -28,8 +40,7 @@ migrate: .env
 
 ## url: print the address the app is served on (APP_PORT in .env, default 3000)
 url:
-	@port=$$(sed -n 's/^APP_PORT=//p' .env 2>/dev/null | tr -d '\r"'); \
-	echo "App running at http://localhost:$${port:-3000}"
+	@echo App running at $(APP_URL)
 
 logs:
 	$(COMPOSE) logs -f
@@ -38,5 +49,5 @@ ps:
 	$(COMPOSE) ps
 
 .env:
-	cp .env.example .env
-	@echo "Created .env from .env.example — edit POSTGRES_PASSWORD before real use."
+	$(COPY) .env.example .env
+	@echo Created .env from .env.example - set POSTGRES_PASSWORD before real use.
