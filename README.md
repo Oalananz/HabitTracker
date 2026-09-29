@@ -130,12 +130,13 @@ On first run this copies `.env.example` to `.env` (edit `POSTGRES_PASSWORD`, and
 
 | Command | What it does | Equivalent |
 |---------|--------------|------------|
-| `make up` | Build and start app + database | `docker compose up -d --build` |
+| `make up` | Build and start app + database, then print the app URL | `docker compose up -d --build` |
 | `make down` | Stop the containers (kept; `make up` resumes) | `docker compose stop` |
 | `make clean` | Stop and delete containers, network and app image — **database kept** | `docker compose down --remove-orphans --rmi local` |
 | `make fclean` | `clean` + delete the database volume — **all data lost** | `docker compose down --remove-orphans --rmi local --volumes` |
 | `make re` | `fclean` then `up` | |
 | `make migrate` | Apply any new SQL migrations to the running database | `docker compose run --rm migrate` |
+| `make url` | Print the app URL (`APP_PORT` from `.env`, default 3000) | |
 | `make logs` / `make ps` | Follow logs / list containers | |
 
 ### Database migrations
