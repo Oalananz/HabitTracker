@@ -49,35 +49,46 @@ const PRAYER_MARKS = EVENTS.filter((e) => e.kind === 'prayer' || e.label === 'is
 const DAY_START = t(4, 30);
 const DAY_END = t(23, 30);
 const REPLAY_SECONDS = 11;
-const LEAD_IN = 0.5;
+// The first run waits for the console's entrance; replays start right away.
+const FIRST_LEAD_IN = 1.7;
+const REPLAY_LEAD_IN = 0.4;
 
-const delayFor = (minute: number) =>
-  LEAD_IN + ((minute - DAY_START) / (DAY_END - DAY_START)) * REPLAY_SECONDS;
+const delayAt = (leadIn: number, minute: number) =>
+  leadIn + ((minute - DAY_START) / (DAY_END - DAY_START)) * REPLAY_SECONDS;
 const pctFor = (minute: number) => ((minute - DAY_START) / (DAY_END - DAY_START)) * 100;
 const clock = (minute: number) =>
   `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 const vars = (v: Record<string, string>) => v as CSSProperties;
 
-// Running score after each scoring event: [score, delay].
-const SCORE_STEPS: [number, number][] = [[0, 0]];
+// Running score after each scoring event, as [score, minute of day].
+const SCORE_STEPS: [number, number][] = [[0, DAY_START]];
 for (const e of EVENTS) {
   if (!e.points) continue;
-  SCORE_STEPS.push([SCORE_STEPS[SCORE_STEPS.length - 1][0] + e.points, delayFor(e.at)]);
+  SCORE_STEPS.push([SCORE_STEPS[SCORE_STEPS.length - 1][0] + e.points, e.at]);
 }
-const firstDelayAt = (min: number) => SCORE_STEPS.find(([s]) => s >= min)?.[1] ?? 0;
+const minuteScoreReaches = (min: number) => SCORE_STEPS.find(([s]) => s >= min)?.[1] ?? DAY_START;
 
 const scoreTone = (score: number) =>
   score >= 8 ? 'text-primary' : score >= 4 ? 'text-tertiary' : 'text-on-surface';
 
-function DayConsole() {
+function DayConsole({ leadIn }: { leadIn: number }) {
+  const delayFor = (minute: number) => delayAt(leadIn, minute);
+  const securedAt = delayFor(minuteScoreReaches(8));
+
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+    <div className="relative grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+      {/* One glow the moment the day is secured. */}
+      <div
+        aria-hidden="true"
+        className={`${styles.securedGlow} pointer-events-none absolute inset-0 z-10 ring-1 ring-primary/50 shadow-[inset_0_0_80px_rgba(108,221,129,0.18)]`}
+        style={vars({ '--delay': `${securedAt}s` })}
+      />
       {/* Log */}
       <ol className="order-2 lg:order-none px-4 sm:px-6 py-5 font-mono text-[12px] sm:text-[13px] leading-relaxed space-y-1.5 border-t lg:border-t-0 lg:border-r border-outline-variant/20">
         {EVENTS.map((e) => (
           <li
             key={`${e.at}-${e.label}`}
-            className={`${styles.reveal} grid grid-cols-[3rem_minmax(0,1fr)_auto] sm:grid-cols-[3.5rem_7.5rem_minmax(0,1fr)_auto] gap-x-2 items-baseline`}
+            className={`${e.points ? styles.rowFlash : styles.reveal} -mx-2 px-2 rounded-sm grid grid-cols-[3rem_minmax(0,1fr)_auto] sm:grid-cols-[3.5rem_7.5rem_minmax(0,1fr)_auto] gap-x-2 items-baseline`}
             style={vars({ '--delay': `${delayFor(e.at)}s` })}
           >
             <time className="text-outline">{clock(e.at)}</time>
@@ -100,12 +111,12 @@ function DayConsole() {
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-outline">Day score</p>
         <p className="sr-only">Day score: 10 out of 10. Day secured.</p>
         <div className="flex items-end gap-3 mt-1" aria-hidden="true">
-          <div className="relative h-[0.86em] w-[1.3em] font-mono font-bold leading-[0.86] text-[112px] sm:text-[148px] tracking-[-0.04em]">
-            {SCORE_STEPS.map(([score, delay]) => (
+          <div className="relative overflow-hidden h-[0.86em] w-[1.3em] font-mono font-bold leading-[0.86] text-[112px] sm:text-[148px] tracking-[-0.04em]">
+            {SCORE_STEPS.map(([score, minute]) => (
               <span
                 key={score}
                 className={`${styles.scoreStep} absolute inset-0 overflow-hidden text-right bg-[#15191f] ${scoreTone(score)}`}
-                style={vars({ '--delay': `${delay}s` })}
+                style={vars({ '--delay': `${minute === DAY_START ? 0 : delayFor(minute)}s` })}
               >
                 {score}
               </span>
@@ -115,21 +126,21 @@ function DayConsole() {
         </div>
 
         {/* Status follows the app's own thresholds: 4+ in progress, 8+ secured. */}
-        <div className="relative mt-4 h-7 font-mono text-[11px] uppercase tracking-[0.18em]" aria-hidden="true">
+        <div className="relative overflow-hidden mt-4 h-7 font-mono text-[11px] uppercase tracking-[0.18em]" aria-hidden="true">
           <span className="absolute inset-0 flex items-center gap-2 bg-[#15191f] text-on-surface-variant">
             <span className="w-1.5 h-1.5 rounded-full bg-outline" /> Just getting started
           </span>
           <span
             className={`${styles.statusLayer} absolute inset-0 flex items-center gap-2 bg-[#15191f] text-tertiary`}
-            style={vars({ '--delay': `${firstDelayAt(4)}s` })}
+            style={vars({ '--delay': `${delayFor(minuteScoreReaches(4))}s` })}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-tertiary" /> In progress
           </span>
           <span
             className={`${styles.statusLayer} absolute inset-0 flex items-center gap-2 bg-[#15191f] text-primary`}
-            style={vars({ '--delay': `${firstDelayAt(8)}s` })}
+            style={vars({ '--delay': `${securedAt}s` })}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Day secured
+            <span className={`${styles.statusPing} w-1.5 h-1.5 rounded-full bg-primary`} style={vars({ '--delay': `${securedAt}s` })} /> Day secured
           </span>
         </div>
 
@@ -184,12 +195,15 @@ function DayConsole() {
               <span className="absolute -top-0.5 -translate-x-1/2 font-mono text-[10px] text-tertiary hidden sm:block">
                 {p.label}
               </span>
-              <div className="absolute top-3 -translate-x-1/2 w-2 h-2 rotate-45 bg-tertiary" />
+              <div
+                className={`${styles.markPop} absolute top-3 -translate-x-1/2 w-2 h-2 rotate-45 bg-tertiary`}
+                style={vars({ '--delay': `${delayFor(p.at)}s` })}
+              />
             </div>
           ))}
           <div
             className={`${styles.cursor} absolute top-1.5 bottom-0`}
-            style={vars({ left: '100%', '--from': '0%', '--duration': `${LEAD_IN + REPLAY_SECONDS}s` })}
+            style={vars({ left: '100%', '--from': '0%', '--duration': `${leadIn + REPLAY_SECONDS}s` })}
           >
             <div className="w-0.5 h-full bg-primary shadow-[0_0_12px_#6cdd81]" />
           </div>
@@ -220,7 +234,7 @@ export default function DayReplay() {
           ↻ Replay the day
         </button>
       </div>
-      <DayConsole key={run} />
+      <DayConsole key={run} leadIn={run === 0 ? FIRST_LEAD_IN : REPLAY_LEAD_IN} />
     </figure>
   );
 }

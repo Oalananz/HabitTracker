@@ -16,15 +16,15 @@
   }
 }
 
-/* Score digits are stacked; each later value covers the one below. */
+/* Score digits are stacked, each opaque; a new value rolls up into the
+ * clipped window over the previous one, like an odometer. */
 .scoreStep {
-  animation: scoreStep 260ms ease-out var(--delay, 0s) backwards;
+  animation: scoreStep 520ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) backwards;
 }
 
 @keyframes scoreStep {
   from {
-    opacity: 0;
-    transform: translateY(18%);
+    transform: translateY(100%);
   }
 }
 
@@ -61,13 +61,14 @@
   }
 }
 
+/* Status labels roll up like the score, so the two change together. */
 .statusLayer {
-  animation: statusLayer 300ms ease-out var(--delay, 0s) backwards;
+  animation: statusLayer 520ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) backwards;
 }
 
 @keyframes statusLayer {
   from {
-    opacity: 0;
+    transform: translateY(100%);
   }
 }
 
@@ -90,5 +91,289 @@
   .statusLayer,
   .caret {
     animation: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Classic, cinematic motion layer. Same rule as above: resting styles are
+ * final, so nothing is ever hidden without JavaScript or with reduced motion.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+:global(html):has(.landingRoot) {
+  scroll-behavior: smooth;
+}
+
+/* Hero entrance ---------------------------------------------------------- */
+
+/* A headline line rises out of a mask. Padding keeps descenders unclipped. */
+.maskLine {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+.maskLineInner {
+  display: block;
+  animation: maskRise 900ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) backwards;
+}
+
+@keyframes maskRise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+.enter {
+  animation: enter 800ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) backwards;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.enterConsole {
+  animation: enterConsole 1100ms cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) backwards;
+}
+
+@keyframes enterConsole {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.985);
+  }
+}
+
+/* Slow drift of the hero grid, the page's only ambient motion. */
+.gridDrift {
+  animation: gridDrift 24s linear infinite;
+}
+
+@keyframes gridDrift {
+  to {
+    background-position: 48px 48px;
+  }
+}
+
+/* Day replay moments ----------------------------------------------------- */
+
+/* A scoring line lights up as its points land. */
+.rowFlash {
+  animation:
+    reveal 420ms ease-out var(--delay, 0s) backwards,
+    rowFlash 1400ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes rowFlash {
+  from {
+    background-color: rgba(108, 221, 129, 0.16);
+  }
+}
+
+/* Prayer markers pop as the time cursor passes them. Tailwind v4 positions
+ * with the standalone translate/rotate properties, so only scale is animated. */
+.markPop {
+  animation: markPop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--delay, 0s) backwards;
+}
+
+@keyframes markPop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* One glow around the console the moment the day is secured. */
+.securedGlow {
+  opacity: 0;
+  animation: securedGlow 1800ms ease-out var(--delay, 0s) both;
+}
+
+@keyframes securedGlow {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.statusPing {
+  animation: statusPing 1200ms ease-out var(--delay, 0s) backwards;
+}
+
+@keyframes statusPing {
+  from {
+    box-shadow: 0 0 0 0 rgba(108, 221, 129, 0.7);
+  }
+  to {
+    box-shadow: 0 0 0 10px rgba(108, 221, 129, 0);
+  }
+}
+
+/* Scroll reveals ---------------------------------------------------------
+ * Elements start hidden only when scripting is on and motion is welcome;
+ * InView adds data-inview once they scroll into view. */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .scrollReveal:not([data-inview]) .rise,
+  .scrollReveal:not([data-inview]).rise {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  .scrollReveal:not([data-inview]) .heatCell {
+    opacity: 0.12;
+    transform: scale(0.4);
+  }
+
+  .scrollReveal:not([data-inview]) .typeLine {
+    opacity: 0;
+  }
+
+  .scrollReveal:not([data-inview]) .typeCommand {
+    width: 0;
+  }
+
+  .scrollReveal:not([data-inview]) .sunrise {
+    opacity: 0;
+    transform: translateY(60px) scaleX(0.6);
+  }
+
+  .scrollReveal:not([data-inview]) .ledgerPoint {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+.rise {
+  transition:
+    opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.ledgerPoint {
+  display: inline-block;
+  transition:
+    opacity 400ms ease-out,
+    transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(var(--i, 0) * 80ms + 250ms);
+}
+
+/* Heatmap fills week by week, like time passing. */
+.heatCell {
+  transition:
+    opacity 500ms ease-out,
+    transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(var(--col, 0) * 32ms + var(--row, 0) * 12ms);
+}
+
+/* Terminal: the command types out, then each output line prints. */
+.typeCommand {
+  display: inline-block;
+  vertical-align: bottom;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 7ch;
+  transition: width 700ms steps(7, end) 300ms;
+}
+
+.typeLine {
+  transition: opacity 200ms ease-out;
+  transition-delay: calc(1100ms + var(--i, 0) * 380ms);
+}
+
+/* Amber horizon rising behind the closing line. */
+.sunrise {
+  transition:
+    opacity 1600ms ease-out,
+    transform 1800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover details ---------------------------------------------------------- */
+
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.shine:hover::after,
+.shine:focus-visible::after {
+  transform: translateX(120%);
+  transition: transform 750ms ease;
+}
+
+.shineArrow {
+  display: inline-block;
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.shine:hover .shineArrow {
+  transform: translateX(3px);
+}
+
+/* Cursor spotlight on product panels (pointer devices only). */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(108, 221, 129, 0.09), transparent 45%);
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maskLineInner,
+  .enter,
+  .enterConsole,
+  .gridDrift,
+  .rowFlash,
+  .markPop,
+  .statusPing {
+    animation: none;
+  }
+
+  .securedGlow {
+    animation: none;
+    opacity: 0;
+  }
+
+  .rise,
+  .ledgerPoint,
+  .heatCell,
+  .typeCommand,
+  .typeLine,
+  .sunrise,
+  .shineArrow,
+  .shine:hover::after {
+    transition: none;
   }
 }

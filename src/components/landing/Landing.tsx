@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import DayReplay from './DayReplay';
+import InView from './InView';
 import RecoveryClock from './RecoveryClock';
+import Spotlight from './Spotlight';
 import styles from './landing.module.css';
+
+const vars = (v: Record<string, string>) => v as React.CSSProperties;
 
 const focusRing =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
@@ -10,9 +14,9 @@ function PrimaryCta({ children = 'Create your account' }: { children?: React.Rea
   return (
     <Link
       href="/login?mode=register"
-      className={`inline-flex items-center gap-2 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider px-6 py-3.5 rounded-sm hover:opacity-90 transition-opacity ${focusRing}`}
+      className={`${styles.shine} inline-flex items-center gap-2 bg-scanline-gradient text-on-primary font-headline font-bold text-sm uppercase tracking-wider px-6 py-3.5 rounded-sm ${focusRing}`}
     >
-      {children} <span aria-hidden="true">↵</span>
+      {children} <span aria-hidden="true" className={styles.shineArrow}>↵</span>
     </Link>
   );
 }
@@ -104,15 +108,15 @@ const SELF_HOST_FACTS: { title: string; detail: string }[] = [
   { title: 'MIT licensed', detail: 'Read the code, change it, keep it.' },
 ];
 
-function Panel({ title, detail, children, className = '' }: { title: string; detail: string; children: React.ReactNode; className?: string }) {
+function Panel({ title, detail, children, index }: { title: string; detail: string; children: React.ReactNode; index: number }) {
   return (
-    <article className={`min-w-0 bg-[#12161c] p-6 sm:p-7 flex flex-col gap-6 ${className}`}>
+    <Spotlight className={`${styles.rise} min-w-0 bg-[#12161c] p-6 sm:p-7 flex flex-col gap-6`} style={vars({ '--i': String(index) })}>
       <div>
         <h3 className="font-headline text-lg font-bold text-on-surface tracking-tight">{title}</h3>
         <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed max-w-[46ch]">{detail}</p>
       </div>
       <div className="mt-auto">{children}</div>
-    </article>
+    </Spotlight>
   );
 }
 
@@ -120,7 +124,7 @@ export default function Landing() {
   const levels = heatmapLevels();
 
   return (
-    <div className="min-h-screen bg-background text-on-surface overflow-x-clip">
+    <div className={`${styles.landingRoot} min-h-screen bg-background text-on-surface overflow-x-clip`}>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 bg-primary text-on-primary px-3 py-2 rounded-sm font-mono text-xs"
@@ -158,20 +162,26 @@ export default function Landing() {
         <section className="relative">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[640px] opacity-[0.35] [background-image:linear-gradient(to_right,#3e4a3e33_1px,transparent_1px),linear-gradient(to_bottom,#3e4a3e33_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
+            className={`${styles.gridDrift} pointer-events-none absolute inset-x-0 top-0 h-[640px] opacity-[0.35] [background-image:linear-gradient(to_right,#3e4a3e33_1px,transparent_1px),linear-gradient(to_bottom,#3e4a3e33_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]`}
           />
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-14 sm:pt-20 pb-16">
             <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-end">
               <div>
-                <Eyebrow>habitterminal today</Eyebrow>
+                <div className={styles.enter} style={vars({ '--delay': '0.05s' })}>
+                  <Eyebrow>habitterminal today</Eyebrow>
+                </div>
                 <h1 className="mt-5 font-headline font-bold tracking-[-0.045em] leading-[0.92] text-[46px] sm:text-[68px] lg:text-[88px]">
-                  Every day gets a score.
-                  <span className="block text-primary">
-                    Secure yours<span className={`${styles.caret} inline-block w-[0.42em] h-[0.78em] ml-2 align-baseline bg-primary translate-y-[0.06em]`} aria-hidden="true" />
+                  <span className={styles.maskLine}>
+                    <span className={styles.maskLineInner} style={vars({ '--delay': '0.15s' })}>Every day gets a score.</span>
+                  </span>
+                  <span className={styles.maskLine}>
+                    <span className={`${styles.maskLineInner} text-primary`} style={vars({ '--delay': '0.32s' })}>
+                      Secure yours<span className={`${styles.caret} inline-block w-[0.42em] h-[0.78em] ml-2 align-baseline bg-primary translate-y-[0.06em]`} aria-hidden="true" />
+                    </span>
                   </span>
                 </h1>
               </div>
-              <div className="lg:pb-3">
+              <div className={`${styles.enter} lg:pb-3`} style={vars({ '--delay': '0.5s' })}>
                 <p className="text-base sm:text-lg text-on-surface-variant leading-relaxed max-w-[44ch]">
                   HabitTerminal scores each day out of 10: focus, the five prayers, Quran and dhikr,
                   self-control, sleep, and the tasks you set. Log as you go and you always know where
@@ -187,7 +197,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="mt-12 sm:mt-16">
+            <div className={`${styles.enterConsole} mt-12 sm:mt-16`} style={vars({ '--delay': '0.75s' })}>
               <DayReplay />
             </div>
           </div>
@@ -196,65 +206,76 @@ export default function Landing() {
         {/* ── Scoring ledger ── */}
         <section id="score" className="scroll-mt-20 border-t border-outline-variant/20 bg-surface-container-lowest">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-12 lg:gap-16">
-            <div>
-              <Eyebrow>how scoring works</Eyebrow>
-              <h2 className="mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]">
+            <InView>
+              <div className={styles.rise} style={vars({ '--i': '0' })}>
+                <Eyebrow>how scoring works</Eyebrow>
+              </div>
+              <h2 className={`${styles.rise} mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]`} style={vars({ '--i': '1' })}>
                 What a 10 is made of.
               </h2>
-              <p className="mt-5 text-on-surface-variant leading-relaxed max-w-[42ch]">
+              <p className={`${styles.rise} mt-5 text-on-surface-variant leading-relaxed max-w-[42ch]`} style={vars({ '--i': '2' })}>
                 Seven parts, updated the moment you log something. Reach 8 and the day is secured.
                 Miss a part and the breakdown shows you exactly which one.
               </p>
-              <p className="mt-4 text-sm text-outline max-w-[42ch]">
+              <p className={`${styles.rise} mt-4 text-sm text-outline max-w-[42ch]`} style={vars({ '--i': '3' })}>
                 Your focus and sleep goals are yours to set in Settings.
               </p>
-            </div>
+            </InView>
 
-            <div className="font-mono">
+            <InView className="font-mono">
               <ul>
-                {LEDGER.map((row) => (
-                  <li key={row.rule} className="py-4 border-b border-dashed border-outline-variant/50 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 items-baseline">
+                {LEDGER.map((row, n) => (
+                  <li
+                    key={row.rule}
+                    className={`${styles.rise} py-4 border-b border-dashed border-outline-variant/50 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 items-baseline`}
+                    style={vars({ '--i': String(n) })}
+                  >
                     <div className="min-w-0">
                       <p className="font-headline text-[17px] text-on-surface">{row.rule}</p>
                       <p className="text-[12px] text-outline mt-1">{row.note}</p>
                     </div>
-                    <span className="text-primary text-lg font-bold tabular-nums">+{row.points}</span>
+                    <span className={`${styles.ledgerPoint} text-primary text-lg font-bold tabular-nums`} style={vars({ '--i': String(n) })}>
+                      +{row.points}
+                    </span>
                   </li>
                 ))}
               </ul>
-              <div className="pt-5 flex items-baseline justify-between border-t-2 border-on-surface/80 mt-[-1px]">
+              <div className={`${styles.rise} pt-5 flex items-baseline justify-between border-t-2 border-on-surface/80 mt-[-1px]`} style={vars({ '--i': String(LEDGER.length + 1) })}>
                 <span className="text-[12px] uppercase tracking-[0.2em] text-on-surface-variant">Total</span>
                 <span className="text-on-surface text-3xl font-bold tabular-nums">
                   10<span className="text-outline text-lg">/10</span>
                 </span>
               </div>
-            </div>
+            </InView>
           </div>
         </section>
 
         {/* ── The system: real fragments of the product ── */}
         <section id="system" className="scroll-mt-20 border-t border-outline-variant/20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
-            <div className="max-w-2xl">
-              <Eyebrow>the system</Eyebrow>
-              <h2 className="mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]">
+            <InView className="max-w-2xl">
+              <div className={styles.rise} style={vars({ '--i': '0' })}>
+                <Eyebrow>the system</Eyebrow>
+              </div>
+              <h2 className={`${styles.rise} mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]`} style={vars({ '--i': '1' })}>
                 Built around how a day actually runs.
               </h2>
-              <p className="mt-5 text-on-surface-variant leading-relaxed max-w-[52ch]">
+              <p className={`${styles.rise} mt-5 text-on-surface-variant leading-relaxed max-w-[52ch]`} style={vars({ '--i': '2' })}>
                 Prayer times anchor the plan, streaks keep you honest, and a year of scored days
                 becomes a pattern you can read.
               </p>
-            </div>
+            </InView>
 
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-outline-variant/25 border border-outline-variant/25 rounded-md overflow-hidden">
+            <InView className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-outline-variant/25 border border-outline-variant/25 rounded-md overflow-hidden">
               <Panel
+                index={0}
                 title="Recovery journeys"
                 detail="A live clock for every habit you’re breaking. Log a slip and it restarts. Run one with friends and compare streaks."
               >
                 <RecoveryClock />
               </Panel>
 
-              <Panel title="Consistency" detail="Every scored day, half a year at a glance.">
+              <Panel index={1} title="Consistency" detail="Every scored day, half a year at a glance.">
                 {/* Cells scale with the panel, so every week always fits. */}
                 <div>
                   <div
@@ -264,7 +285,11 @@ export default function Landing() {
                     aria-label={`Consistency heatmap, current streak ${CURRENT_STREAK} days`}
                   >
                     {levels.map((level, i) => (
-                      <span key={i} className={`block aspect-square rounded-[2px] ${HEAT_CLASSES[level]}`} />
+                      <span
+                        key={i}
+                        className={`${styles.heatCell} block aspect-square rounded-[2px] ${HEAT_CLASSES[level]}`}
+                        style={vars({ '--col': String(Math.floor(i / 7)), '--row': String(i % 7) })}
+                      />
                     ))}
                   </div>
                 </div>
@@ -274,6 +299,7 @@ export default function Landing() {
               </Panel>
 
               <Panel
+                index={2}
                 title="Planner by prayer blocks"
                 detail="Plan between the prayers instead of around an empty calendar. Times come from your location."
               >
@@ -302,7 +328,7 @@ export default function Landing() {
                 </ol>
               </Panel>
 
-              <Panel title="Achievements" detail="47 of them, from Lock In to GOD MODE, unlocked by what you actually do.">
+              <Panel index={3} title="Achievements" detail="47 of them, from Lock In to GOD MODE, unlocked by what you actually do.">
                 <div className="max-w-[320px] bg-surface-container border-l-4 border-primary rounded-md overflow-hidden shadow-2xl shadow-black/40">
                   <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high">
                     <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -319,42 +345,46 @@ export default function Landing() {
                   </div>
                 </div>
               </Panel>
-            </div>
+            </InView>
 
-            <dl className="mt-12 grid sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-8">
-              {ALSO.map((item) => (
-                <div key={item.name} className="border-t border-outline-variant/40 pt-4">
+            <InView className="mt-12">
+              <dl className="grid sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-8">
+              {ALSO.map((item, n) => (
+                <div key={item.name} className={`${styles.rise} border-t border-outline-variant/40 pt-4`} style={vars({ '--i': String(n) })}>
                   <dt className="font-headline font-bold text-on-surface">{item.name}</dt>
                   <dd className="mt-2 text-sm text-on-surface-variant leading-relaxed">{item.detail}</dd>
                 </div>
               ))}
-            </dl>
+              </dl>
+            </InView>
           </div>
         </section>
 
         {/* ── Self-hosting ── */}
         <section id="self-host" className="scroll-mt-20 border-t border-outline-variant/20 bg-surface-container-lowest">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <Eyebrow>self-hosting</Eyebrow>
-              <h2 className="mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]">
+            <InView>
+              <div className={styles.rise} style={vars({ '--i': '0' })}>
+                <Eyebrow>self-hosting</Eyebrow>
+              </div>
+              <h2 className={`${styles.rise} mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]`} style={vars({ '--i': '1' })}>
                 Yours, on your machine.
               </h2>
-              <p className="mt-5 text-on-surface-variant leading-relaxed max-w-[46ch]">
+              <p className={`${styles.rise} mt-5 text-on-surface-variant leading-relaxed max-w-[46ch]`} style={vars({ '--i': '2' })}>
                 HabitTerminal runs as two containers: the app, and a Postgres database that belongs
                 to you. One command starts both.
               </p>
               <dl className="mt-10 grid sm:grid-cols-2 gap-x-8 gap-y-6">
-                {SELF_HOST_FACTS.map((f) => (
-                  <div key={f.title}>
+                {SELF_HOST_FACTS.map((f, n) => (
+                  <div key={f.title} className={styles.rise} style={vars({ '--i': String(n + 3) })}>
                     <dt className="font-headline font-bold text-on-surface">{f.title}</dt>
                     <dd className="mt-1.5 text-sm text-on-surface-variant leading-relaxed">{f.detail}</dd>
                   </div>
                 ))}
               </dl>
-            </div>
+            </InView>
 
-            <div className="rounded-md overflow-hidden border border-outline-variant/25">
+            <InView className="rounded-md overflow-hidden border border-outline-variant/25">
               <div className="flex items-center gap-3 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant/20">
                 <div className="flex gap-1.5" aria-hidden="true">
                   <span className="w-2.5 h-2.5 rounded-full bg-error/60" />
@@ -365,32 +395,40 @@ export default function Landing() {
               </div>
               <pre className="bg-[#0a0e14] px-5 py-6 font-mono text-[13px] leading-7 overflow-x-auto">
                 <code>
-                  <span className="text-outline">$ </span><span className="text-on-surface">make up</span>{'\n'}
-                  <span className="text-primary"> ✔ </span><span className="text-on-surface-variant">db       healthy</span>{'\n'}
-                  <span className="text-primary"> ✔ </span><span className="text-on-surface-variant">migrate  18 migrations applied</span>{'\n'}
-                  <span className="text-primary"> ✔ </span><span className="text-on-surface-variant">app      started</span>{'\n'}
-                  <span className="text-on-surface">App running at </span><span className="text-primary underline underline-offset-4">http://localhost:3000</span>
+                  <span className="text-outline">$ </span><span className={`${styles.typeCommand} text-on-surface`}>make up</span>{'\n'}
+                  <span className={styles.typeLine} style={vars({ '--i': '0' })}><span className="text-primary"> ✔ </span><span className="text-on-surface-variant">db       healthy</span></span>{'\n'}
+                  <span className={styles.typeLine} style={vars({ '--i': '1' })}><span className="text-primary"> ✔ </span><span className="text-on-surface-variant">migrate  18 migrations applied</span></span>{'\n'}
+                  <span className={styles.typeLine} style={vars({ '--i': '2' })}><span className="text-primary"> ✔ </span><span className="text-on-surface-variant">app      started</span></span>{'\n'}
+                  <span className={styles.typeLine} style={vars({ '--i': '3' })}><span className="text-on-surface">App running at </span><span className="text-primary underline underline-offset-4">http://localhost:3000</span></span>
                 </code>
               </pre>
-            </div>
+            </InView>
           </div>
         </section>
 
         {/* ── Closing ── */}
-        <section className="border-t border-outline-variant/20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 text-center">
-            <p className="font-mono text-[12px] tracking-[0.2em] uppercase text-tertiary">Fajr · 05:08</p>
-            <h2 className="mt-5 font-headline font-bold text-[40px] sm:text-[64px] tracking-[-0.045em] leading-[0.95]">
+        <section className="relative overflow-hidden border-t border-outline-variant/20">
+          <InView className="relative mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 text-center">
+            {/* An amber horizon rises behind the closing line: dawn, Fajr. */}
+            <div
+              aria-hidden="true"
+              className={`${styles.sunrise} pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-[-140px] w-[min(1100px,150vw)] h-[440px]`}
+            >
+              <div className="absolute inset-0 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(250,188,69,0.22),rgba(250,188,69,0.06)_45%,transparent_70%)]" />
+              <div className="absolute left-[12%] right-[12%] top-1/2 h-px bg-gradient-to-r from-transparent via-tertiary/70 to-transparent" />
+            </div>
+            <p className={`${styles.rise} relative font-mono text-[12px] tracking-[0.2em] uppercase text-tertiary`} style={vars({ '--i': '0' })}>Fajr · 05:08</p>
+            <h2 className={`${styles.rise} relative mt-5 font-headline font-bold text-[40px] sm:text-[64px] tracking-[-0.045em] leading-[0.95]`} style={vars({ '--i': '1' })}>
               Tomorrow starts at Fajr.
             </h2>
-            <p className="mt-5 text-on-surface-variant text-lg max-w-[40ch] mx-auto">
+            <p className={`${styles.rise} relative mt-5 text-on-surface-variant text-lg max-w-[40ch] mx-auto`} style={vars({ '--i': '2' })}>
               Create your account tonight and score your first day tomorrow.
             </p>
-            <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <div className={`${styles.rise} relative mt-9 flex flex-wrap justify-center gap-3`} style={vars({ '--i': '3' })}>
               <PrimaryCta />
               <SecondaryCta />
             </div>
-          </div>
+          </InView>
         </section>
       </main>
 
