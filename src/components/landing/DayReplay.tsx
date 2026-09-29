@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type PointerEvent } from 'react';
 import styles from './landing.module.css';
 
 // One real-shaped day, scored with the app's actual rules (max 10).
@@ -43,7 +43,7 @@ const METERS: { category: Category; label: string; max: number }[] = [
   { category: 'tasks', label: 'Tasks', max: 1 },
 ];
 
-const PRAYER_MARKS = EVENTS.filter((e) => e.kind === 'prayer' || e.label === 'isha');
+export const PRAYER_MARKS = EVENTS.filter((e) => e.kind === 'prayer' || e.label === 'isha');
 
 // The replay compresses 04:30–23:30 into REPLAY_SECONDS.
 const DAY_START = t(4, 30);
@@ -55,7 +55,7 @@ const REPLAY_LEAD_IN = 0.4;
 
 const delayAt = (leadIn: number, minute: number) =>
   leadIn + ((minute - DAY_START) / (DAY_END - DAY_START)) * REPLAY_SECONDS;
-const pctFor = (minute: number) => ((minute - DAY_START) / (DAY_END - DAY_START)) * 100;
+export const pctFor = (minute: number) => ((minute - DAY_START) / (DAY_END - DAY_START)) * 100;
 const clock = (minute: number) =>
   `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 const vars = (v: Record<string, string>) => v as CSSProperties;
@@ -217,8 +217,26 @@ export default function DayReplay() {
   // Remounting the console restarts every CSS animation from the top.
   const [run, setRun] = useState(0);
 
+  // A slight 3D tilt toward the pointer (CSS vars only; gated by CSS media queries).
+  const tilt = (e: PointerEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    e.currentTarget.style.setProperty('--ry', `${(x * 5).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty('--rx', `${(-y * 4).toFixed(2)}deg`);
+  };
+  const untilt = (e: PointerEvent<HTMLElement>) => {
+    e.currentTarget.style.setProperty('--ry', '0deg');
+    e.currentTarget.style.setProperty('--rx', '0deg');
+  };
+
   return (
-    <figure aria-label="An example day in HabitTerminal, scored hour by hour" className="rounded-md overflow-hidden border border-outline-variant/25 bg-[#15191f] shadow-[0_40px_120px_-40px_rgba(108,221,129,0.25)]">
+    <figure
+      aria-label="An example day in HabitTerminal, scored hour by hour"
+      onPointerMove={tilt}
+      onPointerLeave={untilt}
+      className={`${styles.tilt} rounded-md overflow-hidden border border-outline-variant/25 bg-[#15191f] shadow-[0_40px_120px_-40px_rgba(108,221,129,0.25)]`}
+    >
       <div className="flex items-center gap-3 px-4 py-2.5 bg-surface-container-lowest border-b border-outline-variant/20">
         <div className="flex gap-1.5" aria-hidden="true">
           <span className="w-2.5 h-2.5 rounded-full bg-error/60" />

@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import AchievementCycler from './AchievementCycler';
 import DayReplay from './DayReplay';
+import DayScrollBar from './DayScrollBar';
 import InView from './InView';
 import RecoveryClock from './RecoveryClock';
 import Spotlight from './Spotlight';
@@ -47,11 +49,16 @@ function Wordmark() {
   );
 }
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children, typing = 'view', delay = 0 }: { children: string; typing?: 'load' | 'view'; delay?: number }) {
   return (
     <p className="font-mono text-[12px] tracking-[0.14em] text-primary">
       <span aria-hidden="true">&gt; </span>
-      {children}
+      <span
+        className={`${styles.typeText} ${typing === 'load' ? styles.typeOnLoad : styles.typeOnView}`}
+        style={vars({ '--chars': String(children.length), '--delay': `${delay}s` })}
+      >
+        {children}
+      </span>
     </p>
   );
 }
@@ -66,6 +73,8 @@ const LEDGER: { rule: string; note: string; points: number }[] = [
   { rule: 'Sleep reaches your goal', note: '7 hours by default', points: 1 },
   { rule: 'Every task done', note: 'Today’s tasks and habits, all checked off', points: 1 },
 ];
+
+const LEDGER_RUNNING = LEDGER.reduce<number[]>((acc, row) => [...acc, (acc[acc.length - 1] ?? 0) + row.points], []);
 
 // ─── Consistency heatmap: deterministic sample data (26 weeks) ───────────────
 const WEEKS = 26;
@@ -102,9 +111,9 @@ const ALSO: { name: string; detail: string }[] = [
 ];
 
 const SELF_HOST_FACTS: { title: string; detail: string }[] = [
-  { title: 'Your data, your database', detail: 'Everything lives in your own Postgres. No analytics, no trackers.' },
-  { title: 'Works offline', detail: 'Check in without a connection; your changes sync when you’re back.' },
-  { title: 'Installs like an app', detail: 'Add it to your phone or desktop home screen.' },
+  { title: 'Your data, your database', detail: 'Everything lives in a Postgres database you control.' },
+  { title: 'No trackers', detail: 'No analytics or third-party tracking scripts, hosted or self-hosted.' },
+  { title: 'Updates in one command', detail: 'New database migrations apply automatically on the next make up.' },
   { title: 'MIT licensed', detail: 'Read the code, change it, keep it.' },
 ];
 
@@ -141,7 +150,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center gap-6 font-label text-sm text-on-surface-variant">
             <a href="#score" className={`hover:text-on-surface transition-colors rounded-sm ${focusRing}`}>How scoring works</a>
             <a href="#system" className={`hover:text-on-surface transition-colors rounded-sm ${focusRing}`}>The system</a>
-            <a href="#self-host" className={`hover:text-on-surface transition-colors rounded-sm ${focusRing}`}>Self-hosting</a>
+            <a href="#self-host" className={`hover:text-on-surface transition-colors rounded-sm ${focusRing}`}>Self-host</a>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Link href="/login" className={`hidden sm:inline-flex font-label text-sm text-on-surface-variant hover:text-on-surface px-3 py-2 rounded-sm transition-colors ${focusRing}`}>
@@ -155,6 +164,7 @@ export default function Landing() {
             </Link>
           </div>
         </nav>
+        <DayScrollBar />
       </header>
 
       <main id="main">
@@ -168,7 +178,7 @@ export default function Landing() {
             <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-end">
               <div>
                 <div className={styles.enter} style={vars({ '--delay': '0.05s' })}>
-                  <Eyebrow>habitterminal today</Eyebrow>
+                  <Eyebrow typing="load" delay={0.1}>habitterminal today</Eyebrow>
                 </div>
                 <h1 className="mt-5 font-headline font-bold tracking-[-0.045em] leading-[0.92] text-[46px] sm:text-[68px] lg:text-[88px]">
                   <span className={styles.maskLine}>
@@ -192,7 +202,7 @@ export default function Landing() {
                   <SecondaryCta />
                 </div>
                 <p className="mt-5 font-mono text-[11px] tracking-wide text-outline">
-                  Free · MIT licensed · Runs on your own machine · Works offline
+                  Free · Open source · Works offline · Installs like an app
                 </p>
               </div>
             </div>
@@ -240,10 +250,19 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <div className={`${styles.rise} pt-5 flex items-baseline justify-between border-t-2 border-on-surface/80 mt-[-1px]`} style={vars({ '--i': String(LEDGER.length + 1) })}>
+              <div className={`${styles.rise} pt-5 flex items-baseline justify-between border-t-2 border-on-surface/80 mt-[-1px]`} style={vars({ '--i': '0' })}>
                 <span className="text-[12px] uppercase tracking-[0.2em] text-on-surface-variant">Total</span>
                 <span className="text-on-surface text-3xl font-bold tabular-nums">
-                  10<span className="text-outline text-lg">/10</span>
+                  <span className={styles.odo} aria-hidden="true">
+                    <span className="absolute inset-0 text-right">0</span>
+                    {LEDGER_RUNNING.map((total, n) => (
+                      <span key={total} className={styles.odoStep} style={vars({ '--i': String(n) })}>
+                        {total}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="sr-only">10</span>
+                  <span className="text-outline text-lg">/10</span>
                 </span>
               </div>
             </InView>
@@ -329,21 +348,7 @@ export default function Landing() {
               </Panel>
 
               <Panel index={3} title="Achievements" detail="47 of them, from Lock In to GOD MODE, unlocked by what you actually do.">
-                <div className="max-w-[320px] bg-surface-container border-l-4 border-primary rounded-md overflow-hidden shadow-2xl shadow-black/40">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high">
-                    <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      workspace_premium
-                    </span>
-                    <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-primary">Achievement unlocked</span>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="font-headline text-sm font-bold text-on-surface uppercase tracking-wide">Iron Week</p>
-                    <p className="text-xs text-on-surface-variant mt-0.5">Full discipline: 7 consecutive days</p>
-                    <span className="inline-block mt-2 font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-surface-container-highest text-primary">
-                      Uncommon
-                    </span>
-                  </div>
-                </div>
+                <AchievementCycler />
               </Panel>
             </InView>
 
@@ -365,14 +370,14 @@ export default function Landing() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <InView>
               <div className={styles.rise} style={vars({ '--i': '0' })}>
-                <Eyebrow>self-hosting</Eyebrow>
+                <Eyebrow>self-host</Eyebrow>
               </div>
               <h2 className={`${styles.rise} mt-4 font-headline font-bold text-[34px] sm:text-[48px] tracking-[-0.035em] leading-[1]`} style={vars({ '--i': '1' })}>
-                Yours, on your machine.
+                Or run it yourself.
               </h2>
               <p className={`${styles.rise} mt-5 text-on-surface-variant leading-relaxed max-w-[46ch]`} style={vars({ '--i': '2' })}>
-                HabitTerminal runs as two containers: the app, and a Postgres database that belongs
-                to you. One command starts both.
+                HabitTerminal is open source. Run your own copy as two containers, the app and a
+                Postgres database that belongs to you, and one command starts both.
               </p>
               <dl className="mt-10 grid sm:grid-cols-2 gap-x-8 gap-y-6">
                 {SELF_HOST_FACTS.map((f, n) => (

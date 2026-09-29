@@ -4,12 +4,15 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import 'material-symbols/outlined.css';
 import "./globals.css";
 import RootFrame from '@/components/layout/RootFrame';
+import { SITE_URL } from '@/lib/siteUrl';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-space-grotesk' });
 const jetBrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains-mono' });
 
 export const metadata: Metadata = {
+  // Absolute base for link previews (opengraph-image.tsx) and canonical URLs.
+  metadataBase: SITE_URL,
   title: "HabitTerminal",
   description: "A production-grade habit tracking and recovery monitoring system with terminal-inspired aesthetics.",
 };

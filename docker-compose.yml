@@ -35,7 +35,10 @@ services:
     entrypoint: ["sh", "/db/migrate.sh"]
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SITE_URL: ${SITE_URL:-http://localhost:3000}
     image: habittracker-app
     restart: unless-stopped
     depends_on:
@@ -47,6 +50,7 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       ENCRYPTION_SECRET: ${ENCRYPTION_SECRET:-}
       TZ: ${TZ:-UTC}
+      SITE_URL: ${SITE_URL:-http://localhost:3000}
       PRAYER_CALC_METHOD: ${PRAYER_CALC_METHOD:-}
     ports:
       - "${APP_PORT:-3000}:3000"

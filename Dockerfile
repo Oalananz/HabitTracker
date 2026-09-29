@@ -10,6 +10,9 @@ RUN npm ci --no-audit --no-fund
 FROM node:22-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# Public URL, baked into link previews, robots.txt and the sitemap at build time.
+ARG SITE_URL=http://localhost:3000
+ENV SITE_URL=$SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

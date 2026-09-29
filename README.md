@@ -143,6 +143,13 @@ On first run this copies `.env.example` to `.env` (edit `POSTGRES_PASSWORD`, and
 
 Migrations live in `db/migrations/`. On every `make up`, a one-shot `migrate` container applies any file not yet recorded in the `schema_migrations` table, in filename order, each in its own transaction — so to change the schema, add a new higher-numbered file and run `make up` (or `make migrate`).
 
+### Deploying publicly
+
+1. In `.env`: set `SITE_URL` to your public address (e.g. `https://habitterminal.example`) — it is baked into link previews, `robots.txt` and the sitemap at build time — and set a strong `POSTGRES_PASSWORD` **before the first `make up`** (see the note in `.env.example` for changing it later).
+2. Put the app behind an HTTPS reverse proxy (Caddy, nginx, Traefik…) that forwards to port `APP_PORT`. The proxy must send `X-Forwarded-Proto` (session cookies are marked `Secure` when it says `https`) and `X-Forwarded-For` (used to rate-limit logins per client).
+3. Keep Postgres private: `docker-compose.yml` binds it to `127.0.0.1` only — don't change that on a public server.
+4. Back up the `habittracker_db-data` volume; `make fclean` deletes it.
+
 ### Local development (hot reload)
 
 ```bash

@@ -6,12 +6,12 @@ import Landing from '@/components/landing/Landing';
 export const metadata: Metadata = {
   title: 'HabitTerminal — Every day gets a score',
   description:
-    'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks. Self-hosted, works offline.',
+    'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks. Free, open source, works offline.',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'HabitTerminal — Every day gets a score',
     description:
       'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks.',
-    images: ['/logo.png'],
   },
 };
 
