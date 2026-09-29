@@ -117,12 +117,14 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   const userId = await getSessionUserId();
   if (!userId) return null;
 
-  const { data: profile } = await db
+  const { data: profile, error } = await db
     .from('users')
     .select('id, email, username, status_message, created_at')
     .eq('id', userId)
     .maybeSingle();
 
+  // A failed lookup is an error, not a signed-out user; let callers log it.
+  if (error) throw new Error(`Profile lookup failed: ${error.message}`);
   if (!profile) return null;
   return {
     id: profile.id,

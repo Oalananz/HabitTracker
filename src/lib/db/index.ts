@@ -11,12 +11,20 @@ import type { Database } from '@/lib/database.types';
 // ─── Type parsing ────────────────────────────────────────────────────
 // Match JSON-API conventions the app was written against: dates stay as
 // 'YYYY-MM-DD' strings, timestamps become ISO strings, numerics become numbers.
-const parseTimestamptz = types.getTypeParser(types.builtins.TIMESTAMPTZ);
+//
+// Parsers must not wrap getTypeParser(): the pg type registry is process-wide,
+// and Next evaluates this module once per server chunk, so a wrapper would end
+// up wrapping its own earlier copy (which returns a string, not a Date).
+
+/** '2026-09-29 22:03:45.657246+00' (Postgres text format) → ISO 8601 string. */
+export function timestamptzToIso(value: string): string {
+  const iso = value.replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00');
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
+}
+
 types.setTypeParser(types.builtins.DATE, (v) => v);
-types.setTypeParser(types.builtins.TIMESTAMPTZ, (v) => {
-  const d = parseTimestamptz(v) as Date;
-  return Number.isNaN(d.getTime()) ? v : d.toISOString();
-});
+types.setTypeParser(types.builtins.TIMESTAMPTZ, timestamptzToIso);
 types.setTypeParser(types.builtins.TIMESTAMP, (v) => v.replace(' ', 'T'));
 types.setTypeParser(types.builtins.NUMERIC, (v) => parseFloat(v));
 types.setTypeParser(types.builtins.INT8, (v) => Number(v));
