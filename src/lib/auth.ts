@@ -2,8 +2,9 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
 import { cookies } from 'next/headers';
 import { db, pool } from '@/lib/db';
+import { SESSION_COOKIE } from '@/lib/sessionCookie';
 
-export const SESSION_COOKIE = 'ht_session';
+export { SESSION_COOKIE };
 export const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
 const SESSION_TTL_DAYS = 30;
 const AUTH_ID_CACHE_TTL_MS = 15_000;

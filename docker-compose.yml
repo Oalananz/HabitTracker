@@ -39,6 +39,7 @@ services:
       context: .
       args:
         SITE_URL: ${SITE_URL:-http://localhost:3000}
+        CONTACT_EMAIL: ${CONTACT_EMAIL:-}
     image: habittracker-app
     restart: unless-stopped
     depends_on:

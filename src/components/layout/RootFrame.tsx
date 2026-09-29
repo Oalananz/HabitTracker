@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import AppShell from '@/components/layout/AppShell';
 
 const PUBLIC_PATH_PREFIXES = ['/login'];
-const PUBLIC_PATHS = new Set(['/']);
+const PUBLIC_PATHS = new Set(['/', '/privacy']);
 
 function isPublicPath(pathname: string | null) {
   if (!pathname) return true;

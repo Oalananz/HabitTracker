@@ -13,6 +13,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Public URL, baked into link previews, robots.txt and the sitemap at build time.
 ARG SITE_URL=http://localhost:3000
 ENV SITE_URL=$SITE_URL
+# Contact shown on the privacy page for data and deletion requests.
+ARG CONTACT_EMAIL=
+ENV CONTACT_EMAIL=$CONTACT_EMAIL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, requireAuthId, USERNAME_RE } from '@/lib/auth';
+import { getCurrentUser, requireAuthId, SESSION_COOKIE, USERNAME_RE } from '@/lib/auth';
 import { pool } from '@/lib/db';
 import { errorResponse } from '@/lib/apiErrors';
 
@@ -9,12 +9,16 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ user: null }, { status: 401 });
+      // Missing or expired session: drop the stale cookie so the landing page
+      // (which redirects cookie holders to /today) is reachable again.
+      const response = NextResponse.json({ user: null }, { status: 401 });
+      response.cookies.delete(SESSION_COOKIE);
+      return response;
     }
     return NextResponse.json({ user });
   } catch (err) {
-    console.error('[/api/auth/me] error:', err);
-    return NextResponse.json({ user: null }, { status: 401 });
+    // A server fault is not a sign-out: keep the cookie and report the error.
+    return errorResponse(err, 'GET /api/auth/me');
   }
 }
 

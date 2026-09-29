@@ -4,7 +4,9 @@ import DayReplay from './DayReplay';
 import DayScrollBar from './DayScrollBar';
 import InView from './InView';
 import RecoveryClock from './RecoveryClock';
+import Skyline from './Skyline';
 import Spotlight from './Spotlight';
+import Wordmark from './Wordmark';
 import styles from './landing.module.css';
 
 const vars = (v: Record<string, string>) => v as React.CSSProperties;
@@ -31,21 +33,6 @@ function SecondaryCta() {
     >
       Sign in
     </Link>
-  );
-}
-
-// The logo's rounded terminal and prompt, drawn crisply at nav size.
-function Wordmark() {
-  return (
-    <span className="inline-flex items-center gap-2.5">
-      <span
-        aria-hidden="true"
-        className="inline-flex items-center justify-center w-7 h-6 rounded-[5px] border-2 border-primary font-mono text-[11px] font-bold leading-none text-primary"
-      >
-        &gt;_
-      </span>
-      <span className="font-mono font-bold text-[17px] tracking-tight text-primary">HabitTerminal</span>
-    </span>
   );
 }
 
@@ -92,7 +79,6 @@ function heatmapLevels(): number[] {
     return 1 + Math.floor(rand() * (2 + warmth * 2));
   });
 }
-const HEAT_CLASSES = ['bg-surface-container-highest', 'bg-primary/20', 'bg-primary/45', 'bg-primary/70', 'bg-primary'];
 
 const PRAYER_BLOCKS: { name: string; time: string; plans: string[]; now?: boolean }[] = [
   { name: 'Fajr', time: '05:08', plans: ['Quran, 2 pages'] },
@@ -107,7 +93,7 @@ const ALSO: { name: string; detail: string }[] = [
   { name: 'Money', detail: 'Income and expenses, budgets, savings goals, debts and subscriptions.' },
   { name: 'Learning', detail: 'Courses, study sessions, skills and certificates in one place.' },
   { name: 'Weekly review', detail: 'Wins, problems and lessons, with a look across all six areas.' },
-  { name: 'AI planner', detail: 'Optional. Drafts your day and breaks down goals using Gemini; only minimal, non-identifying data is sent.' },
+  { name: 'AI planner', detail: 'Optional. Drafts your day, breaks down goals and reviews your week with Google Gemini. Only what you ask it about is sent, never your email or account.' },
 ];
 
 const SELF_HOST_FACTS: { title: string; detail: string }[] = [
@@ -170,10 +156,14 @@ export default function Landing() {
       <main id="main">
         {/* ── Hero: the thesis is a day being scored ── */}
         <section className="relative">
+          {/* A perspective floor recedes to a horizon behind the hero. */}
           <div
             aria-hidden="true"
-            className={`${styles.gridDrift} pointer-events-none absolute inset-x-0 top-0 h-[640px] opacity-[0.35] [background-image:linear-gradient(to_right,#3e4a3e33_1px,transparent_1px),linear-gradient(to_bottom,#3e4a3e33_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]`}
-          />
+            className={`${styles.floorStage} pointer-events-none absolute inset-x-0 top-[340px] h-[620px] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black_55%,transparent)]`}
+          >
+            <div className={styles.floorPlane} />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent shadow-[0_0_24px_rgba(108,221,129,0.5)]" />
+          </div>
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-14 sm:pt-20 pb-16">
             <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-end">
               <div>
@@ -191,7 +181,7 @@ export default function Landing() {
                   </span>
                 </h1>
               </div>
-              <div className={`${styles.enter} lg:pb-3`} style={vars({ '--delay': '0.5s' })}>
+              <div className={`${styles.enterVisible} lg:pb-3`} style={vars({ '--delay': '0.2s' })}>
                 <p className="text-base sm:text-lg text-on-surface-variant leading-relaxed max-w-[44ch]">
                   HabitTerminal scores each day out of 10: focus, the five prayers, Quran and dhikr,
                   self-control, sleep, and the tasks you set. Log as you go and you always know where
@@ -208,7 +198,9 @@ export default function Landing() {
             </div>
 
             <div className={`${styles.enterConsole} mt-12 sm:mt-16`} style={vars({ '--delay': '0.75s' })}>
-              <DayReplay />
+              <div className={styles.consoleDepth}>
+                <DayReplay />
+              </div>
             </div>
           </div>
         </section>
@@ -294,24 +286,8 @@ export default function Landing() {
                 <RecoveryClock />
               </Panel>
 
-              <Panel index={1} title="Consistency" detail="Every scored day, half a year at a glance.">
-                {/* Cells scale with the panel, so every week always fits. */}
-                <div>
-                  <div
-                    className="grid grid-flow-col grid-rows-7 gap-[3px]"
-                    style={{ gridTemplateColumns: `repeat(${WEEKS}, minmax(0, 1fr))` }}
-                    role="img"
-                    aria-label={`Consistency heatmap, current streak ${CURRENT_STREAK} days`}
-                  >
-                    {levels.map((level, i) => (
-                      <span
-                        key={i}
-                        className={`${styles.heatCell} block aspect-square rounded-[2px] ${HEAT_CLASSES[level]}`}
-                        style={vars({ '--col': String(Math.floor(i / 7)), '--row': String(i % 7) })}
-                      />
-                    ))}
-                  </div>
-                </div>
+              <Panel index={1} title="Consistency" detail="Half a year of scored days as a skyline. The better the day, the taller it stands.">
+                <Skyline levels={levels} weeks={WEEKS} label={`Consistency skyline: half a year of scored days, current streak ${CURRENT_STREAK} days`} />
                 <p className="mt-4 font-mono text-[12px] text-on-surface-variant">
                   Current streak <span className="text-primary font-bold">{CURRENT_STREAK} days</span>
                 </p>
@@ -440,7 +416,11 @@ export default function Landing() {
       <footer className="border-t border-outline-variant/20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center gap-4 justify-between">
           <Wordmark />
-          <p className="font-mono text-[11px] text-outline">© 2026 HabitTerminal · MIT License</p>
+          <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-label text-sm text-on-surface-variant">
+            <Link href="/privacy" className={`hover:text-on-surface rounded-sm ${focusRing}`}>Privacy</Link>
+            <Link href="/login" className={`hover:text-on-surface rounded-sm ${focusRing}`}>Sign in</Link>
+            <span className="font-mono text-[11px] text-outline">© 2026 HabitTerminal · MIT License</span>
+          </nav>
         </div>
       </footer>
     </div>

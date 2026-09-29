@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Logo from '@/components/ui/Logo';
@@ -38,7 +39,13 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-5 p-4">
+      <Link
+        href="/"
+        className="font-mono text-xs text-on-surface-variant hover:text-primary transition-colors rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        ← HabitTerminal home
+      </Link>
       <TerminalWindow
         title={isRegister ? 'init_protocol.sh' : 'auth_gateway.sh'}
         className="w-full max-w-md animate-fade-in"
@@ -146,6 +153,12 @@ function LoginContent() {
             </button>
           </form>
 
+          {isRegister && (
+            <p className="mt-4 text-center text-xs text-on-surface-variant leading-relaxed">
+              Your prayers and habits are visible only to you.{' '}
+              <Link href="/privacy" className="text-primary underline underline-offset-2">How your data is handled</Link>
+            </p>
+          )}
 
           {/* Toggle Register/Login */}
           <div className="mt-6 text-center">
@@ -168,7 +181,7 @@ function LoginContent() {
           {/* Terminal footer */}
           <div className="mt-8 pt-4 border-t border-outline-variant/10">
             <div className="font-mono text-[10px] text-outline flex justify-between">
-              <span>SYSTEM_VERSION: v1.0.0-stable</span>
+              <Link href="/privacy" className="hover:text-primary transition-colors">PRIVACY</Link>
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                 ONLINE

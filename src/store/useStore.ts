@@ -451,7 +451,14 @@ export const useStore = create<AppState>((set, get) => ({
       try {
         if (networkStatus.isOnline) {
           const res = await fetch('/api/auth/me');
-          if (!res.ok) throw new Error('Not authenticated');
+          if (res.status === 401) {
+            // Definitively signed out (expired or revoked session): don't fall
+            // back to the offline copy, which is only for network/server failures.
+            await clearPersistedSession();
+            set({ user: null, isAuthLoading: false, authInitialized: true });
+            return;
+          }
+          if (!res.ok) throw new Error(`Auth check failed: ${res.status}`);
           const data = await res.json();
           const user = data.user || null;
           if (user) await persistSession(user);

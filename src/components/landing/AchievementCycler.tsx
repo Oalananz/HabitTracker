@@ -12,6 +12,17 @@ const ACHIEVEMENTS = [
 ];
 const SHOW_MS = 3600;
 
+// Inline medal (matches the app's "workspace_premium" icon) so the landing page
+// never downloads the multi-megabyte icon font for a single glyph.
+function PremiumIcon({ color }: { color: string }) {
+  return (
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill={color}>
+      <path d="M12 2a7 7 0 0 0-4 12.74V22l4-1.6 4 1.6v-7.26A7 7 0 0 0 12 2Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" />
+      <path d="m12 5.6 1.1 2.33 2.55.3-1.88 1.74.5 2.53L12 11.23l-2.27 1.27.5-2.53-1.88-1.74 2.55-.3L12 5.6Z" />
+    </svg>
+  );
+}
+
 export default function AchievementCycler() {
   // Starts on Iron Week so the server render matches; cycles only when motion is welcome.
   const [index, setIndex] = useState(1);
@@ -35,13 +46,11 @@ export default function AchievementCycler() {
     >
       <div
         key={a.name}
-        className={`${styles.toastIn} bg-surface-container border-l-4 rounded-md overflow-hidden shadow-2xl shadow-black/40`}
+        className={`${styles.flipIn} bg-surface-container border-l-4 rounded-md overflow-hidden shadow-2xl shadow-black/40`}
         style={{ borderLeftColor: a.color }}
       >
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high">
-          <span aria-hidden="true" className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1", color: a.color }}>
-            workspace_premium
-          </span>
+          <PremiumIcon color={a.color} />
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold" style={{ color: a.color }}>
             Achievement unlocked
           </span>

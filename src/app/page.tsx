@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getAuthUserId } from '@/lib/auth';
 import Landing from '@/components/landing/Landing';
 
 export const metadata: Metadata = {
@@ -12,18 +10,12 @@ export const metadata: Metadata = {
     title: 'HabitTerminal — Every day gets a score',
     description:
       'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks.',
+    type: 'website',
   },
+  twitter: { card: 'summary_large_image' },
 };
 
-export default async function Home() {
-  // Signed-in visitors go straight to their day; everyone else sees the landing page.
-  let userId: string | null = null;
-  try {
-    userId = await getAuthUserId();
-  } catch {
-    // Database unreachable: still show the landing page.
-  }
-  if (userId) redirect('/today');
-
+// Static and cacheable. Signed-in visitors are redirected by src/proxy.ts.
+export default function Home() {
   return <Landing />;
 }

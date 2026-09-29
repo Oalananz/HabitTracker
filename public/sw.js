@@ -19,7 +19,7 @@ const ASSETS_TO_CACHE = [
   '/onboarding',
   '/login',
   '/manifest.json',
-  '/logo.png'
+  '/icons/icon-192.png'
 ];
 
 // Install Event - Pre-cache critical pages/assets
