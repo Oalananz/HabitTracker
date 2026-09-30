@@ -3,14 +3,14 @@ import Landing from '@/components/landing/Landing';
 import { getLandingContent } from '@/lib/landingContent.server';
 
 export const metadata: Metadata = {
-  title: 'HabitTerminal — Every day gets a score',
+  title: 'HabitTerminal — Turn your day into a score',
   description:
-    'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks. Free, open source, works offline.',
+    'Track focus, prayer, Quran, sleep, self-control, and daily tasks in one focused daily dashboard — and score every day out of 10. Free and open source.',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'HabitTerminal — Every day gets a score',
+    title: 'HabitTerminal — Turn your day into a score',
     description:
-      'Score each day out of 10: focus, the five prayers, Quran and dhikr, self-control, sleep, and your tasks.',
+      'Track focus, prayer, Quran, sleep, self-control, and daily tasks — and score every day out of 10.',
     type: 'website',
   },
   twitter: { card: 'summary_large_image' },

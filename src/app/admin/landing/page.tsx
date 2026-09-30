@@ -9,7 +9,7 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { useToast } from '@/store/useToast';
 import type { LandingContent, LandingItem } from '@/lib/landingContent';
 
-const MAX_ITEMS = 8;
+const MAX_ITEMS = 6;
 
 interface LandingRecord {
   content: LandingContent;
@@ -175,7 +175,7 @@ export default function LandingEditorPage() {
     }
   };
 
-  const { hero, cta, score, system, selfHost, closing } = draft;
+  const { hero, cta, scoring, features, pillars, closing } = draft;
 
   return (
     <div className="space-y-6 animate-page-enter pb-24">
@@ -183,7 +183,7 @@ export default function LandingEditorPage() {
       <PageHeader
         title="Landing page"
         eyebrow="admin/landing"
-        description="Edit the public landing page's copy. The scoring rules and live product demos stay as they are."
+        description="Edit the public landing page's copy. The scoring rules and product previews stay as they are."
       />
 
       <p className="text-xs text-on-surface-variant">
@@ -196,8 +196,8 @@ export default function LandingEditorPage() {
           <h2 className="text-sm font-medium text-on-surface">Hero</h2>
           <Field id="hero-eyebrow" label="Label above the headline" max={40} value={hero.eyebrow} onChange={(v) => set('hero', { eyebrow: v })} />
           <Field id="hero-line1" label="Headline, line 1" max={60} value={hero.titleLine1} onChange={(v) => set('hero', { titleLine1: v })} />
-          <Field id="hero-line2" label="Headline, line 2 (green)" max={40} value={hero.titleLine2} onChange={(v) => set('hero', { titleLine2: v })} />
-          <Field id="hero-subtitle" label="Description" max={400} multiline value={hero.subtitle} onChange={(v) => set('hero', { subtitle: v })} />
+          <Field id="hero-line2" label="Headline, line 2 (green)" max={60} value={hero.titleLine2} onChange={(v) => set('hero', { titleLine2: v })} />
+          <Field id="hero-subtitle" label="Description" max={300} multiline value={hero.subtitle} onChange={(v) => set('hero', { subtitle: v })} />
           <Field id="hero-meta" label="Small print under the buttons" max={120} value={hero.meta} onChange={(v) => set('hero', { meta: v })} />
           <div className="grid grid-cols-2 gap-3">
             <Field id="cta-primary" label="Main button" max={30} value={cta.primary} onChange={(v) => set('cta', { primary: v })} />
@@ -207,32 +207,29 @@ export default function LandingEditorPage() {
 
         <Card className="space-y-4">
           <h2 className="text-sm font-medium text-on-surface">How scoring works</h2>
-          <Toggle id="score-visible" label="Show this section" checked={score.visible} onChange={(v) => set('score', { visible: v })} />
-          <Field id="score-eyebrow" label="Label" max={40} value={score.eyebrow} onChange={(v) => set('score', { eyebrow: v })} />
-          <Field id="score-title" label="Heading" max={80} value={score.title} onChange={(v) => set('score', { title: v })} />
-          <Field id="score-intro" label="Intro" max={400} multiline value={score.intro} onChange={(v) => set('score', { intro: v })} />
-          <Field id="score-note" label="Note" max={200} value={score.note} onChange={(v) => set('score', { note: v })} />
+          <Toggle id="scoring-visible" label="Show this section" checked={scoring.visible} onChange={(v) => set('scoring', { visible: v })} />
+          <Field id="scoring-eyebrow" label="Label" max={40} value={scoring.eyebrow} onChange={(v) => set('scoring', { eyebrow: v })} />
+          <Field id="scoring-title" label="Heading" max={80} value={scoring.title} onChange={(v) => set('scoring', { title: v })} />
+          <Field id="scoring-statement" label="Statement" max={240} multiline value={scoring.statement} onChange={(v) => set('scoring', { statement: v })} />
           <p className="text-xs text-outline">The seven scoring rules come from the app itself and aren’t editable here.</p>
         </Card>
 
         <Card className="space-y-4">
-          <h2 className="text-sm font-medium text-on-surface">The system</h2>
-          <Toggle id="system-visible" label="Show this section" checked={system.visible} onChange={(v) => set('system', { visible: v })} />
-          <Field id="system-eyebrow" label="Label" max={40} value={system.eyebrow} onChange={(v) => set('system', { eyebrow: v })} />
-          <Field id="system-title" label="Heading" max={80} value={system.title} onChange={(v) => set('system', { title: v })} />
-          <Field id="system-intro" label="Intro" max={400} multiline value={system.intro} onChange={(v) => set('system', { intro: v })} />
-          <h3 className="text-xs uppercase tracking-widest text-on-surface-variant pt-2">Feature list</h3>
-          <ItemsEditor idPrefix="system-extra" noun="feature" items={system.extras} onChange={(extras) => set('system', { extras })} />
+          <h2 className="text-sm font-medium text-on-surface">Features</h2>
+          <Toggle id="features-visible" label="Show this section" checked={features.visible} onChange={(v) => set('features', { visible: v })} />
+          <Field id="features-eyebrow" label="Label" max={40} value={features.eyebrow} onChange={(v) => set('features', { eyebrow: v })} />
+          <Field id="features-title" label="Heading" max={80} value={features.title} onChange={(v) => set('features', { title: v })} />
+          <Field id="features-intro" label="Intro" max={300} multiline value={features.intro} onChange={(v) => set('features', { intro: v })} />
+          <p className="text-xs text-outline">The planner, recovery, consistency and achievement previews mirror the app and aren’t editable here.</p>
         </Card>
 
         <Card className="space-y-4">
-          <h2 className="text-sm font-medium text-on-surface">Self-host</h2>
-          <Toggle id="selfhost-visible" label="Show this section" checked={selfHost.visible} onChange={(v) => set('selfHost', { visible: v })} />
-          <Field id="selfhost-eyebrow" label="Label" max={40} value={selfHost.eyebrow} onChange={(v) => set('selfHost', { eyebrow: v })} />
-          <Field id="selfhost-title" label="Heading" max={80} value={selfHost.title} onChange={(v) => set('selfHost', { title: v })} />
-          <Field id="selfhost-intro" label="Intro" max={400} multiline value={selfHost.intro} onChange={(v) => set('selfHost', { intro: v })} />
-          <h3 className="text-xs uppercase tracking-widest text-on-surface-variant pt-2">Facts</h3>
-          <ItemsEditor idPrefix="selfhost-fact" noun="fact" items={selfHost.facts} onChange={(facts) => set('selfHost', { facts })} />
+          <h2 className="text-sm font-medium text-on-surface">Why HabitTerminal</h2>
+          <Toggle id="pillars-visible" label="Show this section" checked={pillars.visible} onChange={(v) => set('pillars', { visible: v })} />
+          <Field id="pillars-eyebrow" label="Label" max={40} value={pillars.eyebrow} onChange={(v) => set('pillars', { eyebrow: v })} />
+          <Field id="pillars-title" label="Heading" max={80} value={pillars.title} onChange={(v) => set('pillars', { title: v })} />
+          <h3 className="text-xs uppercase tracking-widest text-on-surface-variant pt-2">Pillars</h3>
+          <ItemsEditor idPrefix="pillar" noun="pillar" items={pillars.items} onChange={(items) => set('pillars', { items })} />
         </Card>
 
         <Card className="space-y-4">

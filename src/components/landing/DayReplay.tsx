@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties, type PointerEvent } from 'react';
+import { useState, type CSSProperties } from 'react';
 import styles from './landing.module.css';
 
 // One real-shaped day, scored with the app's actual rules (max 10).
@@ -37,7 +37,7 @@ const METERS: { category: Category; label: string; max: number }[] = [
   { category: 'focus', label: 'Focus', max: 2 },
   { category: 'prayers', label: 'Five prayers', max: 2 },
   { category: 'self', label: 'Self-control', max: 2 },
-  { category: 'quran', label: 'Quran + dhikr', max: 1 },
+  { category: 'quran', label: 'Quran & dhikr', max: 1 },
   { category: 'night', label: 'Night prayer', max: 1 },
   { category: 'sleep', label: 'Sleep', max: 1 },
   { category: 'tasks', label: 'Tasks', max: 1 },
@@ -77,14 +77,10 @@ function DayConsole({ leadIn }: { leadIn: number }) {
 
   return (
     <div className="relative grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
-      {/* One glow the moment the day is secured. */}
-      <div
-        aria-hidden="true"
-        className={`${styles.securedGlow} pointer-events-none absolute inset-0 z-10 ring-1 ring-primary/50 shadow-[inset_0_0_80px_rgba(108,221,129,0.18)]`}
-        style={vars({ '--delay': `${securedAt}s` })}
-      />
-      {/* Log */}
-      <ol className="order-2 lg:order-none px-4 sm:px-6 py-5 font-mono text-[12px] sm:text-[13px] leading-relaxed space-y-1.5 border-t lg:border-t-0 lg:border-r border-outline-variant/20">
+      {/* Activity log */}
+      <div className="order-2 lg:order-none px-4 sm:px-6 py-5 border-t lg:border-t-0 lg:border-r border-outline-variant/20">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-outline mb-3"><span aria-hidden="true">&gt; </span>Activity</p>
+      <ol className="font-mono text-[12px] sm:text-[13px] leading-relaxed space-y-1.5">
         {EVENTS.map((e) => (
           <li
             key={`${e.at}-${e.label}`}
@@ -105,10 +101,11 @@ function DayConsole({ leadIn }: { leadIn: number }) {
           </li>
         ))}
       </ol>
+      </div>
 
       {/* Score */}
       <div className="order-1 lg:order-none px-4 sm:px-6 py-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-outline">Day score</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-outline"><span aria-hidden="true">&gt; </span>Day score</p>
         <p className="sr-only">Day score: 10 out of 10. Day secured.</p>
         <div className="flex items-end gap-3 mt-1" aria-hidden="true">
           <div className="relative overflow-hidden h-[0.86em] w-[1.3em] font-mono font-bold leading-[0.86] text-[112px] sm:text-[148px] tracking-[-0.04em]">
@@ -140,16 +137,17 @@ function DayConsole({ leadIn }: { leadIn: number }) {
             className={`${styles.statusLayer} absolute inset-0 flex items-center gap-2 bg-[#15191f] text-primary`}
             style={vars({ '--delay': `${securedAt}s` })}
           >
-            <span className={`${styles.statusPing} w-1.5 h-1.5 rounded-full bg-primary`} style={vars({ '--delay': `${securedAt}s` })} /> Day secured
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Day secured
           </span>
         </div>
 
-        <ul className="mt-5 space-y-2.5">
+        <p className="sr-only">Breakdown: focus 2, five prayers 2, self-control 2, Quran and dhikr 1, night prayer 1, sleep 1, tasks 1.</p>
+        <ul className="mt-5 space-y-2.5" aria-hidden="true">
           {METERS.map((m) => {
             const event = EVENTS.find((e) => e.category === m.category);
             const delay = event ? delayFor(event.at) : 0;
             return (
-              <li key={m.category} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <li key={m.category} className="grid grid-cols-[minmax(0,1fr)_auto_2.25rem] items-center gap-3">
                 <span
                   className={`${styles.earned} font-label text-[13px] text-on-surface`}
                   style={vars({ '--delay': `${delay}s` })}
@@ -165,6 +163,12 @@ function DayConsole({ leadIn }: { leadIn: number }) {
                       />
                     </span>
                   ))}
+                </span>
+                <span
+                  className={`${styles.earned} font-mono text-[13px] font-bold text-primary text-right tabular-nums`}
+                  style={vars({ '--delay': `${delay}s` })}
+                >
+                  +{m.max}
                 </span>
               </li>
             );
@@ -195,10 +199,7 @@ function DayConsole({ leadIn }: { leadIn: number }) {
               <span className="absolute -top-0.5 -translate-x-1/2 font-mono text-[10px] text-tertiary hidden sm:block">
                 {p.label}
               </span>
-              <div
-                className={`${styles.markPop} absolute top-3 -translate-x-1/2 w-2 h-2 rotate-45 bg-tertiary`}
-                style={vars({ '--delay': `${delayFor(p.at)}s` })}
-              />
+              <div className="absolute top-3 -translate-x-1/2 w-2 h-2 rotate-45 bg-tertiary" />
             </div>
           ))}
           <div
@@ -217,37 +218,20 @@ export default function DayReplay() {
   // Remounting the console restarts every CSS animation from the top.
   const [run, setRun] = useState(0);
 
-  // A slight 3D tilt toward the pointer (CSS vars only; gated by CSS media queries).
-  const tilt = (e: PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    e.currentTarget.style.setProperty('--ry', `${(x * 5).toFixed(2)}deg`);
-    e.currentTarget.style.setProperty('--rx', `${(-y * 4).toFixed(2)}deg`);
-  };
-  const untilt = (e: PointerEvent<HTMLElement>) => {
-    e.currentTarget.style.setProperty('--ry', '0deg');
-    e.currentTarget.style.setProperty('--rx', '0deg');
-  };
-
   return (
     <figure
-      aria-label="An example day in HabitTerminal, scored hour by hour"
-      onPointerMove={tilt}
-      onPointerLeave={untilt}
-      className={`${styles.tilt} rounded-md overflow-hidden border border-outline-variant/25 bg-[#15191f] shadow-[0_40px_120px_-40px_rgba(108,221,129,0.25)]`}
+      aria-label="Example dashboard: a day scored hour by hour, ending at 10 out of 10"
+      className="rounded-md overflow-hidden border border-outline-variant/30 bg-[#15191f] shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9)]"
     >
-      <div className="flex items-center gap-3 px-4 py-2.5 bg-surface-container-lowest border-b border-outline-variant/20">
-        <div className="flex gap-1.5" aria-hidden="true">
-          <span className="w-2.5 h-2.5 rounded-full bg-error/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-tertiary/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-primary/60" />
-        </div>
-        <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant">day.log<span className="hidden sm:inline"> — a Tuesday</span></span>
+      <div className="flex items-center gap-3 pl-4 pr-2 py-1 bg-surface-container-lowest border-b border-outline-variant/20">
+        <span className="font-mono text-[12px] text-on-surface-variant">
+          <span className="text-primary">habitterminal</span> <span className="text-outline">~</span> today
+          <span className="hidden sm:inline text-outline"> · Tuesday</span>
+        </span>
         <button
           type="button"
           onClick={() => setRun((r) => r + 1)}
-          className="ml-auto font-mono text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors rounded-sm px-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="ml-auto inline-flex items-center min-h-10 font-mono text-[11px] uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors rounded-sm px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
           ↻ Replay the day
         </button>

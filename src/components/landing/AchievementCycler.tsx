@@ -46,7 +46,7 @@ export default function AchievementCycler() {
     >
       <div
         key={a.name}
-        className={`${styles.flipIn} bg-surface-container border-l-4 rounded-md overflow-hidden shadow-2xl shadow-black/40`}
+        className={`${styles.toastIn} bg-surface-container border-l-4 rounded-md overflow-hidden`}
         style={{ borderLeftColor: a.color }}
       >
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high">

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 
 // Link-preview card (WhatsApp, X, Slack…): the landing page's thesis in one frame.
-export const alt = 'HabitTerminal — Every day gets a score. Secure yours.';
+export const alt = 'HabitTerminal — Turn your day into a score. Build better habits, one day at a time.';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -26,7 +26,7 @@ export default async function OpengraphImage() {
     ['Focus', 2, 2],
     ['Five prayers', 2, 2],
     ['Self-control', 2, 2],
-    ['Quran + dhikr', 1, 1],
+    ['Quran & dhikr', 1, 1],
     ['Night prayer', 1, 1],
     ['Sleep', 1, 1],
     ['Tasks', 1, 1],
@@ -69,10 +69,10 @@ export default async function OpengraphImage() {
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ color: INK, fontSize: 82, fontWeight: 700, lineHeight: 0.95, letterSpacing: -3.5 }}>
-              Every day gets a score.
+              Turn your day
             </div>
             <div style={{ color: GREEN, fontSize: 82, fontWeight: 700, lineHeight: 1.05, letterSpacing: -3.5 }}>
-              Secure yours.
+              into a score.
             </div>
           </div>
 
